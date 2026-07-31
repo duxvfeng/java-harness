@@ -1,0 +1,4 @@
+com\chachamaru\harness\cli\hook\HookCodec.class
+com\chachamaru\harness\cli\hook\HookInput.class
+com\chachamaru\harness\cli\handlers\HookHandler.class
+com\chachamaru\harness\cli\hook\HookOutput.class
