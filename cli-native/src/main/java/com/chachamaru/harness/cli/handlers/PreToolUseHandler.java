@@ -4,7 +4,6 @@ import com.chachamaru.harness.cli.guardrail.GuardrailEngine;
 import com.chachamaru.harness.cli.guardrail.GuardrailResult;
 import com.chachamaru.harness.cli.hook.HookInput;
 import com.chachamaru.harness.cli.hook.HookOutput;
-import com.chachamaru.harness.shared.constants.HookConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,7 @@ import java.io.IOException;
  */
 public class PreToolUseHandler implements HookHandler {
     private static final Logger log = LoggerFactory.getLogger(PreToolUseHandler.class);
+    private static final String PRE_TOOL_USE = "PreToolUse";
     private final GuardrailEngine guardrailEngine;
 
     public PreToolUseHandler(GuardrailEngine guardrailEngine) {
@@ -23,7 +23,7 @@ public class PreToolUseHandler implements HookHandler {
 
     @Override
     public String getEventName() {
-        return HookConstants.PRE_TOOL_USE;
+        return PRE_TOOL_USE;
     }
 
     @Override

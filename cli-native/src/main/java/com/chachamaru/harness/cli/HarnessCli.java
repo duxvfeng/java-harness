@@ -6,7 +6,12 @@ import com.chachamaru.harness.cli.hook.HookCodec;
 import com.chachamaru.harness.cli.hook.HookInput;
 import com.chachamaru.harness.cli.hook.HookOutput;
 import com.chachamaru.harness.cli.handlers.DefaultHookHandler;
+import com.chachamaru.harness.cli.handlers.PostToolUseHandler;
+import com.chachamaru.harness.cli.handlers.PreCompactHandler;
 import com.chachamaru.harness.cli.handlers.PreToolUseHandler;
+import com.chachamaru.harness.cli.handlers.SessionEndHandler;
+import com.chachamaru.harness.cli.handlers.SessionStartHandler;
+import com.chachamaru.harness.cli.handlers.StopHandler;
 import com.chachamaru.harness.cli.router.HookRouter;
 import com.chachamaru.harness.shared.constants.HookConstants;
 import org.slf4j.Logger;
@@ -40,14 +45,14 @@ public class HarnessCli {
 
         // Register Hook Handlers
         router.registerHandler(new PreToolUseHandler(guardrailEngine));
+        router.registerHandler(new PostToolUseHandler());
+        router.registerHandler(new SessionStartHandler());
+        router.registerHandler(new SessionEndHandler());
+        router.registerHandler(new StopHandler());
+        router.registerHandler(new PreCompactHandler());
 
-        // Register default handlers for other events
+        // Register default handlers for remaining events
         String[] otherEvents = {
-            HookConstants.POST_TOOL_USE,
-            HookConstants.SESSION_START,
-            HookConstants.SESSION_END,
-            HookConstants.STOP,
-            HookConstants.PRE_COMPACT,
             HookConstants.POST_COMPACT,
             HookConstants.PERMISSION_DENIED,
             HookConstants.NOTIFICATION,
