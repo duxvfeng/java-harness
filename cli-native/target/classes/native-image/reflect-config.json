@@ -1,0 +1,28 @@
+{
+  "reflectConfig": [
+    {
+      "name": "com.chachamaru.harness.shared.dto.HookEvent",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.GuardrailDecision",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.cli.hook.HookInput",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.cli.hook.HookOutput",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    }
+  ]
+}
