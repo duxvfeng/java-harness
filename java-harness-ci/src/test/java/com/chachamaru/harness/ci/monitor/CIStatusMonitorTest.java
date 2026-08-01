@@ -225,10 +225,10 @@ class CIStatusMonitorTest {
         monitor.removeStatusChangeListener(listener);
 
         // This should not trigger the removed listener
-        latch = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
         monitor.updateWorkflowStatus("test-workflow", CIStatusMonitor.WorkflowStatus.FAILURE, Map.of());
 
-        assertFalse(latch.await(1, TimeUnit.SECONDS));
+        assertFalse(latch2.await(1, TimeUnit.SECONDS));
     }
 
     @Test

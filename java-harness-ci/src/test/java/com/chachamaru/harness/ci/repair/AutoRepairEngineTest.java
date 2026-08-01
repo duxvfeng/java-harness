@@ -272,22 +272,22 @@ class AutoRepairEngineTest {
             Map.of()
         );
 
-        CountDownLatch latch = new CountDownLatch(1);
-        AutoRepairEngine.RepairListener listener = event -> latch.countDown();
+        CountDownLatch latch1 = new CountDownLatch(1);
+        AutoRepairEngine.RepairListener listener = event -> latch1.countDown();
 
         repairEngine.addRepairListener(listener);
         repairEngine.handleFailure(failureInfo);
 
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(latch1.await(5, TimeUnit.SECONDS));
 
         // Remove listener
         repairEngine.removeRepairListener(listener);
 
         // This should not trigger the removed listener
-        latch = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
         repairEngine.handleFailure(failureInfo);
 
-        assertFalse(latch.await(1, TimeUnit.SECONDS));
+        assertFalse(latch2.await(1, TimeUnit.SECONDS));
     }
 
     @Test
