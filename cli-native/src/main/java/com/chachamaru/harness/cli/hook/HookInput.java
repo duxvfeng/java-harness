@@ -39,4 +39,20 @@ public record HookInput(
             && hookEventName != null && !hookEventName.isBlank()
             && toolName != null && !toolName.isBlank();
     }
+
+    /**
+     * Convert to Map for IPC communication
+     */
+    public java.util.Map<String, Object> toMap() {
+        return java.util.Map.of(
+            "session_id", sessionId,
+            "transcript_path", transcriptPath,
+            "cwd", cwd,
+            "permission_mode", permissionMode,
+            "hook_event_name", hookEventName,
+            "tool_name", toolName,
+            "tool_input", toolInput,
+            "plugin_root", pluginRoot
+        );
+    }
 }

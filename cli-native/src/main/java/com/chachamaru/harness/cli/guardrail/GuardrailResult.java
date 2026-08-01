@@ -16,8 +16,20 @@ public record GuardrailResult(
         return decision != null && decision.action() == GuardrailDecision.Action.DENY;
     }
 
+    public String ruleId() {
+        return decision != null ? decision.ruleId() : null;
+    }
+
+    public String reason() {
+        return decision != null ? decision.reason() : null;
+    }
+
     public static GuardrailResult allowed() {
         return new GuardrailResult(null);
+    }
+
+    public static GuardrailResult allowed(String reason) {
+        return new GuardrailResult(GuardrailDecision.allow(reason));
     }
 
     public static GuardrailResult denied(String ruleId, String reason) {
