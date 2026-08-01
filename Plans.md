@@ -81,7 +81,7 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 3.2.1 | 实现代理框架 | 创建Agent接口、AgentContext、AgentResult、AgentRegistry | 接口定义完整，模型类编译通过 | 3.1.3 | cc:TODO |
+| 3.2.1 | 实现代理框架 | 创建Agent接口、AgentContext、AgentResult、AgentRegistry | 接口定义完整，模型类编译通过 | 3.1.3 | cc:✅ fbdeef9 |
 | 3.2.2 | 实现三种核心代理 | 实现WorkerAgent、ReviewerAgent、AdvisorAgent，创建AgentCoordinator | `cd java-harness-collaboration && mvn test`通过，代理测试通过，协调机制验证 | 3.2.1 | cc:TODO |
 
 **Phase 3 验收标准**:
