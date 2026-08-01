@@ -1,15 +1,18 @@
 package com.chachamaru.harness.workflow.engine;
 
-import com.chachamaru.harness.collaboration.skills.Skill;
-import com.chachamaru.harness.collaboration.skills.SkillContext;
-import com.chachamaru.harness.collaboration.skills.SkillRegistry;
-import com.chachamaru.harness.workflow.loader.WorkflowException;
+import com.chachamaru.harness.collaboration.skill.Skill;
+import com.chachamaru.harness.collaboration.skill.SkillRegistry;
+import com.chachamaru.harness.collaboration.skill.model.SkillContext;
+import com.chachamaru.harness.collaboration.skill.model.SkillResult;
+import com.chachamaru.harness.workflow.loader.ExpressionEvaluator;
 import com.chachamaru.harness.workflow.loader.WorkflowLoader;
+import com.chachamaru.harness.workflow.loader.WorkflowException;
 import com.chachamaru.harness.workflow.models.Workflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 /**
  * 工作流执行引擎
  * 负责执行工作流的各个步骤，处理条件、并行执行等
+ * 与 SkillRegistry 完全集成，支持步骤级技能调用
  */
 public class WorkflowEngine {
     private static final Logger log = LoggerFactory.getLogger(WorkflowEngine.class);
@@ -24,14 +28,12 @@ public class WorkflowEngine {
     private final WorkflowLoader workflowLoader;
     private final SkillRegistry skillRegistry;
     private final ExecutionContext executionContext;
-    private final ConditionExpressionEvaluator conditionEvaluator;
     private final ExecutorService executorService;
 
     public WorkflowEngine(WorkflowLoader workflowLoader, SkillRegistry skillRegistry) {
         this.workflowLoader = workflowLoader;
         this.skillRegistry = skillRegistry;
         this.executionContext = new ExecutionContext();
-        this.conditionEvaluator = new ConditionExpressionEvaluator();
         this.executorService = Executors.newCachedThreadPool();
     }
 
@@ -45,7 +47,7 @@ public class WorkflowEngine {
 
         try {
             // 加载工作流定义
-            Workflow workflow = workflowLoader.loadDefaultWorkflow(workflowName);
+            Workflow workflow = workflowLoader.loadDefaultWorkflow(workflowName, input);
             result.setPhase(workflow.getPhase());
 
             log.info("Executing workflow: {} ({})", workflowName, workflow.getDescription());
@@ -53,12 +55,11 @@ public class WorkflowEngine {
             // 初始化执行上下文
             executionContext.clear();
             if (input != null) {
-                executionContext.putAll(input);
+                executionContext.setVariables(input);
             }
 
             // 执行工作流步骤
             List<WorkflowStepExecution> stepResults = executeWorkflowSteps(workflow);
-            result.setStepExecutions(stepResults);
 
             // 检查是否所有必需步骤都成功
             boolean allRequiredSuccessful = stepResults.stream()
@@ -67,13 +68,16 @@ public class WorkflowEngine {
 
             if (allRequiredSuccessful) {
                 result.setSuccess(true);
-                result.setMessage(renderTemplate(workflow.getOnSuccess().getMessage(), executionContext));
+                result.setMessage(renderWorkflowOutput(workflow.getOnSuccess()));
                 log.info("Workflow {} completed successfully", workflowName);
             } else {
                 result.setSuccess(false);
-                result.setMessage(renderTemplate(workflow.getOnError().getMessage(), executionContext));
+                result.setMessage(renderWorkflowOutput(workflow.getOnError()));
                 log.warn("Workflow {} completed with errors", workflowName);
             }
+
+            // 收集输出变量
+            result.setOutputVariables(executionContext.getAllVariables());
 
         } catch (Exception e) {
             result.setSuccess(false);
@@ -173,6 +177,8 @@ public class WorkflowEngine {
         execution.setStep(step);
         execution.setStartTime(System.currentTimeMillis());
 
+        executionContext.pushExecution(step.getId());
+
         try {
             log.info("Executing step: {} using skill: {}", step.getId(), step.getSkill());
 
@@ -186,16 +192,17 @@ public class WorkflowEngine {
             SkillContext context = prepareSkillContext(step);
 
             // 执行技能
-            com.chachamaru.harness.collaboration.skills.SkillResult skillResult = skill.execute(context);
+            LocalDateTime startTime = LocalDateTime.now();
+            SkillResult skillResult = skill.execute(context);
 
-            if (skillResult.isSuccess() || skillResult.isApplicable()) {
+            if (skillResult.isSuccess()) {
                 execution.setSuccess(true);
                 execution.setOutput(extractSkillOutput(skillResult));
                 log.info("Step {} completed successfully", step.getId());
             } else {
                 execution.setSuccess(false);
-                execution.setErrorMessage("Skill execution failed: " + skillResult.getMessage());
-                log.warn("Step {} failed: {}", step.getId(), skillResult.getMessage());
+                execution.setErrorMessage("Skill execution failed: " + skillResult.message());
+                log.warn("Step {} failed: {}", step.getId(), skillResult.message());
             }
 
         } catch (Exception e) {
@@ -205,6 +212,7 @@ public class WorkflowEngine {
         } finally {
             execution.setEndTime(System.currentTimeMillis());
             execution.setDuration(execution.getEndTime() - execution.getStartTime());
+            executionContext.popExecution();
         }
 
         return execution;
@@ -216,101 +224,67 @@ public class WorkflowEngine {
     private boolean shouldExecuteStep(Workflow.WorkflowStep step) {
         // 检查条件
         if (step.getCondition() != null && !step.getCondition().isEmpty()) {
-            return evaluateCondition(step.getCondition());
-        }
-
-        // 检查模式
-        if (step.getMode().equals("optional")) {
-            return true; // 可选步骤总是尝试执行
+            try {
+                return workflowLoader.evaluateCondition(step.getCondition(), executionContext.getAllVariables());
+            } catch (Exception e) {
+                log.warn("Failed to evaluate condition for step {}: {}", step.getId(), e.getMessage());
+                return false;
+            }
         }
 
         return true;
     }
 
     /**
-     * 评估条件表达式
-     */
-    private boolean evaluateCondition(String condition) {
-        // 简单的条件评估实现
-        // 支持变量检查、布尔表达式等
-
-        try {
-            // 替换变量
-            String evaluated = condition;
-            for (Map.Entry<String, Object> entry : executionContext.entrySet()) {
-                String placeholder = "{{" + entry.getKey() + "}}";
-                if (evaluated.contains(placeholder)) {
-                    evaluated = evaluated.replace(placeholder, String.valueOf(entry.getValue()));
-                }
-            }
-
-            // 简单布尔表达式评估
-            if (evaluated.equals("true")) return true;
-            if (evaluated.equals("false")) return false;
-
-            // 包含检查
-            if (evaluated.contains("==")) {
-                String[] parts = evaluated.split("==");
-                return parts[0].trim().equals(parts[1].trim());
-            }
-
-            if (evaluated.contains("!=")) {
-                String[] parts = evaluated.split("!=");
-                return !parts[0].trim().equals(parts[1].trim());
-            }
-
-            // 默认返回true
-            return true;
-
-        } catch (Exception e) {
-            log.warn("Failed to evaluate condition: {}", condition, e);
-            return false;
-        }
-    }
-
-    /**
      * 准备技能执行上下文
      */
     private SkillContext prepareSkillContext(Workflow.WorkflowStep step) {
-        SkillContext context = new SkillContext();
+        // 构建 configuration map
+        Map<String, Object> configuration = new HashMap<>();
 
-        // 设置基本参数
-        Map<String, Object> parameters = new HashMap<>();
-        if (step.getInput().getVariables() != null) {
-            parameters.putAll(step.getInput().getVariables());
-        }
-
-        // 添加执行上下文变量
-        for (String contextVar : step.getInput().getContextFrom()) {
-            if (executionContext.containsKey(contextVar)) {
-                parameters.put(contextVar, executionContext.get(contextVar));
+        // 添加步骤输入变量
+        if (step.getInput() != null && step.getInput().getVariables() != null) {
+            // 渲染变量值（支持变量替换）
+            for (Object var : step.getInput().getVariables()) {
+                String varName = var.toString();
+                if (executionContext.hasVariable(varName)) {
+                    configuration.put(varName, executionContext.getVariable(varName));
+                }
             }
         }
 
-        context.setParameters(parameters);
-        context.setSessionId(generateSessionId());
+        // 构建会话状态
+        Map<String, Object> sessionState = new HashMap<>();
+        sessionState.putAll(executionContext.getAllVariables());
 
-        // 设置文件输入
-        if (step.getInput().getFiles() != null) {
-            // 这里可以转换为文件对象或其他适当的形式
-            context.setInputArtifact(step.getInput().getFiles());
-        }
-
-        return context;
+        // 创建 SkillContext（使用 record 构造函数）
+        return new SkillContext(
+            step.getSkill(),
+            skillRegistry.getSkill(step.getSkill()).getName(),
+            null, // task - 工作流步骤不直接关联任务
+            null, // hookInput - 工作流执行不使用 hook input
+            configuration,
+            sessionState
+        );
     }
 
     /**
      * 提取技能输出
      */
-    private Map<String, Object> extractSkillOutput(com.chachamaru.harness.collaboration.skills.SkillResult skillResult) {
+    private Map<String, Object> extractSkillOutput(SkillResult skillResult) {
         Map<String, Object> output = new HashMap<>();
 
-        if (skillResult.getArtifact() != null) {
-            output.put("artifact", skillResult.getArtifact());
+        if (skillResult.output() != null) {
+            output.put("artifact", skillResult.output());
         }
 
         output.put("success", skillResult.isSuccess());
-        output.put("message", skillResult.getMessage());
+        output.put("message", skillResult.message());
+
+        // 添加元数据
+        if (skillResult.metadata() != null) {
+            output.putAll(skillResult.metadata());
+        }
 
         return output;
     }
@@ -320,44 +294,54 @@ public class WorkflowEngine {
      */
     private void updateExecutionContext(WorkflowStepExecution stepExecution) {
         if (stepExecution.getOutput() != null) {
-            executionContext.putAll(stepExecution.getOutput());
-        }
-    }
+            // 提取步骤输出中的变量
+            if (stepExecution.getStep().getOutput() != null &&
+                stepExecution.getStep().getOutput().getVariables() != null) {
 
-    /**
-     * 渲染模板
-     */
-    private String renderTemplate(String template, Map<String, Object> context) {
-        if (template == null) return "";
-
-        String result = template;
-        for (Map.Entry<String, Object> entry : context.entrySet()) {
-            String placeholder = "{{" + entry.getKey() + "}}";
-            if (result.contains(placeholder)) {
-                result = result.replace(placeholder, String.valueOf(entry.getValue()));
+                for (String varName : stepExecution.getStep().getOutput().getVariables()) {
+                    if (stepExecution.getOutput().containsKey(varName)) {
+                        Object value = stepExecution.getOutput().get(varName);
+                        executionContext.setVariable(varName, value);
+                    }
+                }
             }
+
+            // 添加所有输出变量到执行上下文
+            Map<String, Object> outputCopy = new HashMap<>(stepExecution.getOutput());
+            executionContext.setVariables(outputCopy);
         }
-        return result;
     }
 
     /**
-     * 生成会话ID
+     * 渲染工作流输出消息
      */
-    private String generateSessionId() {
-        return "workflow-" + UUID.randomUUID().toString().substring(0, 8);
+    private String renderWorkflowOutput(Workflow.WorkflowOutput workflowOutput) {
+        if (workflowOutput == null || workflowOutput.getMessage() == null) {
+            return "";
+        }
+
+        return executionContext.renderTemplate(workflowOutput.getMessage());
     }
 
     /**
      * 获取执行上下文
      */
-    public Map<String, Object> getExecutionContext() {
-        return new HashMap<>(executionContext);
+    public ExecutionContext getExecutionContext() {
+        return executionContext;
+    }
+
+    /**
+     * 获取已注册的技能注册表
+     */
+    public SkillRegistry getSkillRegistry() {
+        return skillRegistry;
     }
 
     /**
      * 关闭引擎
      */
     public void shutdown() {
+        log.info("Shutting down workflow engine");
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
