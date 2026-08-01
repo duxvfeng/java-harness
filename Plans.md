@@ -6,7 +6,7 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 7.1.1 | 完善工作流YAML解析 | 支持完整的YAML frontmatter解析、变量替换、条件表达式求值 | `cd java-harness-workflow && mvn test`通过，YAML解析测试验证 | 已完成的Workflow模型 | cc:TODO |
+| 7.1.1 | 完善工作流YAML解析 | 支持完整的YAML frontmatter解析、变量替换、条件表达式求值 | `cd java-harness-workflow && mvn test`通过，YAML解析测试验证 | 已完成的Workflow模型 | cc:✅ 827d5ff |
 | 7.1.2 | 实现工作流上下文管理 | 实现ExecutionContext类，支持变量传递、文件上下文、会话状态管理 | 上下文管理测试通过，变量正确传递到技能 | 7.1.1 | cc:TODO |
 | 7.1.3 | 集成技能调用系统 | 将WorkflowEngine与SkillRegistry完全集成，支持步骤级技能调用 | 集成测试验证工作流能正确调用已注册的技能 | 7.1.2 | cc:TODO |
 | 7.1.4 | 实现条件表达式引擎 | 实现完整的条件表达式解析和求值，支持布尔运算、比较操作、集合操作 | 条件表达式测试通过，支持所有Go版本的条件语法 | 7.1.3 | cc:TODO |
