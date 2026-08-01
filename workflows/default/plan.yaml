@@ -1,0 +1,80 @@
+# /plan 工作流定义
+# 将功能需求转换为结构化任务列表
+
+phase: plan
+description: "更新 Plans.md 并分解任务的阶段"
+
+steps:
+  # Step 1: 读取仓库上下文
+  - id: read-context
+    skill: core-read-repo-context
+    input:
+      files:
+        - README.md
+        - Plans.md
+        - package.json
+      context_from:
+        - repo_tree
+        - open_files
+    mode: required
+
+  # Step 2: 需求收集（无输入时）
+  - id: gather-requirements
+    skill: init-requirements
+    condition: "!user_prompt"
+    input:
+      context_from:
+        - user_intent
+    output:
+      variables:
+        - feature_request
+    mode: optional
+
+  # Step 3: 功能规划
+  - id: plan-feature
+    skill: plan-feature
+    input:
+      files:
+        - Plans.md
+      context_from:
+        - user_prompt
+        - repo_diff
+        - tech_stack
+      variables:
+        - feature_request
+    output:
+      update_files:
+        - Plans.md
+      variables:
+        - task_count
+        - phase_name
+    mode: required
+
+  # Step 4: 计划审查（可选）
+  - id: review-plan
+    skill: plan-review
+    input:
+      files:
+        - Plans.md
+      context_from:
+        - previous_step_output
+    mode: optional
+
+# 成功时的输出
+on_success:
+  message: |
+    ✅ 计划完成！
+
+    📄 已向 Plans.md 添加了 {{task_count}} 个任务。
+
+    下一步操作：
+    - "开始 {{phase_name}}" → 开始实施
+    - "显示计划" → 查看详细信息
+    - "修改" → 调整计划
+
+# 错误时的输出
+on_error:
+  message: |
+    ⚠️ 创建计划时发生错误。
+
+    请再次告诉我您想做什么。

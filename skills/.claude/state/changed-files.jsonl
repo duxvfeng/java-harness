@@ -1,0 +1,12 @@
+{"file":"D:/project/java-harness/docs/skills-migration.md","action":"Write","timestamp":"2026-08-01T06:16:59Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/models/Workflow.java","action":"Write","timestamp":"2026-08-01T06:22:27Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/WorkflowException.java","action":"Write","timestamp":"2026-08-01T06:23:00Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/WorkflowLoader.java","action":"Write","timestamp":"2026-08-01T06:23:19Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/WorkflowEngine.java","action":"Write","timestamp":"2026-08-01T06:24:04Z","important":false}
+{"file":"D:/project/java-harness/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/WorkflowExecutionResult.java","action":"Write","timestamp":"2026-08-01T06:24:23Z","important":false}
+{"file":"D:/project/java-harness/docs/工作流编排系统指南.md","action":"Write","timestamp":"2026-08-01T06:25:32Z","important":false}
+{"file":"D:/project/java-harness/Plans.md","action":"Write","timestamp":"2026-08-01T06:28:28Z","important":true}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/ExecutionContext.java","action":"Write","timestamp":"2026-08-01T06:29:08Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chamaru/harness/workflow/engine/ConditionExpressionEvaluator.java","action":"Write","timestamp":"2026-08-01T06:29:48Z","important":false}
+{"file":"D:/project/java-harness/java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/integration/WorkflowIntegrationExample.java","action":"Write","timestamp":"2026-08-01T06:30:25Z","important":false}
+{"file":"D:/project/java-harness/docs/工作流实现总结.md","action":"Write","timestamp":"2026-08-01T06:30:55Z","important":false}

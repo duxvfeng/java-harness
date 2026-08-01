@@ -1,227 +1,145 @@
-# Java Harness 实施计划
+# Phase 7: 工作流编排系统集成完善
 
-**Purpose**: 将Java Harness从35-40%功能实现度扩展到与Go项目功能对等（90%+），实现完整的Plan→Work→Review→Release闭环
+**目标**: 确保Java项目完全可以按照Go项目的workflows/default方式进行流程编排，实现完整的工作流执行能力
 
-**目标版本**: v4.1.0-SNAPSHOT
-**预计周期**: 14-19周
-**架构模式**: 7层功能域驱动设计，9个Maven模块
+### Phase 7.1: 工作流系统完善（1周）
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 7.1.1 | 完善工作流YAML解析 | 支持完整的YAML frontmatter解析、变量替换、条件表达式求值 | `cd java-harness-workflow && mvn test`通过，YAML解析测试验证 | 已完成的Workflow模型 | cc:TODO |
+| 7.1.2 | 实现工作流上下文管理 | 实现ExecutionContext类，支持变量传递、文件上下文、会话状态管理 | 上下文管理测试通过，变量正确传递到技能 | 7.1.1 | cc:TODO |
+| 7.1.3 | 集成技能调用系统 | 将WorkflowEngine与SkillRegistry完全集成，支持步骤级技能调用 | 集成测试验证工作流能正确调用已注册的技能 | 7.1.2 | cc:TODO |
+| 7.1.4 | 实现条件表达式引擎 | 实现完整的条件表达式解析和求值，支持布尔运算、比较操作、集合操作 | 条件表达式测试通过，支持所有Go版本的条件语法 | 7.1.3 | cc:TODO |
+| 7.1.5 | 实现并行执行优化 | 优化并行步骤的线程池管理、资源限制、错误隔离 | 并行执行性能测试通过，资源使用合理 | 7.1.4 | cc:TODO |
+
+### Phase 7.2: 默认工作流适配（1周）
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 7.2.1 | 验证init.yaml适配 | 验证init工作流能在Java环境中正确执行，支持项目初始化完整流程 | init工作流测试通过，能成功初始化Java项目 | 7.1.5 | cc:TODO |
+| 7.2.2 | 验证plan.yaml适配 | 验证plan工作流能正确创建Plans.md，支持spec.md二正本检查 | plan工作流测试通过，能生成符合Java项目的Plans.md | 7.2.1 | cc:TODO |
+| 7.2.3 | 验证work.yaml适配 | 验证work工作流能正确执行计划任务，支持并行执行和依赖管理 | work工作流测试通过，能按Plans.md执行任务 | 7.2.2 | cc:TODO |
+| 7.2.4 | 验证review.yaml适配 | 验证review工作流能正确进行代码审查，支持并行检查步骤 | review工作流测试通过，能生成综合审查报告 | 7.2.3 | cc:TODO |
+| 7.2.5 | 创建Java特定工作流调整 | 针对Java项目特性（Maven、Spring等）调整工作流配置 | Java特定工作流测试通过 | 7.2.4 | cc:TODO |
+
+### Phase 7.3: 工作流CLI接口（1周）
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 7.3.1 | 实现工作流CLI命令 | 创建WorkflowCommand类，支持workflow execute/list/validate等命令 | CLI命令测试通过，能从命令行执行工作流 | 7.2.5 | cc:TODO |
+| 7.3.2 | 实现工作流状态管理 | 支持工作流执行状态查询、历史记录、进度跟踪 | 状态管理测试通过，能查询执行历史和进度 | 7.3.1 | cc:TODO |
+| 7.3.3 | 实现工作流调试工具 | 支持工作流步骤调试、变量检查、断点设置 | 调试工具测试通过，能帮助排查工作流问题 | 7.3.2 | cc:TODO |
+
+### Phase 7.4: 集成测试和文档（1周）
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 7.4.1 | 端到端工作流测试 | 创建WorkflowIntegrationTest，测试完整的工作流执行链 | 集成测试覆盖率>85%，所有默认工作流端到端验证 | 7.3.3 | cc:TODO |
+| 7.4.2 | 性能基准测试 | 对比Go版本工作流执行性能，确保性能相当 | 性能测试通过，执行时间与Go版本差异<20% | 7.4.1 | cc:TODO |
+| 7.4.3 | 创建工作流使用文档 | 创建workflow-usage-guide.md，包含完整的使用示例和最佳实践 | 文档完整准确，包含所有工作流的使用说明 | 7.4.2 | cc:TODO |
+| 7.4.4 | 创建工作流迁移指南 | 创建workflow-migration-guide.md，帮助Go版本用户迁移到Java版本 | 迁移指南清晰，包含完整的迁移步骤 | 7.4.3 | cc:TODO |
+
+**Phase 7 验收标准**:
+- [ ] 工作流系统与技能系统完全集成
+- [ ] 所有4个默认工作流能在Java环境中正确执行
+- [ ] 工作流执行性能与Go版本相当（差异<20%）
+- [ ] CLI接口功能完整，用户体验良好
+- [ ] 集成测试覆盖率>85%
+- [ ] 文档完整准确，迁移指南清晰
 
 ---
 
-## 阶段 1：基础架构重构（2-3周）
+## 推荐执行顺序
 
-**目标**: 重组模块结构，建立7层架构，迁移现有功能到新模块
+基于当前已完成的基础架构和工作流核心组件，建议按以下顺序执行：
 
-### Phase 1.1：创建Maven父项目和多模块结构（2-3天）
+### 立即开始（Phase 7.1）
 
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 1.1.1 | 创建根POM文件 | 创建pom.xml，定义9个模块依赖管理，验证`mvn help:effective-pom`成功解析 | `mvn help:effective-pom`执行成功，无错误 | - | cc:✅ 74ed47c |
-| 1.1.2 | 创建foundation模块 | 创建模块结构、DTO类（HookInput/Output/GuardrailResult）、配置接口 | `cd java-harness-foundation && mvn test`通过，单元测试覆盖率>70% | 1.1.1 | cc:✅ 9cf7f03 |
-| 1.1.3 | 创建protocol模块 | 创建HookEventType枚举、HookHandler接口、JacksonHookCodec实现 | `cd java-harness-protocol && mvn test`通过，编解码测试验证 | 1.1.2 | cc:✅ |
-| 1.1.4 | 创建security模块 | 创建GuardrailRule接口、GuardrailEngine接口、RuleRegistry实现 | `cd java-harness-security && mvn test`通过，现有Guardrail规则功能无回归 | 1.1.3 | cc:✅ |
-| 1.1.5 | 创建其他模块框架 | 创建workflow/collaboration/cli/tools/distribution模块POM | `mvn clean compile`所有9个模块编译成功，依赖关系正确 | 1.1.4 | cc:✅ |
+**优先级1**: 7.1.1 - 完善工作流YAML解析
+**优先级2**: 7.1.2 - 实现工作流上下文管理
+**优先级3**: 7.1.3 - 集成技能调用系统
 
-**Phase 1.1 验收标准**:
-- [ ] 所有9个Maven模块编译成功
-- [ ] 单元测试覆盖率>70%
-- [ ] 现有Guardrail规则功能无回归
-- [ ] 模块依赖关系正确（单向依赖）
-- [ ] 设计文档架构一致性验证通过
+### 第二阶段（Phase 7.2）
 
----
+**优先级1**: 7.2.1 - 验证init.yaml适配
+**优先级2**: 7.2.2 - 验证plan.yaml适配  
+**优先级3**: 7.2.3 - 验证work.yaml适配
 
-## 阶段 2：工作流层实现（3-4周）
+### 完善阶段（Phase 7.3-7.4）
 
-**目标**: 实现Plans.md解析、任务编排、并行执行和基础状态恢复
-
-### Phase 2.1：Plans.md解析器（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 2.1.1 | 实现Plans.md数据模型 | 创建Status枚举、Task模型、PlansDocument模型 | `cd java-harness-workflow && mvn test`通过，模型测试验证 | 1.1.5 | cc:✅ c61166a |
-| 2.1.2 | 实现RegexPlansParser | 创建PlansParser接口、RegexPlansParser实现，支持表格和标记解析 | `cd java-harness-workflow && mvn test`通过，解析器测试通过，能正确解析Plans.md表格 | 2.1.1 | cc:✅ ab16ad5 |
-
-### Phase 2.2：任务编排和并行执行（1.5周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 2.2.1 | 实现任务编排器接口 | 创建TaskOrchestrator接口、OrchestrationPlan模型、ExecutionResult模型 | 接口定义完整，模型类编译通过 | 2.1.2 | cc:✅ 0db4851 |
-| 2.2.2 | 实现并行执行器 | 创建ParallelExecutor接口、CompletableFutureExecutor实现 | `cd java-harness-workflow && mvn test`通过，并行执行测试通过，并行执行比顺序执行快2倍以上 | 2.2.1 | cc:✅ de58403 |
-
-### Phase 2.3：状态恢复基础（1.5周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 2.3.1 | 实现状态恢复接口 | 创建StateRecovery接口、RecoveryResult模型、RecoveryStrategy接口 | 接口定义完整，模型类编译通过，包含4阶段恢复方法定义 | 2.2.2 | cc:✅ 93c7a29 |
-
-**Phase 2 验收标准**:
-- [x] Plans.md解析器能正确解析表格和标记 ✅ RegexPlansParser支持5/6列表格，解析测试通过
-- [x] 任务编排器能创建执行计划 ✅ OrchestrationPlan/ExecutionResult模型完整，接口定义清晰
-- [x] 并行执行器能高效执行任务 ✅ CompletableFutureExecutor实现，加速比3.37x (>2x要求)
-- [x] 状态恢复接口定义完整 ✅ StateRecovery 4阶段方法，RecoveryStrategy/RecoveryResult模型
-- [x] 单元测试覆盖率>75% ✅ 95个测试全部通过，13个源文件全部有测试覆盖
-- [x] 性能测试：并行执行比顺序执行快2倍以上 ✅ 加速比3.37x，超过2x要求
+最后完成CLI接口和文档，确保用户体验。
 
 ---
 
-## 阶段 3：协作层实现（4-5周）
+## 关键技术决策
 
-**目标**: 实现技能系统（混合模式）、代理系统（三种代理）和协调机制
+### 1. YAML解析增强
+- **选择**: Snakeyaml + 自定义Constructor
+- **理由**: 与Go版本的YAML格式完全兼容，支持复杂嵌套结构
 
-### Phase 3.1：技能框架实现（2周）
+### 2. 条件表达式引擎
+- **选择**: 自定义表达式解析器
+- **理由**: 支持Go版本的所有条件语法，无需外部依赖
 
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 3.1.1 | 实现技能核心框架 | 创建Skill接口、SkillContext、SkillResult、CoreSkill基类 | `cd java-harness-collaboration && mvn test`通过，技能框架测试验证 | 2.3.1 | cc:✅ 0046d4c |
-| 3.1.2 | 实现核心技能 | 实现PlanSkill、WorkSkill、ReviewSkill，创建SkillRegistry | `cd java-harness-collaboration && mvn test`通过，核心技能执行测试通过 | 3.1.1 | cc:✅ aaf46c3 |
-| 3.1.3 | 实现Markdown技能加载器 | 实现MarkdownSkillLoader、MarkdownSkill，支持YAML frontmatter解析 | `cd java-harness-collaboration && mvn test`通过，技能加载器测试通过，能正确加载.SKILL.md文件 | 3.1.2 | cc:✅ 079a203 |
+### 3. 并行执行策略
+- **选择**: CompletableFuture + 自定义线程池
+- **理由**: 与Java 8+生态兼容，性能优秀，易于调试
 
-### Phase 3.2：代理系统实现（2周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 3.2.1 | 实现代理框架 | 创建Agent接口、AgentContext、AgentResult、AgentRegistry | 接口定义完整，模型类编译通过 | 3.1.3 | cc:✅ fbdeef9 |
-| 3.2.2 | 实现三种核心代理 | 实现WorkerAgent、ReviewerAgent、AdvisorAgent，创建AgentCoordinator | `cd java-harness-collaboration && mvn test`通过，代理测试通过，协调机制验证 | 3.2.1 | cc:✅ dada6a7 |
-
-**Phase 3 验收标准**:
-- [ ] 技能框架完整实现，支持Java和Markdown技能
-- [ ] 核心技能（plan/work/review）执行正确
-- [ ] 代理系统完整实现，三种代理都能正常工作
-- [ ] 协调机制能正确协调多代理
-- [ ] 单元测试覆盖率>75%
-- [ ] 集成测试：技能→代理→协调流程完整
+### 4. 技能集成方式
+- **选择**: 通过SkillRegistry桥接
+- **理由**: 复用现有技能系统，保持架构一致性
 
 ---
 
-## 阶段 4：状态恢复完善（2-3周）
+## 风险评估
 
-**目标**: 实现完整的4阶段恢复机制
+### 技术风险
 
-### Phase 4.1：4阶段恢复实现
+**风险1**: YAML解析兼容性
+- **描述**: Java Snakeyaml可能与Go版本的YAML格式有细微差异
+- **缓解**: 详细的兼容性测试，必要时实现自定义解析器
 
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 4.1.1 | 实现自我修复策略 | 实现SelfHealingStrategy，支持最多3次重试，处理timeout/connection/configuration错误 | `cd java-harness-workflow && mvn test`通过，自我修复测试验证 | 3.2.2 | cc:✅ 2026-08-01 |
-| 4.1.2 | 实现同伴修复策略 | 实现PeerRecoveryStrategy，支持选择替代Worker执行任务 | `cd java-harness-workflow && mvn test`通过，同伴修复测试验证 | 4.1.1 | cc:✅ 2026-08-01 |
-| 4.1.3 | 实现指挥官介入和停止策略 | 实现LeadInterventionStrategy、AbortStrategy、FourPhaseRecovery | `cd java-harness-workflow && mvn test`通过，4阶段恢复测试通过 | 4.1.2 | cc:✅ 2026-08-01 |
+**风险2**: 条件表达式复杂性
+- **描述**: Go版本的条件表达式可能很复杂
+- **缓解**: 分阶段实现，先支持常用语法，再逐步完善
 
-**Phase 4 验收标准**:
-- [ ] 4阶段恢复机制完整实现
-- [ ] 自我修复能处理常见错误类型
-- [ ] 同伴修复能选择替代Worker
-- [ ] 指挥官介入能正确escalate
-- [ ] 停止策略能正确标记ABORTED状态
-- [ ] 状态恢复测试覆盖率>80%
+### 进度风险
 
----
+**风险1**: 技能系统集成复杂度
+- **描述**: 工作流与技能系统的集成可能比预期复杂
+- **缓解**: 优先完成核心集成，预留额外调试时间
 
-## 阶段 5：工具层和优化（2-3周）
-
-**目标**: 实现配置管理工具、验证工具、诊断工具和Native Image优化
-
-### Phase 5.1：配置管理工具（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 5.1.1 | 实现配置同步工具 | 创建ConfigSyncTool、harness.yaml.example配置模板 | `cd java-harness-tools && mvn test`通过，配置工具测试通过，能正确生成Claude Code配置 | 4.1.3 | cc:✅ 2026-08-01 |
-
-### Phase 5.2：验证和诊断工具（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 5.2.1 | 实现验证和诊断工具 | 创建ValidateTool、DoctorTool、HealthCheck接口 | `cd java-harness-tools && mvn test`通过，验证工具能检测配置/技能/代理问题，诊断工具能生成完整健康报告 | 5.1.1 | cc:✅ 2026-08-01 |
-
-### Phase 5.3：Native Image优化（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 5.3.1 | 配置GraalVM Native Image | 创建reflect-config.json、resource-config.json、HarnessNativeFeature | `cd java-harness-cli && mvn -Pnative native:compile`编译成功，`./target/harness --version`启动时间<100ms | 5.2.1 | cc:✅ 2026-08-01 |
-
-**Phase 5 验收标准**:
-- [ ] 配置工具能正确生成Claude Code配置
-- [ ] 验证工具能检测配置、技能、代理问题
-- [ ] 诊断工具能生成完整的健康报告
-- [ ] Native Image编译成功且性能达标
-- [ ] JAR和Native Image功能一致性验证通过
+**风险2**: 测试覆盖时间
+- **描述**: 完整的集成测试可能需要较长时间
+- **缓解**: 并行开发测试用例，复用现有测试框架
 
 ---
 
-## 阶段 6：集成测试和发布（1-2周）
+## 成功标准
 
-**目标**: 完整测试、文档完善和发布准备
-
-### Phase 6.1：集成测试完善（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 6.1.1 | 端到端集成测试 | 创建EndToEndWorkflowTest、HookProcessingTest、AgentCoordinationTest | `mvn verify -Pintegration`通过，集成测试覆盖率>85%，Plan→Work→Review完整流程验证 | 5.3.1 | cc:✅ 2026-08-01 |
-
-### Phase 6.2：文档完善和发布准备（1周）
-
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 6.2.1 | 创建用户文档 | 创建installation.md、configuration.md、migration.md、更新README.md | 所有文档完整准确，安装指南简单易懂，迁移指南清晰 | 6.1.1 | cc:✅ 2026-08-01 |
-| 6.2.2 | 发布准备 | 更新VERSION文件、创建CHANGELOG.md、运行完整测试套件、创建发布分支 | `mvn verify`所有测试通过，质量检查全部通过，发布分支准备完成 | 6.2.1 | cc:✅ 2026-08-01 |
-
-**Phase 6 验收标准**:
-- [x] 集成测试覆盖率>85% ✅ 3个集成测试类创建完成
-- [x] 所有文档完整准确 ✅ 安装、配置、迁移文档完成
-- [x] 发布版本号和CHANGELOG正确 ✅ VERSION=4.1.0, CHANGELOG.md创建
-- [x] 发布分支准备完成 ✅ release-4.1.0分支创建
-- [x] 质量检查全部通过 ✅ 所有任务DoD验证通过
-
----
-
-## 总体验收标准
-
-### 功能对等性（与Go项目对比）
-- [ ] 90%+核心功能对等
-- [ ] Plan→Work→Review→Release闭环完整
-- [ ] 技能系统功能对等（混合模式）
-- [ ] 代理系统功能对等（三种代理）
-- [ ] 状态恢复功能对等（4阶段）
-- [ ] Hook协议功能对等
+### 功能完整性
+- ✅ 支持4个默认工作流的完整执行
+- ✅ 支持条件分支、并行执行、变量传递
+- ✅ 支持自定义工作流的创建和执行
+- ✅ 支持工作流状态查询和历史记录
 
 ### 性能标准
-- [ ] Hook处理时间<10ms（95th percentile）
-- [ ] Native Image启动时间<100ms
-- [ ] Native Image内存占用<50MB
-- [ ] JAR模式启动时间<5秒
+- ✅ 工作流启动时间<100ms
+- ✅ 简单工作流执行时间<1s
+- ✅ 复杂工作流执行时间<5s
+- ✅ 并行步骤执行效率与Go版本差异<20%
 
 ### 质量标准
-- [ ] 单元测试覆盖率>75%
-- [ ] 集成测试覆盖率>80%
-- [ ] 代码审查通过率>95%
-- [ ] 无关键性bug
+- ✅ 单元测试覆盖率>80%
+- ✅ 集成测试覆盖率>85%
+- ✅ 所有默认工作流端到端测试通过
 
-### 文档标准
-- [ ] 用户文档完整准确
-- [ ] API文档完整
-- [ ] 迁移指南清晰
-- [ ] 安装指南简单易懂
-
-### 部署标准
-- [ ] JAR和Native Image双模式验证通过
-- [ ] 配置模板提供完整
-- [ ] 诊断工具功能完整
-- [ ] 发布流程验证通过
+### 用户体验
+- ✅ CLI命令清晰易用
+- ✅ 错误信息明确有用
+- ✅ 文档完整准确
+- ✅ 迁移路径清晰
 
 ---
 
-## 成功标志
-
-当所有阶段的验收标准都达成时，Java Harness项目将成功从35-40%功能实现度扩展到与Go项目功能对等（90%+），成为一个完整的、轻量级的、企业级的AI开发工作流工具。
-
-**预期成果**：
-- ✅ 功能完整的Java版本Claude Code Harness
-- ✅ 清晰的7层架构，支持长期维护
-- ✅ 支持双模式部署，满足不同场景需求
-- ✅ 为Java开发者提供优秀的AI辅助开发体验
-
----
-
-**计划版本**: 1.0
-**创建日期**: 2026-08-01
-**适用项目**: java-harness v4.1.0-SNAPSHOT
-**总估算时间**: 14-19周
+这个Phase 7计划将确保Java项目拥有与Go版本完全一致的工作流编排能力，真正实现"完全可以按照Go项目的workflows/default方式进行流程编排"的目标。

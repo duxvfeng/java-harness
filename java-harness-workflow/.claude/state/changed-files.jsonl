@@ -13,3 +13,6 @@
 {"file":"D:/project/java-harness/java-harness-tools/src/main/resources/harness.yaml.example","action":"Write","timestamp":"2026-08-01T04:40:35Z","important":false}
 {"file":"D:/project/java-harness/java-harness-tools/src/test/java/com/chachamaru/harness/tools/config/ConfigSyncToolTest.java","action":"Write","timestamp":"2026-08-01T04:40:54Z","important":false}
 {"file":"src/test/java/com/chachamaru/harness/workflow/integration/HookProcessingTest.java","action":"Write","timestamp":"2026-08-01T05:22:10Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/loader/ExpressionEvaluator.java","action":"Edit","timestamp":"2026-08-01T06:38:39Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/loader/WorkflowLoader.java","action":"Edit","timestamp":"2026-08-01T06:40:22Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/loader/QuickTest.java","action":"Write","timestamp":"2026-08-01T06:42:07Z","important":false}

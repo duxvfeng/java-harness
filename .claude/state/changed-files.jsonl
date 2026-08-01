@@ -79,3 +79,12 @@
 {"file":"VERSION","action":"Write","timestamp":"2026-08-01T05:19:00Z","important":false}
 {"file":"CHANGELOG.md","action":"Write","timestamp":"2026-08-01T05:19:06Z","important":false}
 {"file":"Plans.md","action":"Edit","timestamp":"2026-08-01T05:22:41Z","important":true}
+{"file":"docs/操作手册.md","action":"Write","timestamp":"2026-08-01T06:01:58Z","important":false}
+{"file":"docs/Claude插件打包指南.md","action":"Write","timestamp":"2026-08-01T06:10:35Z","important":false}
+{"file":"verify-workflow-system.sh","action":"Write","timestamp":"2026-08-01T06:31:23Z","important":false}
+{"file":"java-harness-workflow/pom.xml","action":"Edit","timestamp":"2026-08-01T06:34:40Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/VariableResolver.java","action":"Write","timestamp":"2026-08-01T06:34:58Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/ExpressionEvaluator.java","action":"Write","timestamp":"2026-08-01T06:35:28Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/WorkflowLoader.java","action":"Edit","timestamp":"2026-08-01T06:36:14Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/loader/VariableResolverTest.java","action":"Write","timestamp":"2026-08-01T06:37:37Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/loader/ExpressionEvaluatorTest.java","action":"Write","timestamp":"2026-08-01T06:37:54Z","important":false}

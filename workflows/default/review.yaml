@@ -1,0 +1,125 @@
+# /harness-review 工作流定义（旧名: review）
+# 检查已创建代码的质量
+
+phase: review
+description: "检查代码质量并提出改进建议的阶段"
+
+steps:
+  # Step 1: 确定变更文件
+  - id: identify-changes
+    skill: core-read-repo-context
+    input:
+      context_from:
+        - git_diff
+        - recent_commits
+    output:
+      variables:
+        - changed_files
+        - change_summary
+    mode: required
+
+  # Step 2: 安全检查
+  - id: security-check
+    skill: review-security
+    input:
+      files: "{{changed_files}}"
+      context_from:
+        - code_content
+    output:
+      variables:
+        - security_issues
+        - security_score
+    mode: required
+    parallel: true
+
+  # Step 3: 性能检查
+  - id: performance-check
+    skill: review-performance
+    input:
+      files: "{{changed_files}}"
+      context_from:
+        - code_content
+    output:
+      variables:
+        - performance_issues
+        - performance_score
+    mode: required
+    parallel: true
+
+  # Step 4: 代码质量检查
+  - id: quality-check
+    skill: review-quality
+    input:
+      files: "{{changed_files}}"
+      context_from:
+        - code_content
+        - eslint_output
+    output:
+      variables:
+        - quality_issues
+        - quality_score
+    mode: required
+    parallel: true
+
+  # Step 5: 可访问性检查（Web 项目时）
+  - id: accessibility-check
+    skill: review-accessibility
+    condition: "tech_stack.includes('react') || tech_stack.includes('vue')"
+    input:
+      files: "{{changed_files}}"
+    output:
+      variables:
+        - a11y_issues
+        - a11y_score
+    mode: optional
+    parallel: true
+
+  # Step 6: 汇总审查结果
+  - id: aggregate-results
+    skill: review-aggregate
+    input:
+      variables:
+        - security_issues
+        - performance_issues
+        - quality_issues
+        - a11y_issues
+    output:
+      variables:
+        - overall_grade
+        - improvement_suggestions
+    mode: required
+
+  # Step 7: 应用改进（用户批准后）
+  - id: apply-improvements
+    skill: review-apply-fixes
+    condition: "user_approved"
+    input:
+      variables:
+        - improvement_suggestions
+    output:
+      update_files: true
+    mode: optional
+
+# 成功时的输出
+on_success:
+  message: |
+    📊 代码审查结果
+
+    **综合评价**: {{overall_grade}}
+
+    | 观点 | 评分 |
+    |------|------|
+    | 安全性 | {{security_score}} |
+    | 性能 | {{performance_score}} |
+    | 代码质量 | {{quality_score}} |
+
+    {{improvement_suggestions}}
+
+    是否自动修复？
+
+# 错误时的输出
+on_error:
+  message: |
+    ⚠️ 审查过程中发生错误。
+
+    请手动检查。

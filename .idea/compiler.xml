@@ -6,9 +6,21 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="harness-shared" />
-        <module name="harness-cli-native" />
+        <module name="java-harness-collaboration" />
+        <module name="java-harness-foundation" />
+        <module name="java-harness-tools" />
+        <module name="java-harness-service" />
+        <module name="java-harness-workflow" />
+        <module name="java-harness-security" />
+        <module name="java-harness-protocol" />
+        <module name="java-harness-shared" />
+        <module name="java-harness-cli" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="harness-cli-native" target="17" />
+      <module name="harness-shared" target="17" />
+      <module name="harness-spring-service" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

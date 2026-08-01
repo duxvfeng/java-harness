@@ -1,0 +1,148 @@
+# /harness-init 工作流定义（旧名: init）
+# 向新项目或现有项目添加工作流
+# 实际的初始化逻辑由 skills/harness-init/ 负责
+
+phase: init
+description: "初始化项目并设置开发工作流"
+
+steps:
+  # Step 1: 项目分析（三值判定）
+  # harness-init 技能的 execution-flow.md 内进行项目分析
+  - id: analyze-project
+    skill: harness-init
+    input:
+      files:
+        - README.md
+        - package.json
+        - AGENTS.md
+        - CLAUDE.md
+        - Plans.md
+      context_from:
+        - repo_tree
+        - git_status
+    output:
+      variables:
+        - project_type      # new | existing | ambiguous
+        - ambiguity_reason  # null | template_only | few_files | readme_only | scaffold_only
+        - tech_stack
+        - code_file_count
+    mode: required
+
+  # Step 1.5: 模糊情况的验证（仅在 ambiguous 时）
+  # 在 harness-init 技能的交互流程中处理
+  - id: clarify-project-type
+    skill: harness-init
+    condition: "project_type == 'ambiguous'"
+    input:
+      context_from:
+        - ambiguity_reason
+        - code_file_count
+        - tech_stack
+    output:
+      variables:
+        - project_type  # 通过用户选择确定为 new | existing
+    mode: required
+
+  # Step 2: 需求收集（新项目时）
+  # 在 harness-init 技能的交互流程中处理
+  - id: init-requirements
+    skill: harness-init
+    condition: "project_type == 'new'"
+    input:
+      context_from:
+        - user_prompt
+        - previous_step_output
+    output:
+      variables:
+        - project_name
+        - tech_choice
+        - initial_tasks
+    mode: required
+
+  # Step 3: 项目生成（新项目时）
+  # 通过 harness-init 技能的脚手架功能处理
+  - id: scaffold-project
+    skill: harness-init
+    condition: "project_type == 'new'"
+    input:
+      variables:
+        - project_name
+        - tech_choice
+      context_from:
+        - config_file  # claude-code-harness.config.json
+    output:
+      update_files:
+        - package.json
+        - src/
+    mode: required
+
+  # Step 4: 工作流文件生成
+  # 在 harness-init 技能的 generated-files.md 中定义
+  - id: generate-workflow-files
+    skill: harness-init
+    input:
+      templates:
+        - templates/AGENTS.md.template
+        - templates/CLAUDE.md.template
+        - templates/Plans.md.template
+      context_from:
+        - project_context
+    output:
+      create_files:
+        - AGENTS.md
+        - CLAUDE.md
+        - Plans.md
+    mode: required
+
+  # Step 4.5: 内存（SSOT）初始化
+  # 由 memory 技能负责
+  - id: init-memory-ssot
+    skill: memory
+    input:
+      templates:
+        - templates/memory/decisions.md.template
+        - templates/memory/patterns.md.template
+        - templates/memory/session-log.md.template
+    output:
+      create_files:
+        - .claude/memory/decisions.md
+        - .claude/memory/patterns.md
+        - .claude/memory/session-log.md
+    mode: optional
+
+  # Step 5: 计划审查（可选）
+  # 由 planning 技能负责
+  - id: review-plan
+    skill: planning
+    input:
+      files:
+        - Plans.md
+    mode: optional
+
+  # Step 6: 下一步操作引导
+  - id: next-action-guide
+    skill: vibecoder-guide
+    input:
+      context_from:
+        - completed_steps
+        - plans_md
+    output:
+      user_message: true
+    mode: required
+
+# 成功时的输出
+on_success:
+  message: |
+    ✅ 项目初始化完成！
+
+    下一步操作：
+    - "运行起来" → 启动开发服务器
+    - "开始第1阶段" → 执行首个任务
+    - "显示计划" → 查看 Plans.md
+
+# 错误时的输出
+on_error:
+  message: |
+    ⚠️ 初始化过程中发生错误。
+
+    请查看详细信息，然后说"重试一次"。

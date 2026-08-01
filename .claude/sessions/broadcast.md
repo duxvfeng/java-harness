@@ -94,3 +94,24 @@
 
 ## 2026-08-01T05:23:41Z [9d02e1f6-398]
 📁 `D:\project\java-harness\Plans.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:01:58Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\docs\操作手册.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:10:35Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\docs\Claude插件打包指南.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:16:59Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\docs\skills-migration.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:25:32Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\docs\工作流编排系统指南.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:28:28Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\Plans.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:30:55Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\docs\工作流实现总结.md` が変更されました: パターン '*.md' にマッチ
+
+## 2026-08-01T06:31:23Z [bd8584ac-b7e]
+📁 `D:\project\java-harness\verify-workflow-system.sh` が変更されました: パターン '*.sh' にマッチ
