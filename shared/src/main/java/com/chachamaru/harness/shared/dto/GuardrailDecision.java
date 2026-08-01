@@ -29,7 +29,15 @@ public record GuardrailDecision(
         return new GuardrailDecision(Action.ALLOW, null, null, null);
     }
 
+    public static GuardrailDecision allow(String reason) {
+        return new GuardrailDecision(Action.ALLOW, null, reason, null);
+    }
+
     public static GuardrailDecision deny(String ruleId, String reason) {
         return new GuardrailDecision(Action.DENY, ruleId, reason, null);
+    }
+
+    public boolean allowed() {
+        return action == Action.ALLOW;
     }
 }
