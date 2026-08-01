@@ -18,9 +18,9 @@
 |------|------|-----|---------|--------|
 | 1.1.1 | 创建根POM文件 | 创建pom.xml，定义9个模块依赖管理，验证`mvn help:effective-pom`成功解析 | `mvn help:effective-pom`执行成功，无错误 | - | cc:✅ 74ed47c |
 | 1.1.2 | 创建foundation模块 | 创建模块结构、DTO类（HookInput/Output/GuardrailResult）、配置接口 | `cd java-harness-foundation && mvn test`通过，单元测试覆盖率>70% | 1.1.1 | cc:✅ 9cf7f03 |
-| 1.1.3 | 创建protocol模块 | 创建HookEventType枚举、HookHandler接口、JacksonHookCodec实现 | `cd java-harness-protocol && mvn test`通过，编解码测试验证 | 1.1.2 | cc:TODO |
-| 1.1.4 | 创建security模块 | 创建GuardrailRule接口、GuardrailEngine接口、RuleRegistry实现 | `cd java-harness-security && mvn test`通过，现有Guardrail规则功能无回归 | 1.1.3 | cc:TODO |
-| 1.1.5 | 创建其他模块框架 | 创建workflow/collaboration/cli/tools/distribution模块POM | `mvn clean compile`所有9个模块编译成功，依赖关系正确 | 1.1.4 | cc:TODO |
+| 1.1.3 | 创建protocol模块 | 创建HookEventType枚举、HookHandler接口、JacksonHookCodec实现 | `cd java-harness-protocol && mvn test`通过，编解码测试验证 | 1.1.2 | cc:✅ |
+| 1.1.4 | 创建security模块 | 创建GuardrailRule接口、GuardrailEngine接口、RuleRegistry实现 | `cd java-harness-security && mvn test`通过，现有Guardrail规则功能无回归 | 1.1.3 | cc:✅ |
+| 1.1.5 | 创建其他模块框架 | 创建workflow/collaboration/cli/tools/distribution模块POM | `mvn clean compile`所有9个模块编译成功，依赖关系正确 | 1.1.4 | cc:✅ |
 
 **Phase 1.1 验收标准**:
 - [ ] 所有9个Maven模块编译成功

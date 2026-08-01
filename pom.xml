@@ -19,16 +19,16 @@
         <module>cli-native</module>
         <module>spring-service</module>
 
-        <!-- New 7-layer architecture modules (progressively being added) -->
+        <!-- New 7-layer architecture modules -->
         <module>java-harness-foundation</module>
-
-        <!-- Remaining modules to be added in Phase 1.1 tasks:
-             Task 1.1.3: java-harness-protocol
-             Task 1.1.4: java-harness-security
-             Task 1.1.5: java-harness-workflow, java-harness-collaboration,
-                        java-harness-cli, java-harness-service, java-harness-tools,
-                        java-harness-distribution
-        -->
+        <module>java-harness-protocol</module>
+        <module>java-harness-security</module>
+        <module>java-harness-workflow</module>
+        <module>java-harness-collaboration</module>
+        <module>java-harness-cli</module>
+        <module>java-harness-service</module>
+        <module>java-harness-tools</module>
+        <module>java-harness-distribution</module>
     </modules>
 
     <properties>

@@ -1,0 +1,5 @@
+com\chachamaru\harness\protocol\JacksonHookCodec.class
+com\chachamaru\harness\protocol\HookEventType.class
+com\chachamaru\harness\protocol\HookHandler.class
+com\chachamaru\harness\protocol\HookHandlerException.class
+com\chachamaru\harness\protocol\HookCodecException.class

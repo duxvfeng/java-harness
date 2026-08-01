@@ -1,0 +1,8 @@
+{"file":"D:/project/java-harness/java-harness-security/pom.xml","action":"Write","timestamp":"2026-08-01T03:03:18Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/main/java/com/chachamaru/harness/security/GuardrailRule.java","action":"Write","timestamp":"2026-08-01T03:03:37Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/main/java/com/chachamaru/harness/security/GuardrailEngine.java","action":"Write","timestamp":"2026-08-01T03:03:47Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/main/java/com/chachamaru/harness/security/RuleRegistry.java","action":"Write","timestamp":"2026-08-01T03:04:13Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/main/java/com/chachamaru/harness/security/SensitiveFileRule.java","action":"Write","timestamp":"2026-08-01T03:04:26Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/test/java/com/chachamaru/harness/security/RuleRegistryTest.java","action":"Write","timestamp":"2026-08-01T03:04:40Z","important":false}
+{"file":"D:/project/java-harness/java-harness-security/src/test/java/com/chachamaru/harness/security/GuardrailRuleTest.java","action":"Write","timestamp":"2026-08-01T03:04:53Z","important":false}
+{"file":"D:/project/java-harness/pom.xml","action":"Edit","timestamp":"2026-08-01T03:05:14Z","important":false}
