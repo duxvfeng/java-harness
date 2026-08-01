@@ -1,2 +1,3 @@
 {"schema_version":"guardrail-fire.v1","ts":"2026-08-01T07:06:15Z","host":"claude","tool":"Bash","rule_id":"R05:confirm-rm-rf","decision":"ask","command_sha256":"7083f083340d4dcf3197a5cb44f80e45e98ce43cb3a8742fb33faa60d8f4b972","command_len":38}
 {"schema_version":"guardrail-fire.v1","ts":"2026-08-01T07:06:23Z","host":"claude","tool":"Bash","rule_id":"R05:confirm-rm-rf","decision":"ask","command_sha256":"754f0ab2ac4536b898d0a61547ef52a6220940521ea2667322a7aff93c59a2af","command_len":37}
+{"schema_version":"guardrail-fire.v1","ts":"2026-08-01T09:46:39Z","host":"claude","tool":"Bash","rule_id":"R05:confirm-rm-rf","decision":"ask","command_sha256":"7bec74a1074437a46cc93e3039767f74e31ceb8a5d7c263637e7f4a7f517b89b","command_len":1805}

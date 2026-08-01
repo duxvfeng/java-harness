@@ -1,6 +1,6 @@
 package com.chachamaru.harness.workflow.execution;
 
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 import com.chachamaru.harness.workflow.orchestration.ExecutionResult;
 
 import java.time.LocalDateTime;

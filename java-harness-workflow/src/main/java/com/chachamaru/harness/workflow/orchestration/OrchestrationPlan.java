@@ -1,7 +1,7 @@
 package com.chachamaru.harness.workflow.orchestration;
 
 import com.chachamaru.harness.workflow.model.PlansDocument;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 
 import java.util.List;
 

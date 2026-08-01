@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.chachamaru.harness.foundation.dto.HookOutputTest
--------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s - in com.chachamaru.harness.foundation.dto.HookOutputTest

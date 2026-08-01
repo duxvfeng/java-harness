@@ -1,8 +1,8 @@
 package com.chachamaru.harness.workflow.parser;
 
 import com.chachamaru.harness.workflow.model.PlansDocument;
-import com.chachamaru.harness.workflow.model.Status;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Status;
+import com.chachamaru.harness.protocol.model.Task;
 
 import java.io.IOException;
 import java.nio.file.Files;

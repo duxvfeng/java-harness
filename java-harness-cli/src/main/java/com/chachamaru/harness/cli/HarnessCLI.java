@@ -73,7 +73,7 @@ public class HarnessCLI {
     private void registerGuardrailRules(GuardrailEngine engine) {
         log.info("Registering Guardrail rules");
 
-        // Register all 15 Guardrail rules
+        // Register all 27 built-in Guardrail rules
         engine.registerRule(new R01NoSudo());
         engine.registerRule(new R02ProtectedPath());
         engine.registerRule(new R03RedirectionBypass());
@@ -89,8 +89,23 @@ public class HarnessCLI {
         engine.registerRule(new R13PackageFile());
         engine.registerRule(new R14BillingEgress());
         engine.registerRule(new R15ProductionDeploy());
+        engine.registerRule(new R16DatabaseWrite());
+        engine.registerRule(new R17ContainerManagement());
+        engine.registerRule(new R18ConfigFileWrite());
+        engine.registerRule(new R19ExecutableDownload());
+        engine.registerRule(new R20NetworkExposure());
+        engine.registerRule(new R21SystemCritical());
+        engine.registerRule(new R22CertificateManagement());
+        engine.registerRule(new R23BackupDeletion());
+        engine.registerRule(new R24LogManipulation());
+        engine.registerRule(new R25ServiceRestart());
+        engine.registerRule(new R26UserPermission());
+        engine.registerRule(new R27CronSchedule());
 
-        log.info("Registered {} Guardrail rules", 15);
+        log.info("Registered {} built-in Guardrail rules", 27);
+
+        // Load custom rules from configuration files
+        engine.loadCustomRules();
     }
 
     public void run() {

@@ -3,7 +3,7 @@ package com.chachamaru.harness.collaboration.skill.impl;
 import com.chachamaru.harness.collaboration.skill.CoreSkill;
 import com.chachamaru.harness.collaboration.skill.SkillExecutionException;
 import com.chachamaru.harness.collaboration.skill.model.SkillContext;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

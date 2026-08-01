@@ -5,7 +5,7 @@ import com.chachamaru.harness.collaboration.skill.SkillRegistry;
 import com.chachamaru.harness.collaboration.skill.model.SkillContext;
 import com.chachamaru.harness.collaboration.skill.model.SkillResult;
 import com.chachamaru.harness.foundation.dto.HookInput;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 import com.chachamaru.harness.workflow.model.Status;
 import org.junit.jupiter.api.Test;
 

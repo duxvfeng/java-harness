@@ -1,5 +1,7 @@
 package com.chachamaru.harness.workflow.model;
 
+import com.chachamaru.harness.protocol.model.Status;
+import com.chachamaru.harness.protocol.model.Task;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.List;

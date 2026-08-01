@@ -53,7 +53,6 @@ public class WorkflowStepExecution {
     public void setOutput(Map<String, Object> output) {
         this.output = output != null ? output : new HashMap<>();
     }
-    }
 
     public long getStartTime() {
         return startTime;

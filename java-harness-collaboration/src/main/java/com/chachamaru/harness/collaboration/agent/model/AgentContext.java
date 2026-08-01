@@ -1,7 +1,7 @@
 package com.chachamaru.harness.collaboration.agent.model;
 
 import com.chachamaru.harness.foundation.dto.HookInput;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 
 import java.time.LocalDateTime;
 import java.util.Map;

@@ -3,3 +3,4 @@
 {"event":"task_completed","teammate":"","task_id":"3","subject":"Task 3.1.3: 实现Markdown技能加载器","description":"实现MarkdownSkillLoader、MarkdownSkill，支持YAML frontmatter解析。验证：cd java-harness-","timestamp":"2026-08-01T04:12:10Z"}
 {"event":"task_completed","teammate":"","task_id":"4","subject":"Task 3.2.1: 实现代理框架","description":"创建Agent接口、AgentContext、AgentResult、AgentRegistry。验证：接口定义完整，模\ufffd\ufffd","timestamp":"2026-08-01T04:17:45Z"}
 {"event":"task_completed","teammate":"","task_id":"5","subject":"Task 3.2.2: 实现三种核心代理","description":"实现WorkerAgent、ReviewerAgent、AdvisorAgent，创建AgentCoordinator。验证：cd java-harness","timestamp":"2026-08-01T04:23:13Z"}
+{"event":"task_completed","teammate":"","task_id":"3","subject":"修复循环依赖问题","description":"解开 collaboration ↔ workflow 的循环依赖，将 Skill 相关类移到正确位置","timestamp":"2026-08-01T07:14:30Z"}

@@ -1,7 +1,7 @@
 package com.chachamaru.harness.collaboration.skill.model;
 
 import com.chachamaru.harness.foundation.dto.HookInput;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 
 import java.util.Map;
 

@@ -1,0 +1,20 @@
+{
+  "active_plan": "phase-8-completion",
+  "last_updated": "2026-08-01",
+  "plans": {
+    "phase-8-completion": {
+      "name": "Phase 8: Go 版本功能完全补全计划",
+      "file": "Plans.md",
+      "status": "active",
+      "completion_percentage": 0
+    }
+  },
+  "archived": [
+    {
+      "name": "Phase 7: 工作流编排系统集成完善",
+      "file": "plans/archive/phase-7-workflow-system.md",
+      "archived_date": "2026-08-01",
+      "reason": "重新规划为 Phase 8"
+    }
+  ]
+}

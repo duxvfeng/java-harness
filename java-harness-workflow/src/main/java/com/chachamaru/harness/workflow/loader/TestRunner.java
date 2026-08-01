@@ -37,8 +37,8 @@ public class TestRunner {
     
     private static void testExpressionEvaluator() {
         try {
-            Map<String, Object> context;
-            
+            Map<String, Object> context = Map.of();
+
             // Test boolean literals
             boolean result = ExpressionEvaluator.evaluate("true", context);
             if (result != true) throw new RuntimeException("true test failed");

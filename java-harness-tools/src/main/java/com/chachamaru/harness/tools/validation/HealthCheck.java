@@ -127,7 +127,7 @@ public interface HealthCheck {
     /**
      * Health status enumeration.
      */
-    enum HealthStatus {
+    public enum HealthStatus {
         /** Component is functioning normally */
         HEALTHY,
 

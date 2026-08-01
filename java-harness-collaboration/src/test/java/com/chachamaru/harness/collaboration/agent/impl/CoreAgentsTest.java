@@ -5,7 +5,7 @@ import com.chachamaru.harness.collaboration.agent.AgentExecutionException;
 import com.chachamaru.harness.collaboration.agent.model.AgentContext;
 import com.chachamaru.harness.collaboration.agent.model.AgentResult;
 import com.chachamaru.harness.foundation.dto.HookInput;
-import com.chachamaru.harness.workflow.model.Task;
+import com.chachamaru.harness.protocol.model.Task;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
