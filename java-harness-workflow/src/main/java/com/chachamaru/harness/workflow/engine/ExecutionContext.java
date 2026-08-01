@@ -1,5 +1,7 @@
 package com.chachamaru.harness.workflow.engine;
 
+import com.chachamaru.harness.workflow.loader.VariableResolver;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Stack;
@@ -146,22 +148,11 @@ public class ExecutionContext {
     }
 
     /**
-     * 渲染模板变量
+     * 渲染模板变量（使用 VariableResolver）
+     * 支持 ${variable} 语法
      */
     public String renderTemplate(String template) {
-        if (template == null) {
-            return "";
-        }
-
-        String result = template;
-        for (Map.Entry<String, Object> entry : variables.entrySet()) {
-            String placeholder = "{{" + entry.getKey() + "}}";
-            if (result.contains(placeholder)) {
-                String value = entry.getValue() != null ? String.valueOf(entry.getValue()) : "";
-                result = result.replace(placeholder, value);
-            }
-        }
-        return result;
+        return VariableResolver.resolve(template, variables);
     }
 
     /**
@@ -182,5 +173,40 @@ public class ExecutionContext {
         summary.append("Execution Depth: ").append(executionStack.size()).append("\n");
         summary.append("Metadata: ").append(metadata.size()).append("\n");
         return summary.toString();
+    }
+
+    /**
+     * 获取所有文件上下文
+     */
+    public Map<String, Object> getAllFileContext() {
+        return new HashMap<>(fileContext);
+    }
+
+    /**
+     * 获取所有会话状态
+     */
+    public Map<String, Object> getAllSessionState() {
+        return new HashMap<>(sessionState);
+    }
+
+    /**
+     * 删除变量
+     */
+    public void removeVariable(String key) {
+        variables.remove(key);
+    }
+
+    /**
+     * 获取变量数量
+     */
+    public int getVariableCount() {
+        return variables.size();
+    }
+
+    /**
+     * 获取执行栈深度
+     */
+    public int getExecutionDepth() {
+        return executionStack.size();
     }
 }
