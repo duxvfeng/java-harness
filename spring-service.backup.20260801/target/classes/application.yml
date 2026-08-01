@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: harness-service
+  
+  datasource:
+    url: jdbc:sqlite:harness.db
+    driver-class-name: org.sqlite.JDBC
+    
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    
+logging:
+  level:
+    com.chachamaru.harness: DEBUG
+    org.springframework: INFO
+    org.mybatis: DEBUG

@@ -1,0 +1,5 @@
+com\chachamaru\harness\cli\hook\HookCodecTest.class
+com\chachamaru\harness\cli\router\HookRouterTest.class
+com\chachamaru\harness\cli\ipc\HttpIpcClientTest.class
+com\chachamaru\harness\cli\guardrail\GuardrailEngineIpcIntegrationTest.class
+com\chachamaru\harness\cli\guardrail\GuardrailEngineIpcIntegrationTest$1.class

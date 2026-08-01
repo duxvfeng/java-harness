@@ -1,0 +1,15 @@
+{"file":"pom.xml","action":"Edit","timestamp":"2026-08-01T04:41:29Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/tools/config/ConfigSyncTool.java","action":"Edit","timestamp":"2026-08-01T04:41:56Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/tools/config/ConfigSyncToolTest.java","action":"Edit","timestamp":"2026-08-01T04:42:58Z","important":false}
+{"file":"D:/project/java-harness/Plans.md","action":"Edit","timestamp":"2026-08-01T04:43:24Z","important":true}
+{"file":"src/main/java/com/chachamaru/harness/tools/validation/HealthCheck.java","action":"Write","timestamp":"2026-08-01T04:44:05Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/tools/validation/ValidateTool.java","action":"Write","timestamp":"2026-08-01T04:44:32Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/tools/validation/DoctorTool.java","action":"Write","timestamp":"2026-08-01T04:45:01Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/tools/validation/ValidationToolsTest.java","action":"Write","timestamp":"2026-08-01T04:45:30Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/main/resources/META-INF/native-image/reflect-config.json","action":"Write","timestamp":"2026-08-01T04:50:07Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/main/resources/META-INF/native-image/resource-config.json","action":"Write","timestamp":"2026-08-01T04:50:22Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/main/resources/META-INF/native-image/serialization-config.json","action":"Write","timestamp":"2026-08-01T04:50:32Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/main/java/com/chachamaru/harness/cli/nativeimage/HarnessNativeFeature.java","action":"Write","timestamp":"2026-08-01T04:50:54Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/pom.xml","action":"Edit","timestamp":"2026-08-01T04:51:13Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/main/java/com/chachamaru/harness/cli/HarnessCLI.java","action":"Write","timestamp":"2026-08-01T04:51:27Z","important":false}
+{"file":"D:/project/java-harness/java-harness-cli/src/test/java/com/chachamaru/harness/cli/NativeImageConfigTest.java","action":"Write","timestamp":"2026-08-01T04:51:44Z","important":false}

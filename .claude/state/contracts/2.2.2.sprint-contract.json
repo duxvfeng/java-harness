@@ -1,0 +1,22 @@
+{
+  "taskId": "2.2.2",
+  "title": "Implement parallel executor",
+  "description": "Create ParallelExecutor interface, CompletableFutureExecutor implementation in java-harness-workflow",
+  "acceptanceCriteria": "Tests pass, parallel execution >2x faster than sequential",
+  "lane": "implementation",
+  "specPath": "spec.md",
+  "stage": "implementation",
+  "researchEvidence": [],
+  "tddRedLog": [],
+  "reviewArtifact": null,
+  "prCloseout": null,
+  "runtimeValidation": {
+    "lspEnabled": false,
+    "astSearchCount": 0
+  },
+  "review": {
+    "maxIterations": 3,
+    "criticalBlocking": true,
+    "majorBlocking": true
+  }
+}

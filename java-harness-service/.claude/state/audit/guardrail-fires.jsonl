@@ -1,0 +1,2 @@
+{"schema_version":"guardrail-fire.v1","ts":"2026-08-01T05:07:03Z","host":"claude","tool":"Edit","rule_id":"R04:confirm-write-outside-project","decision":"ask","command_sha256":"86a097ccd2f9ed1814aef4398325af99fe521cb0ac0ee2cf55bca0351829ee7b","command_len":31}
+{"schema_version":"guardrail-fire.v1","ts":"2026-08-01T05:07:18Z","host":"claude","tool":"Edit","rule_id":"R04:confirm-write-outside-project","decision":"ask","command_sha256":"86a097ccd2f9ed1814aef4398325af99fe521cb0ac0ee2cf55bca0351829ee7b","command_len":31}

@@ -15,9 +15,9 @@
 
     <modules>
         <!-- Existing modules (legacy) -->
-        <module>shared</module>
-        <module>cli-native</module>
-        <module>spring-service</module>
+        <module>java-harness-shared</module>
+        <!-- cli-native merged into java-harness-cli (2024-08-01) -->
+        <!-- spring-service merged into java-harness-service (2024-08-01) -->
 
         <!-- New 7-layer architecture modules -->
         <module>java-harness-foundation</module>

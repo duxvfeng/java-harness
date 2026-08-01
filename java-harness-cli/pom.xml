@@ -19,6 +19,13 @@
     <description>CLI layer - Command-line interface and user interaction</description>
 
     <dependencies>
+        <!-- Shared module (constants and utilities) -->
+        <dependency>
+            <groupId>com.chachamaru</groupId>
+            <artifactId>java-harness-shared</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Foundation layer -->
         <dependency>
             <groupId>com.chachamaru</groupId>
@@ -73,6 +80,14 @@
             <version>4.7.5</version>
         </dependency>
 
+        <!-- GraalVM SDK for native image configuration (compile only) -->
+        <dependency>
+            <groupId>org.graalvm.sdk</groupId>
+            <artifactId>graal-sdk</artifactId>
+            <version>23.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -93,4 +108,46 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Native Image Profile -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <imageName>harness</imageName>
+                            <mainClass>com.chachamaru.harness.cli.HarnessCLI</mainClass>
+                            <buildArgs>
+                                <buildArg>--no-fallback</buildArg>
+                                <buildArg>--initialize-at-build-time=java.time.LocalDateTime</buildArg>
+                                <buildArg>--initialize-at-build-time=java.util.LinkedHashMap</buildArg>
+                                <buildArg>--initialize-at-build-time=java.util.ArrayList</buildArg>
+                                <buildArg>--initialize-at-build-time=java.util.HashMap</buildArg>
+                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <buildArg>-H:IncludeResources=.*\\.yaml$</buildArg>
+                                <buildArg>-H:IncludeResources=.*\.json$</buildArg>
+                                <buildArg>-H:IncludeResources=.*\\.yml$</buildArg>
+                                <buildArg>-H:ConfigurationFileDirectories=src/main/resources/META-INF/native-image</buildArg>
+                            </buildArgs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

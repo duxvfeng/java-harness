@@ -1,0 +1,15 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": ".*\.json$"
+      },
+      {
+        "pattern": ".*\.properties$"
+      },
+      {
+        "pattern": ".*\.xml$"
+      }
+    ]
+  }
+}

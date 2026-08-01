@@ -1,0 +1,142 @@
+{
+  "reflect": [
+    {
+      "name": "com.chachamaru.harness.foundation.dto.HookInput",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.foundation.dto.HookOutput",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.foundation.dto.GuardrailResult",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.protocol.HookEventType",
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.model.Task",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.model.Status",
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.recovery.RecoveryResult",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.recovery.RecoveryResult$RecoveryStatus",
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.recovery.RecoveryResult$RecoveryPhase",
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.workflow.recovery.RecoveryResult$RecoveryAction",
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.collaboration.agent.AgentContext",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.collaboration.agent.AgentResult",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.collaboration.skill.SkillContext",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "com.chachamaru.harness.collaboration.skill.SkillResult",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "java.time.LocalDateTime",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "java.util.LinkedHashMap",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "java.util.ArrayList",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "java.util.HashMap",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "name": "picocli.CommandLine",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    }
+  ],
+  "proxies": [
+    {
+      "interface": "com.chachamaru.harness.protocol.HookHandler"
+    },
+    {
+      "interface": "com.chachamaru.harness.security.GuardrailEngine"
+    },
+    {
+      "interface": "com.chachamaru.harness.workflow.recovery.RecoveryStrategy"
+    },
+    {
+      "interface": "com.chachamaru.harness.workflow.recovery.StateRecovery"
+    },
+    {
+      "interface": "com.chachamaru.harness.collaboration.agent.Agent"
+    },
+    {
+      "interface": "com.chachamaru.harness.collaboration.skill.Skill"
+    },
+    {
+      "interface": "com.chachamaru.harness.tools.validation.HealthCheck"
+    }
+  ],
+  "resources": {
+    "includes": [
+      {
+        "pattern": "harness\\.yaml\\.example"
+      },
+      {
+        "pattern": ".*\\.json"
+      },
+      {
+        "pattern": ".*\\.yaml"
+      },
+      {
+        "pattern": ".*\\.yml"
+      }
+    ]
+  }
+}
