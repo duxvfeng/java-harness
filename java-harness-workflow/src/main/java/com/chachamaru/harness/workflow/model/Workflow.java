@@ -1,4 +1,4 @@
-package com.chachamaru.harness.workflow.models;
+package com.chachamaru.harness.workflow.model;
 
 import java.util.List;
 import java.util.Map;

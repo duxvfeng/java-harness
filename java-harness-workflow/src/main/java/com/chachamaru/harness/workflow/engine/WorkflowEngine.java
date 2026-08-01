@@ -4,14 +4,12 @@ import com.chachamaru.harness.collaboration.skill.Skill;
 import com.chachamaru.harness.collaboration.skill.SkillRegistry;
 import com.chachamaru.harness.collaboration.skill.model.SkillContext;
 import com.chachamaru.harness.collaboration.skill.model.SkillResult;
-import com.chachamaru.harness.workflow.loader.ExpressionEvaluator;
 import com.chachamaru.harness.workflow.loader.WorkflowLoader;
 import com.chachamaru.harness.workflow.loader.WorkflowException;
-import com.chachamaru.harness.workflow.models.Workflow;
+import com.chachamaru.harness.workflow.model.Workflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;

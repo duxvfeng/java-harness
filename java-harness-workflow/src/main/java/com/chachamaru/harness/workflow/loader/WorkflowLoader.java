@@ -1,6 +1,6 @@
 package com.chachamaru.harness.workflow.loader;
 
-import com.chachamaru.harness.workflow.models.Workflow;
+import com.chachamaru.harness.workflow.model.Workflow;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;

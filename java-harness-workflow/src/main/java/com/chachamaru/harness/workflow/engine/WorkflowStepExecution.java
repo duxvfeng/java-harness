@@ -1,5 +1,7 @@
 package com.chachamaru.harness.workflow.engine;
 
+import com.chachamaru.harness.workflow.model.Workflow;
+
 import java.util.Map;
 import java.util.HashMap;
 

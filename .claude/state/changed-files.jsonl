@@ -88,3 +88,14 @@
 {"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/loader/WorkflowLoader.java","action":"Edit","timestamp":"2026-08-01T06:36:14Z","important":false}
 {"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/loader/VariableResolverTest.java","action":"Write","timestamp":"2026-08-01T06:37:37Z","important":false}
 {"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/loader/ExpressionEvaluatorTest.java","action":"Write","timestamp":"2026-08-01T06:37:54Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/engine/ExecutionContextTest.java","action":"Write","timestamp":"2026-08-01T06:47:40Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/ExecutionContext.java","action":"Edit","timestamp":"2026-08-01T06:48:08Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/WorkflowExecutionResult.java","action":"Write","timestamp":"2026-08-01T06:52:10Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/WorkflowStepExecution.java","action":"Write","timestamp":"2026-08-01T06:52:16Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/WorkflowEngine.java","action":"Write","timestamp":"2026-08-01T06:52:42Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/integration/SkillIntegrationTest.java","action":"Write","timestamp":"2026-08-01T06:53:01Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/loader/ExpressionEvaluatorCompleteTest.java","action":"Write","timestamp":"2026-08-01T06:55:58Z","important":false}
+{"file":"docs/条件表达式引擎功能文档.md","action":"Write","timestamp":"2026-08-01T06:56:27Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/ParallelExecutionConfig.java","action":"Write","timestamp":"2026-08-01T06:57:40Z","important":false}
+{"file":"java-harness-workflow/src/main/java/com/chachamaru/harness/workflow/engine/OptimizedParallelExecutor.java","action":"Write","timestamp":"2026-08-01T06:58:17Z","important":false}
+{"file":"java-harness-workflow/src/test/java/com/chachamaru/harness/workflow/engine/ParallelExecutionOptimizationTest.java","action":"Write","timestamp":"2026-08-01T06:59:07Z","important":false}

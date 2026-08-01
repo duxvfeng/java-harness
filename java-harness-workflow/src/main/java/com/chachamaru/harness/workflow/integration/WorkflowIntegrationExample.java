@@ -1,10 +1,9 @@
 package com.chachamaru.harness.workflow.integration;
 
-import com.chachamaru.harness.workflow.models.Workflow;
+import com.chachamaru.harness.workflow.model.Workflow;
 import com.chachamaru.harness.workflow.loader.WorkflowLoader;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
