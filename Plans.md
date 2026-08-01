@@ -73,7 +73,7 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 3.1.1 | 实现技能核心框架 | 创建Skill接口、SkillContext、SkillResult、CoreSkill基类 | `cd java-harness-collaboration && mvn test`通过，技能框架测试验证 | 2.3.1 | cc:TODO |
+| 3.1.1 | 实现技能核心框架 | 创建Skill接口、SkillContext、SkillResult、CoreSkill基类 | `cd java-harness-collaboration && mvn test`通过，技能框架测试验证 | 2.3.1 | cc:✅ 0046d4c |
 | 3.1.2 | 实现核心技能 | 实现PlanSkill、WorkSkill、ReviewSkill，创建SkillRegistry | `cd java-harness-collaboration && mvn test`通过，核心技能执行测试通过 | 3.1.1 | cc:TODO |
 | 3.1.3 | 实现Markdown技能加载器 | 实现MarkdownSkillLoader、MarkdownSkill，支持YAML frontmatter解析 | `cd java-harness-collaboration && mvn test`通过，技能加载器测试通过，能正确加载.SKILL.md文件 | 3.1.2 | cc:TODO |
 
