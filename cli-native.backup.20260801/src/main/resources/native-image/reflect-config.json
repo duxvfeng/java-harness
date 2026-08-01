@@ -1,0 +1,58 @@
+{
+  "reflectConfig": [
+    {
+      "name": "com.chachamaru.harness.shared.dto.HookEvent",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.GuardrailDecision",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.GuardrailDecision$Action",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.StateQuery",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.StateQuery$QueryType",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.shared.dto.StateUpdate",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.cli.hook.HookInput",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.cli.hook.HookOutput",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "name": "com.chachamaru.harness.cli.guardrail.GuardrailResult",
+      "allDeclaredConstructors": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+# Java Harness Configuration Example
+# This file demonstrates the available configuration options for Java Harness
+
+# Project identification
+project: java-harness
+version: 4.1.0-SNAPSHOT
+
+# Feature flags
+features:
+  stateRecovery: true        # Enable 4-phase state recovery
+  parallelExecution: true     # Enable parallel task execution
+  nativeImage: false         # Use native image (false = use JAR)
+
+# Recovery configuration
+recovery:
+  maxAttempts: 3             # Maximum recovery attempts per phase
+  backoffBase: 1000          # Base backoff time (milliseconds)
+  backoffMax: 10000          # Maximum backoff time (milliseconds)
+  enableSelfHealing: true    # Phase 1: Self-healing
+  enablePeerRecovery: true   # Phase 2: Peer recovery
+  enableLeadIntervention: true # Phase 3: Lead intervention
+
+# Worker configuration
+workers:
+  default: claude             # Default worker backend (claude/codex/cursor)
+  maxParallel: 4              # Maximum parallel workers
+  timeout: 300000            # Worker timeout (milliseconds)
+
+# Skill system configuration
+skills:
+  enabled: true               # Enable skill system
+  searchPaths:                # Skill search paths
+    - ".claude/skills"
+    - ".skills"
+  autoLoad: true              # Auto-load skills on startup
+
+# Agent system configuration
+agents:
+  enabled: true               # Enable agent system
+  registryPath: ".claude/agents" # Agent registry location
+
+# Logging configuration
+logging:
+  level: INFO                # Log level (DEBUG, INFO, WARN, ERROR)
+  format: text               # Log format (text, json)
+  file: logs/harness.log     # Log file path
+
+# Test configuration
+testing:
+  coverage:
+    enabled: true
+    minimum: 75              # Minimum test coverage percentage
+  parallel:
+    enabled: true
+    threads: 4               # Number of test threads
+
+# Build configuration
+build:
+  nativeImage:
+    enabled: false
+    graalVMHome: ""          # GraalVM installation path
+    quickBuild: true         # Use quick build mode
+  docker:
+    enabled: false
+    imageName: "java-harness"
+    tag: "latest"

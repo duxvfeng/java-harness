@@ -1,7 +1,3 @@
-# Java Harness 功能扩展实现计划
-
-> **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
-
 **目标：** 将Java Harness项目从35-40%功能实现度扩展到与Go项目功能对等（90%+），实现完整的Plan→Work→Review→Release闭环
 
 **架构：** 7层功能域驱动设计（基础设施层→协议层→安全防护层→工作流层→协作层→运行时层→工具层），9个Maven模块，单向依赖，职责清晰

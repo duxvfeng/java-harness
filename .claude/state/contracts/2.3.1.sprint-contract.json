@@ -1,0 +1,22 @@
+{
+  "taskId": "2.3.1",
+  "title": "Implement state recovery interface",
+  "description": "Create StateRecovery interface, RecoveryResult model, RecoveryStrategy interface in java-harness-workflow",
+  "acceptanceCriteria": "Interface complete, models compile, 4-phase recovery methods defined",
+  "lane": "implementation",
+  "specPath": "spec.md",
+  "stage": "implementation",
+  "researchEvidence": [],
+  "tddRedLog": [],
+  "reviewArtifact": null,
+  "prCloseout": null,
+  "runtimeValidation": {
+    "lspEnabled": false,
+    "astSearchCount": 0
+  },
+  "review": {
+    "maxIterations": 3,
+    "criticalBlocking": true,
+    "majorBlocking": true
+  }
+}

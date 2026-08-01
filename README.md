@@ -59,6 +59,43 @@ claude-harness-parent/
 | **R14** | 计费API限制 | ✅ |
 | **R15** | 生产部署保护 | ✅ |
 
+## 文档
+
+- **[安装指南](docs/installation.md)** - 详细的安装步骤和系统要求
+- **[配置指南](docs/configuration.md)** - 完整的配置选项和最佳实践
+- **[迁移指南](docs/migration.md)** - 从其他工具或旧版本迁移的指南
+- **[项目文档](docs/README.md)** - 完整的项目文档和架构说明
+
+## 快速开始
+
+### 安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/your-org/java-harness.git
+cd java-harness
+
+# 构建项目
+mvn clean package
+
+# 运行
+java -cp java-harness-cli/target/harness-cli-4.1.0.jar \
+     com.chachamaru.harness.cli.HarnessCli --version
+```
+
+### Native Image 编译
+
+```bash
+# 安装 GraalVM 23.1.0+
+cd java-harness-cli
+mvn -Pnative native:compile
+
+# 运行原生可执行文件（<100ms 启动时间）
+./target/harness --version
+```
+
+详细的安装步骤请参考[安装指南](docs/installation.md)。
+
 ## 构建和运行
 
 ### 编译项目

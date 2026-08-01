@@ -1,0 +1,15 @@
+{"file":"src/main/java/com/chachamaru/harness/workflow/model/Task.java","action":"Edit","timestamp":"2026-08-01T03:18:51Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/model/PlansDocumentTest.java","action":"Edit","timestamp":"2026-08-01T03:21:34Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/recovery/PeerRecoveryStrategy.java","action":"Write","timestamp":"2026-08-01T04:26:26Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/recovery/PeerRecoveryStrategyTest.java","action":"Write","timestamp":"2026-08-01T04:26:51Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/recovery/LeadInterventionStrategy.java","action":"Write","timestamp":"2026-08-01T04:31:46Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/recovery/AbortStrategy.java","action":"Write","timestamp":"2026-08-01T04:32:21Z","important":false}
+{"file":"src/main/java/com/chachamaru/harness/workflow/recovery/FourPhaseRecovery.java","action":"Write","timestamp":"2026-08-01T04:32:48Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/recovery/LeadInterventionStrategyTest.java","action":"Write","timestamp":"2026-08-01T04:33:08Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/recovery/AbortStrategyTest.java","action":"Write","timestamp":"2026-08-01T04:33:30Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/recovery/FourPhaseRecoveryTest.java","action":"Write","timestamp":"2026-08-01T04:34:00Z","important":false}
+{"file":"D:/project/java-harness/Plans.md","action":"Edit","timestamp":"2026-08-01T04:38:20Z","important":true}
+{"file":"D:/project/java-harness/java-harness-tools/src/main/java/com/chachamaru/harness/tools/config/ConfigSyncTool.java","action":"Write","timestamp":"2026-08-01T04:40:16Z","important":false}
+{"file":"D:/project/java-harness/java-harness-tools/src/main/resources/harness.yaml.example","action":"Write","timestamp":"2026-08-01T04:40:35Z","important":false}
+{"file":"D:/project/java-harness/java-harness-tools/src/test/java/com/chachamaru/harness/tools/config/ConfigSyncToolTest.java","action":"Write","timestamp":"2026-08-01T04:40:54Z","important":false}
+{"file":"src/test/java/com/chachamaru/harness/workflow/integration/HookProcessingTest.java","action":"Write","timestamp":"2026-08-01T05:22:10Z","important":false}
