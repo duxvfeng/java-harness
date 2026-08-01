@@ -1,0 +1,5 @@
+# Created at 2026-08-01T10:50:51.817
+Boot Manifest-JAR contains absolute paths in classpath 'D:\project\java-harness\java-harness-foundation\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+

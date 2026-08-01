@@ -19,9 +19,10 @@
         <module>cli-native</module>
         <module>spring-service</module>
 
-        <!-- New 7-layer architecture modules (to be added in Phase 1.1 tasks)
-             Note: Modules will be progressively uncommented as they are created
-             Task 1.1.2: java-harness-foundation
+        <!-- New 7-layer architecture modules (progressively being added) -->
+        <module>java-harness-foundation</module>
+
+        <!-- Remaining modules to be added in Phase 1.1 tasks:
              Task 1.1.3: java-harness-protocol
              Task 1.1.4: java-harness-security
              Task 1.1.5: java-harness-workflow, java-harness-collaboration,

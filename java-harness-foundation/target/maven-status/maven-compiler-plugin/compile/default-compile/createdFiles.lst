@@ -1,0 +1,8 @@
+com\chachamaru\harness\foundation\dto\GuardrailResult.class
+com\chachamaru\harness\foundation\config\ConfigurationException.class
+com\chachamaru\harness\foundation\dto\HookInput.class
+com\chachamaru\harness\foundation\dto\HookOutput.class
+com\chachamaru\harness\foundation\config\Configuration.class
+com\chachamaru\harness\foundation\dto\GuardrailResult$Decision.class
+com\chachamaru\harness\foundation\config\Configurable.class
+com\chachamaru\harness\foundation\dto\HookOutput$PermissionDecision.class
