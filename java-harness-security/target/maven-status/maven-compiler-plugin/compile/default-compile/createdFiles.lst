@@ -1,4 +1,4 @@
-com\chachamaru\harness\security\GuardrailEngine.class
-com\chachamaru\harness\security\GuardrailRule.class
-com\chachamaru\harness\security\RuleRegistry.class
-com\chachamaru\harness\security\SensitiveFileRule.class
+com/chachamaru/harness/security/RuleRegistry.class
+com/chachamaru/harness/security/SensitiveFileRule.class
+com/chachamaru/harness/security/GuardrailRule.class
+com/chachamaru/harness/security/GuardrailEngine.class

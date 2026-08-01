@@ -28,6 +28,7 @@
         <module>java-harness-cli</module>
         <module>java-harness-service</module>
         <module>java-harness-tools</module>
+        <module>java-harness-ci</module>
         <module>java-harness-distribution</module>
     </modules>
 

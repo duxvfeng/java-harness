@@ -2,12 +2,14 @@ package com.chachamaru.harness.collaboration.agent.impl;
 
 import com.chachamaru.harness.collaboration.agent.Agent;
 import com.chachamaru.harness.collaboration.agent.AgentExecutionException;
+import com.chachamaru.harness.collaboration.agent.message.AdvisorRequestV1;
 import com.chachamaru.harness.collaboration.agent.model.AgentContext;
 import com.chachamaru.harness.collaboration.agent.model.AgentResult;
 import com.chachamaru.harness.protocol.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -171,12 +173,106 @@ public class WorkerAgent implements Agent {
             throw new AgentExecutionException(id, "Task dependencies not satisfied for: " + task.id());
         }
 
+        // Check if we have advisor response from previous consultation
+        AdvisorRequestV1.QuestionType questionType = determineIfNeedsAdvisor(task, context);
+
+        if (questionType != null && context.getSessionState("advisorResponse", Object.class) == null) {
+            // Need advisor consultation - return request
+            logger.info("Task {} requires advisor consultation", task.id());
+
+            AdvisorRequestV1 request = AdvisorRequestV1.create(
+                id,
+                task.id(),
+                generateAdvisorQuestion(task, context),
+                questionType,
+                task.description()
+            );
+
+            // Return waiting result with advisor request
+            throw new AdvisorRequestException("Advisor consultation needed", request);
+        }
+
+        // Execute task implementation
+        return executeTaskImplementation(task, context);
+    }
+
+    /**
+     * Determines if task needs advisor consultation.
+     *
+     * @param task the task to check
+     * @param context the agent context
+     * @return the question type if advisor needed, null otherwise
+     */
+    private AdvisorRequestV1.QuestionType determineIfNeedsAdvisor(Task task, AgentContext context) {
+        // Check if task involves complex architectural decisions
+        if (task.description() != null && task.description().toLowerCase().matches(".*(architecture|design|pattern|structure).*")) {
+            return AdvisorRequestV1.QuestionType.ARCHITECTURE;
+        }
+
+        // Check if task involves debugging
+        if (task.description() != null && task.description().toLowerCase().matches(".*(debug|fix|issue|error|bug).*")) {
+            return AdvisorRequestV1.QuestionType.DEBUGGING;
+        }
+
+        // Check if we have review findings that need addressing
+        Object mustAddressObj = context.getSessionState("mustAddress", Object.class);
+        if (mustAddressObj != null) {
+            return AdvisorRequestV1.QuestionType.BEST_PRACTICE;
+        }
+
+        // Default: no advisor needed
+        return null;
+    }
+
+    /**
+     * Generates advisor question for the task.
+     *
+     * @param task the task
+     * @param context the agent context
+     * @return the question text
+     */
+    private String generateAdvisorQuestion(Task task, AgentContext context) {
+        StringBuilder question = new StringBuilder();
+        question.append("Task: ").append(task.title()).append("\n");
+        question.append("Description: ").append(task.description()).append("\n");
+
+        // Add review findings if present
+        Object mustAddressObj = context.getSessionState("mustAddress", Object.class);
+        if (mustAddressObj != null) {
+            question.append("\nReview findings to address:\n").append(mustAddressObj).append("\n");
+            question.append("How should I address these review findings?");
+        } else {
+            question.append("\nWhat is the recommended approach for implementing this task?");
+        }
+
+        return question.toString();
+    }
+
+    /**
+     * Executes the actual task implementation.
+     *
+     * @param task the task to execute
+     * @param context the agent context
+     * @return the task output
+     * @throws AgentExecutionException if execution fails
+     */
+    private Object executeTaskImplementation(Task task, AgentContext context) throws AgentExecutionException {
+        logger.debug("Executing task implementation for: {}", task.id());
+
         // Placeholder: In real implementation, this would:
-        // 1. Analyze task requirements
-        // 2. Select appropriate execution strategy
-        // 3. Execute the task logic
-        // 4. Monitor progress
-        // 5. Handle timeouts
+        // 1. Apply advisor recommendations if present
+        // 2. Analyze task requirements
+        // 3. Select appropriate execution strategy
+        // 4. Execute the task logic
+        // 5. Monitor progress
+        // 6. Handle timeouts
+
+        // Check for advisor recommendations
+        Object advisorResponseObj = context.getSessionState("advisorResponse", Object.class);
+        if (advisorResponseObj != null) {
+            logger.debug("Applying advisor recommendations");
+            // Apply recommendations to implementation
+        }
 
         // Simulate task execution
         Map<String, Object> result = Map.of(
@@ -184,8 +280,8 @@ public class WorkerAgent implements Agent {
             "title", task.title(),
             "description", task.description(),
             "status", "completed",
-            "attempt", attempt,
-            "workerId", id
+            "workerId", id,
+            "implementationApplied", advisorResponseObj != null
         );
 
         return result;

@@ -2,14 +2,17 @@ package com.chachamaru.harness.collaboration.agent.impl;
 
 import com.chachamaru.harness.collaboration.agent.Agent;
 import com.chachamaru.harness.collaboration.agent.AgentExecutionException;
+import com.chachamaru.harness.collaboration.agent.message.ReviewResultV1;
 import com.chachamaru.harness.collaboration.agent.model.AgentContext;
 import com.chachamaru.harness.collaboration.agent.model.AgentResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Reviewer agent for code review and quality validation.
@@ -81,16 +84,17 @@ public class ReviewerAgent implements Agent {
             Object target = getReviewTarget(context);
 
             // Perform review
-            ReviewReport report = performReview(target, context);
+            ReviewResultV1 reviewResult = performReview(target, context);
 
-            logger.info("Review completed: {} findings", report.findings().size());
+            logger.info("Review completed: {} findings (verdict: {})",
+                reviewResult.findings().size(), reviewResult.verdict());
 
-            // Determine verdict
+            // Determine agent result based on verdict
             AgentResult result;
-            if (report.hasCriticalIssues()) {
-                result = AgentResult.failure(id, "Review failed: critical issues found", context.executionStartTime());
+            if (reviewResult.isApproved()) {
+                result = AgentResult.success(id, reviewResult, "Review approved", context.executionStartTime());
             } else {
-                result = AgentResult.success(id, report, "Review completed successfully", context.executionStartTime());
+                result = AgentResult.failure(id, "Review requested changes: " + reviewResult.summary(), context.executionStartTime());
             }
 
             return result;
@@ -153,12 +157,12 @@ public class ReviewerAgent implements Agent {
      *
      * @param target the target to review
      * @param context the agent context
-     * @return the review report
+     * @return the review result
      */
-    private ReviewReport performReview(Object target, AgentContext context) {
+    private ReviewResultV1 performReview(Object target, AgentContext context) {
         logger.info("Performing review on target: {}", target);
 
-        List<ReviewFinding> findings = new ArrayList<>();
+        List<ReviewResultV1.ReviewFinding> findings = new ArrayList<>();
 
         // Perform review analysis
         if (target instanceof Map) {
@@ -173,15 +177,45 @@ public class ReviewerAgent implements Agent {
                 findings.addAll(reviewChanges(map.get("changes")));
             }
 
-            // Always add a summary finding
-            findings.add(new ReviewFinding(
-                ReviewSeverity.INFO,
-                "Review Summary",
-                "Review completed using temperature: " + temperature
-            ));
+            // Check for review findings from context
+            Object mustAddressObj = context.getSessionState("mustAddress", Object.class);
+            if (mustAddressObj != null) {
+                findings.addAll(reviewMustAddressItems(mustAddressObj));
+            }
         }
 
-        return new ReviewReport(findings, "Review completed");
+        // Determine verdict based on findings
+        long criticalCount = findings.stream().filter(f -> f.getSeverityEnum() == ReviewResultV1.ReviewSeverity.CRITICAL).count();
+        long majorCount = findings.stream().filter(f -> f.getSeverityEnum() == ReviewResultV1.ReviewSeverity.MAJOR).count();
+
+        String verdict;
+        String summary;
+
+        if (criticalCount > 0 || majorCount > 0) {
+            verdict = ReviewResultV1.Verdict.REQUEST_CHANGES.name();
+            summary = String.format("Found %d critical and %d major issues that must be addressed",
+                criticalCount, majorCount);
+        } else {
+            verdict = ReviewResultV1.Verdict.APPROVE.name();
+            summary = "Review approved - no critical or major issues found";
+        }
+
+        String requestId = UUID.randomUUID().toString();
+
+        return new ReviewResultV1(
+            requestId,
+            verdict,
+            findings,
+            summary,
+            (int) criticalCount,
+            (int) majorCount,
+            Map.of(
+                "reviewerId", id,
+                "temperature", temperature,
+                "crossModel", crossModel
+            ),
+            java.time.Instant.now()
+        );
     }
 
     /**
@@ -190,21 +224,32 @@ public class ReviewerAgent implements Agent {
      * @param code the code to review
      * @return list of findings
      */
-    private List<ReviewFinding> reviewCode(String code) {
-        List<ReviewFinding> findings = new ArrayList();
+    private List<ReviewResultV1.ReviewFinding> reviewCode(String code) {
+        List<ReviewResultV1.ReviewFinding> findings = new ArrayList<>();
 
-        // Placeholder: In real implementation, this would:
-        // 1. Analyze code structure
-        // 2. Check for anti-patterns
-        // 3. Validate naming conventions
-        // 4. Check for security issues
-        // 5. Assess code complexity
-
+        // Check code length
         if (code.length() < 50) {
-            findings.add(new ReviewFinding(
-                ReviewSeverity.MINOR,
+            findings.add(new ReviewResultV1.ReviewFinding(
+                "code-quality",
+                "MINOR",
                 "Short Code",
-                "Code appears to be very short, might need more context"
+                "Code appears to be very short, might need more context or implementation",
+                null,
+                0,
+                "Code length < 50 characters"
+            ));
+        }
+
+        // Check for TODO comments
+        if (code.toLowerCase().contains("todo")) {
+            findings.add(new ReviewResultV1.ReviewFinding(
+                "code-quality",
+                "MAJOR",
+                "TODO Comments Found",
+                "Code contains TODO comments that should be addressed",
+                null,
+                code.indexOf("TODO"),
+                "TODO comments indicate incomplete work"
             ));
         }
 
@@ -218,22 +263,54 @@ public class ReviewerAgent implements Agent {
      * @return list of findings
      */
     @SuppressWarnings("unchecked")
-    private List<ReviewFinding> reviewChanges(Object changes) {
-        List<ReviewFinding> findings = new ArrayList();
-
-        // Placeholder: In real implementation, this would:
-        // 1. Analyze change impact
-        // 2. Check for breaking changes
-        // 3. Validate test coverage
-        // 4. Review documentation updates
+    private List<ReviewResultV1.ReviewFinding> reviewChanges(Object changes) {
+        List<ReviewResultV1.ReviewFinding> findings = new ArrayList<>();
 
         if (changes instanceof List) {
             List<?> changeList = (List<?>) changes;
-            findings.add(new ReviewFinding(
-                ReviewSeverity.INFO,
+
+            findings.add(new ReviewResultV1.ReviewFinding(
+                "changes",
+                "INFO",
                 "Changes Reviewed",
-                "Reviewed " + changeList.size() + " changes"
+                String.format("Reviewed %d changes", changeList.size()),
+                null,
+                0,
+                "Change count: " + changeList.size()
             ));
+        }
+
+        return findings;
+    }
+
+    /**
+     * Reviews must-address items from previous review.
+     *
+     * @param mustAddress the items that must be addressed
+     * @return list of findings
+     */
+    @SuppressWarnings("unchecked")
+    private List<ReviewResultV1.ReviewFinding> reviewMustAddressItems(Object mustAddress) {
+        List<ReviewResultV1.ReviewFinding> findings = new ArrayList<>();
+
+        if (mustAddress instanceof List) {
+            List<?> items = (List<?>) mustAddress;
+
+            for (Object item : items) {
+                if (item instanceof ReviewResultV1.ReviewFinding) {
+                    ReviewResultV1.ReviewFinding finding = (ReviewResultV1.ReviewFinding) item;
+                    // Check if the same issue persists
+                    findings.add(new ReviewResultV1.ReviewFinding(
+                        "persistent-issue",
+                        finding.severity(),
+                        "Persistent Issue: " + finding.title(),
+                        finding.description() + " - This issue was not properly addressed",
+                        finding.file(),
+                        finding.line(),
+                        finding.failureScenario()
+                    ));
+                }
+            }
         }
 
         return findings;
@@ -273,49 +350,5 @@ public class ReviewerAgent implements Agent {
      */
     public void setTemperature(double temperature) {
         this.temperature = Math.max(0.0, Math.min(1.0, temperature));
-    }
-
-    /**
-     * Review report.
-     */
-    public record ReviewReport(
-        List<ReviewFinding> findings,
-        String summary
-    ) {
-        public boolean hasCriticalIssues() {
-            return findings.stream().anyMatch(f -> f.severity() == ReviewSeverity.CRITICAL);
-        }
-
-        public long getCriticalCount() {
-            return findings.stream().filter(f -> f.severity() == ReviewSeverity.CRITICAL).count();
-        }
-
-        public long getMajorCount() {
-            return findings.stream().filter(f -> f.severity() == ReviewSeverity.MAJOR).count();
-        }
-    }
-
-    /**
-     * Review finding.
-     */
-    public record ReviewFinding(
-        ReviewSeverity severity,
-        String title,
-        String description
-    ) {
-    }
-
-    /**
-     * Review severity enumeration.
-     */
-    public enum ReviewSeverity {
-        /** Critical issue that must be fixed */
-        CRITICAL,
-        /** Major issue that should be fixed */
-        MAJOR,
-        /** Minor issue or suggestion */
-        MINOR,
-        /** Informational note */
-        INFO
     }
 }

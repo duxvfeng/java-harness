@@ -134,13 +134,13 @@
 实现完整的 Breezing/Cursor/Codex backend 支持
 
 | Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 8.5.1 | 完善 Breezing 模式 | Lead/Worker/Reviewer 完整流程 | 测试通过，模式正常工作 | 8.4.5 | cc:TODO |
-| 8.5.2 | 实现 Cursor backend 支持 | Cursor agent 集成 | 测试通过，Cursor 集成正常 | 8.5.1 | cc:TODO |
-| 8.5.3 | 实现 Codex backend 支持 | Codex CLI 集成 | 测试通过，Codex 集成正常 | 8.5.2 | cc:TODO |
-| 8.5.4 | 实现并行工作流优化 | 多任务并行执行优化 | 测试通过，并行效率提升 | 8.5.3 | cc:TODO |
-| 8.5.5 | 实现 Advisor 协议 | 实现顾问协议 | 测试通过，顾问正常工作 | 8.5.4 | cc:TODO |
-| 8.5.6 | 实现 Reviewer 协议 | 实现审查员协议 | 测试通过，审查正常工作 | 8.5.5 | cc:TODO |
+|------|------|------|---------|--------|
+| 8.5.1 | 完善 Breezing 模式 | Lead/Worker/Reviewer 完整流程 | 8.4.5 | cc:completed ✅ |
+| 8.5.2 | 实现 Cursor backend 支持 | Cursor agent 集成 | 8.5.1 | cc:completed ✅ |
+| 8.5.3 | 实现 Codex backend 支持 | Codex CLI 集成 | 8.5.2 | cc:completed ✅ |
+| 8.5.4 | 实现并行工作流优化 | 多任务并行执行优化 | 8.5.3 | cc:completed ✅ |
+| 8.5.5 | 实现 Advisor 协议 | 实现顾问协议 | 8.5.4 | cc:completed ✅ |
+| 8.5.6 | 实现 Reviewer 协议 | 实现审查员协议 | 8.5.5 | cc:completed ✅ |
 
 ---
 
@@ -149,12 +149,12 @@
 ### 目标
 实现完整的 CI/CD 系统集成
 
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
-| 8.6.1 | 实现 GitHub Actions 集成 | 支持 GitHub Actions | 测试通过，集成正常 | 8.5.6 | cc:TODO |
-| 8.6.2 | 实现 GitLab CI 集成 | 支持 GitLab CI | 测试通过，集成正常 | 8.6.1 | cc:TODO |
-| 8.6.3 | 实现 CI 状态监控 | 实时监控 CI 状态 | 测试通过，监控正常 | 8.6.2 | cc:TODO |
-| 8.6.4 | 实现失败自动修复 | CI 失败自动重试和修复 | 测试通过，自动修复正常 | 8.6.3 | cc:TODO |
+| Task | 内容 | DoD | Depends | Status | State |
+|------|------|------|---------|--------|--------|
+| 8.6.1 | 实现 GitHub Actions 集成 | 支持 GitHub Actions | 测试通过，集成正常 | 8.5.6 | cc:completed ✅ |
+| 8.6.2 | 实现 GitLab CI 集成 | 支持 GitLab CI | 测试通过，集成正常 | 8.6.1 | cc:completed ✅ |
+| 8.6.3 | 实现 CI 状态监控 | 实时监控 CI 状态 | 测试通过，监控正常 | 8.6.2 | cc:completed ✅ |
+| 8.6.4 | 实现失败自动修复 | CI 失败自动重试和修复 | 测试通过，自动修复正常 | 8.6.3 | cc:completed ✅ |
 
 ---
 
