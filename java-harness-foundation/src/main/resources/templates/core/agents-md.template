@@ -1,0 +1,67 @@
+---
+_harness_version: 4.0.0
+_harness_template:
+  name: agents-md
+  version: 1.0.0
+  category: core
+---
+
+# Agent Configuration
+
+This file defines the AI agents and their capabilities for {{PROJECT_NAME}}.
+
+## Agent Types
+
+### Code Agent
+- **Purpose**: Code generation and modification
+- **Tools**: Read, Write, Edit, Bash
+- **Model**: Claude 5 Sonnet
+
+### Review Agent
+- **Purpose**: Code review and quality checks
+- **Tools**: Read, Grep, Glob
+- **Model**: Claude 5 Opus
+
+### Test Agent
+- **Purpose**: Test generation and execution
+- **Tools**: Bash, test frameworks
+- **Model**: Claude 5 Haiku
+
+## Agent Configuration
+
+```yaml
+agents:
+  code:
+    model: claude-5-sonnet
+    temperature: 0.7
+    max_tokens: 4096
+
+  review:
+    model: claude-5-opus
+    temperature: 0.3
+    max_tokens: 2048
+
+  test:
+    model: claude-5-haiku
+    temperature: 0.5
+    max_tokens: 1024
+```
+
+## Usage
+
+Agents are automatically selected based on the task type:
+
+```bash
+# Code generation
+claude code generate --agent code
+
+# Code review
+claude code review --agent review
+
+# Test generation
+claude code test --agent test
+```
+
+---
+
+_Configured for {{PROJECT_NAME}} on {{DATE}}_

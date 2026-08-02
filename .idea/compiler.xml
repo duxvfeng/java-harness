@@ -12,6 +12,7 @@
         <module name="java-harness-service" />
         <module name="java-harness-workflow" />
         <module name="java-harness-security" />
+        <module name="java-harness-ci" />
         <module name="java-harness-protocol" />
         <module name="java-harness-shared" />
         <module name="java-harness-cli" />

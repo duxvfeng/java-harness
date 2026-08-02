@@ -1,0 +1,69 @@
+---
+_harness_version: 4.0.0
+_harness_template:
+  name: rule-md
+  version: 1.0.0
+  category: rules
+_author: Claude Code Team
+---
+
+# {{RULE_NAME}}
+
+**规则ID**: {{RULE_ID}}
+**版本**: {{RULE_VERSION}}
+**状态**: {{RULE_STATUS}}
+**分类**: {{RULE_CATEGORY}}
+
+## 描述
+
+{{RULE_DESCRIPTION}}
+
+## 触发条件
+
+当满足以下条件时触发此规则：
+
+```yaml
+conditions:
+  - {{TRIGGER_CONDITION_1}}
+  - {{TRIGGER_CONDITION_2}}
+```
+
+## 行为
+
+### 正常行为
+{{NORMAL_BEHAVIOR}}
+
+### 异常行为
+{{ABNORMAL_BEHAVIOR}}
+
+## 配置选项
+
+```yaml
+{{CONFIG_KEY_1}}: {{CONFIG_VALUE_1}}
+{{CONFIG_KEY_2}}: {{CONFIG_VALUE_2}}
+```
+
+## 示例
+
+### 示例1：正常情况
+```
+{{EXAMPLE_1_NORMAL}}
+```
+
+### 示例2：违规情况
+```
+{{EXAMPLE_2_VIOLATION}}
+```
+
+## 修复建议
+
+{{FIX_SUGGESTION}}
+
+## 相关规则
+
+- {{RELATED_RULE_1}}
+- {{RELATED_RULE_2}}
+
+---
+
+_规则模板生成于 {{DATE}}，版本 {{RULE_VERSION}}_

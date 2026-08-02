@@ -1,0 +1,50 @@
+---
+_harness_version: 4.0.0
+_harness_template:
+  name: guardrail-rule
+  version: 1.0.0
+  category: rules
+---
+
+# R{{RULE_NUMBER}}: {{RULE_TITLE}}
+
+## 规则描述
+
+{{RULE_DESCRIPTION}}
+
+## 触发场景
+
+{{TRIGGER_SCENARIO}}
+
+## 检测逻辑
+
+```java
+{{DETECTION_LOGIC}}
+```
+
+## 拦截动作
+
+{{INTERCEPTION_ACTION}}
+
+## 配置参数
+
+| 参数 | 类型 | 默认值 | 描述 |
+|------|------|--------|------|
+| {{PARAM_1}} | {{TYPE_1}} | {{DEFAULT_1}} | {{DESC_1}} |
+| {{PARAM_2}} | {{TYPE_2}} | {{DEFAULT_2}} | {{DESC_2}} |
+
+## 例外情况
+
+{{EXCEPTION_CASES}}
+
+## 测试用例
+
+### 正常用例
+{{TEST_CASE_NORMAL}}
+
+### 违规用例
+{{TEST_CASE_VIOLATION}}
+
+---
+
+_规则 R{{RULE_NUMBER}} 版本 {{RULE_VERSION}} 创建于 {{DATE}}_

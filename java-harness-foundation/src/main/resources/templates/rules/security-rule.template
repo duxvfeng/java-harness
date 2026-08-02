@@ -1,0 +1,65 @@
+---
+_harness_version: 4.0.0
+_harness_template:
+  name: security-rule
+  version: 1.0.0
+  category: rules
+---
+
+# {{SECURITY_RULE_NAME}}
+
+## 安全等级
+**{{SECURITY_LEVEL}}**
+
+## 威胁类型
+{{THREAT_TYPE}}
+
+## 攻击向量
+
+{{ATTACK_VECTOR}}
+
+## 防护措施
+
+### 预防
+{{PREVENTION_MEASURES}}
+
+### 检测
+{{DETECTION_MEASURES}}
+
+### 响应
+{{RESPONSE_MEASURES}}
+
+## 影响范围
+
+- **数据安全**: {{DATA_SECURITY_IMPACT}}
+- **系统完整性**: {{SYSTEM_INTEGRITY_IMPACT}}
+- **用户隐私**: {{USER_PRIVACY_IMPACT}}
+
+## 合规性要求
+
+{{COMPLIANCE_REQUIREMENTS}}
+
+## 审计日志
+
+所有相关操作都会记录到审计日志中：
+
+```json
+{
+  "timestamp": "{{TIMESTAMP}}",
+  "rule": "{{RULE_ID}}",
+  "action": "{{ACTION}}",
+  "user": "{{USER}}",
+  "result": "{{RESULT}}"
+}
+```
+
+## 事件响应流程
+
+1. **检测**: {{DETECTION_STEP}}
+2. **验证**: {{VALIDATION_STEP}}
+3. **响应**: {{RESPONSE_STEP}}
+4. **恢复**: {{RECOVERY_STEP}}
+
+---
+
+_安全规则 {{SECURITY_RULE_NAME}} 版本 {{RULE_VERSION}}_
