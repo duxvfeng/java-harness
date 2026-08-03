@@ -23,8 +23,6 @@ import picocli.CommandLine.Command;
              CollectCommand.class,
              // Plan commands
              PlanGroupCommand.class,
-             PlanCommand.class,
-             PlansCommand.class,
              // Core commands
              SprintContractCommand.class,
              StatusCommand.class,
