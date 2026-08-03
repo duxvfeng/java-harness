@@ -15,6 +15,9 @@ public class CommandRegistry {
         // Register plan handler
         handlers.put("plan", new PlanHandler());
 
+        // Register work handler
+        handlers.put("work", new WorkHandler());
+
         // Register hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }
