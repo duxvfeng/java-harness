@@ -3,7 +3,7 @@
 ## Product Identity
 
 **Name**: Java Harness  
-**Version**: 4.0.0-java-SNAPSHOT  
+**Version**: 4.1.0-java  
 **Purpose**: Java implementation of Claude Code Harness v4  
 **Reference**: Go implementation at `D:\go-project\claude-code-harness`
 
@@ -17,20 +17,29 @@ Java Harness is the Java-native implementation of Claude Code Harness v4, provid
 
 The Java implementation MUST achieve functional parity with the Go version across these dimensions:
 
-1. **Hook System** (13 hooks)
-   - Pre-tool use guardrails
-   - Post-tool tampering detection  
-   - Permission management
-   - Session lifecycle hooks
-   - CI status integration
-   - Subagent tracking
+1. **Hook System** (16 hooks)
+   - Pre-tool use guardrails (pre-tool)
+   - Post-tool tampering detection (post-tool)
+   - Permission management (permission, permission-denied)
+   - Session lifecycle hooks (session-start, session-init, session-cleanup, session-monitor, session-summary)
+   - CI status integration (ci-status)
+   - Subagent tracking (subagent-start, subagent-stop)
+   - Other hooks (post-tool-failure, post-compact, notification, ask-user-question-normalize)
 
-2. **CLI Commands** (30+ commands)
-   - Core workflow commands (init, plan, work, review)
-   - Maintenance commands (doctor, validate, sync)
-   - Inbox management
-   - Memory operations
-   - CI integration
+2. **CLI Commands** (86 commands)
+   - **Hook命令组** (16个子命令): hook pre-tool, post-tool, permission, session-start, etc.
+   - **Evidence命令组**: evidence collect
+   - **Plans命令组**: plans check-deps
+   - **核心工作流命令**: plan, work, review, release, gen
+   - **维护命令**: doctor, validate, sync, init
+   - **会话管理**: session, session-register, session-unregister
+   - **审计命令**: self-audit, retired-alias
+   - **监控命令**: night-watch, mirror, plans-watcher
+   - **工作树命令**: wt, worktree-create, worktree-remove
+   - **CI命令**: ci-check, ci-status
+   - **内存命令**: mem, memory-bridge
+   - **收件箱命令**: inbox, inbox-check
+   - **其他命令**: sprint-contract, status, codex-loop, channels-wake, failure-codifier, impact-score, pre-compact, version, etc.
 
 3. **Workflow Engine**
    - YAML-based workflow definitions
@@ -46,7 +55,7 @@ The Java implementation MUST achieve functional parity with the Go version acros
    - Session management
 
 5. **Internal Packages** (47 packages)
-   - Guardrail enforcement
+   - Guardrail enforcement (27 rules: R01-R27)
    - Event handling
    - State persistence
    - Policy management
@@ -72,6 +81,7 @@ java-harness-tools         - Development tools
 
 - **Language**: Java 17+
 - **Build**: Maven
+- **CLI Framework**: picocli 4.7
 - **Testing**: JUnit 5
 - **JSON**: Jackson
 - **YAML**: SnakeYAML
