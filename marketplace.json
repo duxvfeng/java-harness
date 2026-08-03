@@ -1,0 +1,26 @@
+{
+  "name": "java-harness",
+  "owner": {
+    "name": "dxf",
+    "email": "395781596@qq.com"
+  },
+  "metadata": {
+    "description": "Java implementation of Claude Code Harness with Hook protocol and Guardrail support",
+    "version": "4.0.0"
+  },
+  "plugins": [
+    {
+      "name": "java-harness-plugin",
+      "source": {
+        "source": "url",
+        "url": "https://gitee.com/duxvfeng/java-harness.git"
+      },
+      "description": "Claude Code Harness Java plugin",
+      "version": "4.0.0",
+      "author": {
+        "name": "dxf",
+        "email": "395781596@qq.com"
+      }
+    }
+  ]
+}
