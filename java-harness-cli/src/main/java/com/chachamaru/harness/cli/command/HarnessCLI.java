@@ -1,5 +1,7 @@
 package com.chachamaru.harness.cli.command;
 
+import com.chachamaru.harness.cli.command.hook.HookCommand;
+import com.chachamaru.harness.cli.command.plan.PlanGroupCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -36,6 +38,8 @@ import picocli.CommandLine.Command;
              ChannelsWakeCommand.class,
              InboxCheckCommand.class,
              FailureCodifierCommand.class,
+             HookCommand.class,
+             PlanGroupCommand.class,
              CommandLine.HelpCommand.class
          })
 public class HarnessCLI implements Runnable {
