@@ -14,7 +14,7 @@ import picocli.CommandLine.Command;
  */
 @Command(name = "plans",
          mixinStandardHelpOptions = true,
-         subcommands = {},
+         subcommands = {CheckDepsCommand.class},
          description = "Plan subcommands")
 public class PlanGroupCommand implements Runnable {
     @Override

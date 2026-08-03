@@ -14,7 +14,7 @@ import picocli.CommandLine.Command;
  */
 @Command(name = "evidence",
          mixinStandardHelpOptions = true,
-         subcommands = {},
+         subcommands = {CollectCommand.class},
          description = "Evidence collection subcommands")
 public class EvidenceCommand implements Runnable {
     @Override
