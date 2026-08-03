@@ -1,5 +1,6 @@
 package com.chachamaru.harness.hook;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 /**
@@ -7,13 +8,27 @@ import java.util.Map;
  * Represents a hook event from Claude Code.
  */
 public class HookInput {
+    @JsonProperty("session_id")
     private String sessionId;
+
+    @JsonProperty("transcript_path")
     private String transcriptPath;
+
     private String cwd;
+
+    @JsonProperty("permission_mode")
     private String permissionMode;
+
+    @JsonProperty("hook_event_name")
     private String hookEventName;
+
+    @JsonProperty("tool_name")
     private String toolName;
+
+    @JsonProperty("tool_input")
     private Map<String, Object> toolInput;
+
+    @JsonProperty("plugin_root")
     private String pluginRoot;
 
     // Getters and setters
