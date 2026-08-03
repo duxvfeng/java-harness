@@ -1,0 +1,17 @@
+{
+  "meta" : {
+    "generatedAt" : "2026-08-03T11:15:20.616422400",
+    "generatedBy" : "ConfigSyncTool",
+    "project" : "java-harness",
+    "version" : "4.1.0-SNAPSHOT"
+  },
+  "permissions" : {
+    "bash" : "allow",
+    "read" : "allow",
+    "write" : "prompt"
+  },
+  "skills" : {
+    "autoUpdate" : true,
+    "enabled" : true
+  }
+}

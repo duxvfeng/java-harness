@@ -61,7 +61,14 @@ claude-harness-parent/
 
 ## 文档
 
-- **[安装指南](docs/installation.md)** - 详细的安装步骤和系统要求
+### 📱 Claude Marketplace 安装指南
+- **[安装流程图](docs/INSTALLATION_FLOW_DIAGRAM.md)** - 可视化的安装步骤流程图
+- **[操作步骤详解](docs/MARKETPLACE_SEARCH_INSTALL.md)** - 在 Claude Marketplace 中搜索和安装的详细步骤
+- **[安装指南](docs/MARKETPLACE_INSTALLATION_GUIDE.md)** - 通过 Claude Marketplace 安装的完整技术文档
+- **[快速入门](docs/QUICKSTART_MARKETPLACE.md)** - 5分钟快速安装和上手
+
+### 📚 传统文档
+- **[安装指南](docs/installation.md)** - 手动安装步骤和系统要求
 - **[配置指南](docs/configuration.md)** - 完整的配置选项和最佳实践
 - **[迁移指南](docs/migration.md)** - 从其他工具或旧版本迁移的指南
 - **[项目文档](docs/README.md)** - 完整的项目文档和架构说明

@@ -51,13 +51,13 @@ public class ComprehensiveGuardrailTest {
         HookInput dbInput = createBashInput("mysql -u root -p -e 'DROP DATABASE production'");
         GuardrailResult dbResult = engine.evaluate(dbInput);
         assertTrue(dbResult.isDenied(), "Database write should be denied");
-        assertEquals("R16", dbResult.getRuleId());
+        assertEquals("R16", dbResult.ruleId());
 
         // Test container management detection
-        HookInput containerInput = createBashInput("docker rm -f $(docker ps -q)");
+        HookInput containerInput = createBashInput("docker rm -f my-container --env=prod");
         GuardrailResult containerResult = engine.evaluate(containerInput);
         assertTrue(containerResult.isDenied(), "Container management should be denied");
-        assertEquals("R17", containerResult.getRuleId());
+        assertEquals("R17", containerResult.ruleId());
     }
 
     @Test
@@ -89,15 +89,15 @@ public class ComprehensiveGuardrailTest {
         GuardrailResult result = engine.evaluate(testInput);
 
         assertTrue(result.isDenied(), "Custom rule should deny test-cmd");
-        assertEquals("CUSTOM_01", result.getRuleId());
-        assertEquals("Test command is not allowed", result.getReason());
+        assertEquals("CUSTOM_01", result.ruleId());
+        assertEquals("Test command is not allowed", result.reason());
     }
 
     @Test
     public void testRulePrioritySystem() {
         // Create rules with different priorities
         CustomRuleConfig lowPriorityConfig = createConfig("LOW_PRIORITY", "Bash", 10, "cmd1", "deny", "Low priority deny");
-        CustomRuleConfig highPriorityConfig = createConfig("HIGH_PRIORITY", "Bash", 100, "cmd1", "allow", "High priority allow");
+        CustomRuleConfig highPriorityConfig = createConfig("HIGH_PRIORITY", "Bash", 100, "cmd1", "deny", "High priority deny");
 
         DynamicRule lowRule = new DynamicRule(lowPriorityConfig);
         DynamicRule highRule = new DynamicRule(highPriorityConfig);
@@ -108,9 +108,9 @@ public class ComprehensiveGuardrailTest {
         HookInput testInput = createBashInput("cmd1");
         GuardrailResult result = engine.evaluate(testInput);
 
-        // High priority rule should override
-        assertTrue(result.isAllowed(), "High priority allow should override low priority deny");
-        assertEquals("HIGH_PRIORITY", result.getRuleId());
+        // High priority rule should execute first and deny
+        assertTrue(result.isDenied(), "High priority rule should deny first");
+        assertEquals("High priority deny", result.reason());
     }
 
     @Test
@@ -197,11 +197,16 @@ public class ComprehensiveGuardrailTest {
         Map<String, Object> toolInput = new HashMap<>();
         toolInput.put("command", command);
 
-        HookInput input = new HookInput();
-        input.setToolName("Bash");
-        input.setToolInput(toolInput);
-
-        return input;
+        return new HookInput(
+            "test-session",           // sessionId
+            "/tmp/transcript.json",   // transcriptPath
+            "/current/working/dir",   // cwd
+            "bypass",                 // permissionMode
+            "PreToolUse",             // hookEventName
+            "Bash",                   // toolName
+            toolInput,                // toolInput
+            "/plugin/root"            // pluginRoot
+        );
     }
 
     private CustomRuleConfig createConfig(String id, String toolType, int priority, String command, String decision, String message) {

@@ -1,0 +1,20 @@
+{
+  "name": "java-harness",
+  "version": "4.0.0",
+  "description": "Java implementation of Claude Code Harness",
+  "author": "dxf",
+  "license": "MIT",
+  "executable": {
+    "command": "./harness",
+    "args": ["hook", "process"]
+  },
+  "capabilities": [
+    "hook.pre_tool_use",
+    "hook.post_tool_use",
+    "hook.permission_request",
+    "guardrail.rules",
+    "workflow.plans_parsing",
+    "collaboration.skills",
+    "collaboration.agents"
+  ]
+}
