@@ -30,6 +30,11 @@ public class CommandRegistry {
         handlers.put("sprint-contract", new SprintContractHandler());
         handlers.put("evidence", new EvidenceHandler());
 
+        // CLI utilities
+        handlers.put("version", new VersionHandler());
+        handlers.put("help", new HelpHandler());
+        handlers.put("completion", new CompletionHandler());
+
         // Hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }

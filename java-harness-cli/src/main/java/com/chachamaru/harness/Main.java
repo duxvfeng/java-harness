@@ -84,6 +84,11 @@ public class Main {
         System.err.println("    sprint-contract <command>  Manage sprint contracts");
         System.err.println("    evidence <command>     Collect and report evidence");
         System.err.println("");
+        System.err.println("  CLI Tools:");
+        System.err.println("    version                 Show version information");
+        System.err.println("    help [command]          Show help for command");
+        System.err.println("    completion <shell>     Generate shell completions");
+        System.err.println("");
         System.err.println("  Hooks:");
         System.err.println("    hook <type>             Execute hook handler");
         System.err.println("");
