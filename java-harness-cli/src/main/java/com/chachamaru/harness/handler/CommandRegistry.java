@@ -18,6 +18,9 @@ public class CommandRegistry {
         // Register work handler
         handlers.put("work", new WorkHandler());
 
+        // Register review handler
+        handlers.put("review", new ReviewHandler());
+
         // Register hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }
