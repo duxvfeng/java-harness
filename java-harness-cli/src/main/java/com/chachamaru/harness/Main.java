@@ -2,6 +2,9 @@ package com.chachamaru.harness;
 
 import com.chachamaru.harness.handler.CommandHandler;
 import com.chachamaru.harness.handler.CommandRegistry;
+import com.chachamaru.harness.skill.SkillExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 /**
@@ -11,6 +14,7 @@ import java.util.Arrays;
  * Usage: java-harness <command> [args...]
  */
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final String VERSION = "5.0.0-java";
 
     // 可测试的退出接口（用于依赖注入）
@@ -45,8 +49,24 @@ public class Main {
             return 0;
         }
 
+        // Try to get handler first
         CommandHandler handler = CommandRegistry.getHandler(command);
+
         if (handler == null) {
+            // No handler found, try routing to skill
+            String skillName = SkillExecutor.mapCommandToSkill(command);
+            if (skillName != null) {
+                logger.info("Routing to skill: {}", skillName);
+                boolean executed = SkillExecutor.executeSkill(skillName, commandArgs);
+                if (executed) {
+                    return 0;
+                } else {
+                    System.err.println("Error: Failed to execute skill: " + skillName);
+                    return 1;
+                }
+            }
+
+            // Not found in skills either
             System.err.println("Unknown command: " + command);
             printUsage();
             return 1;
@@ -66,12 +86,12 @@ public class Main {
         System.err.println("Usage: java-harness <command> [args...]");
         System.err.println("");
         System.err.println("Commands:");
-        System.err.println("  Core:");
-        System.err.println("    plan                    Generate plan prompt");
-        System.err.println("    work <taskID>           Execute work task");
-        System.err.println("    review <taskID>         Review completed work");
-        System.err.println("    release [--check]       Prepare release");
-        System.err.println("    sync [root]            Sync configuration");
+        System.err.println("  Core (route to skills):");
+        System.err.println("    plan                    Route to harness-plan skill");
+        System.err.println("    work                    Route to harness-work skill");
+        System.err.println("    review                  Route to harness-review skill");
+        System.err.println("    release                 Route to harness-release skill");
+        System.err.println("    sync                    Route to harness-sync skill");
         System.err.println("");
         System.err.println("  Utilities:");
         System.err.println("    init [root]            Initialize project");
@@ -79,7 +99,7 @@ public class Main {
         System.err.println("    doctor [--migration] [root]  Health check");
         System.err.println("    status [--json]        Show project status");
         System.err.println("");
-        System.err.println("  Generation:");
+        System.err.println("  Tools:");
         System.err.println("    gen [--prompt] [--output]  Generate content");
         System.err.println("    sprint-contract <command>  Manage sprint contracts");
         System.err.println("    evidence <command>     Collect and report evidence");
@@ -94,6 +114,8 @@ public class Main {
         System.err.println("");
         System.err.println("  --version, -v           Print version");
         System.err.println("  help, --help, -h        Show this help");
+        System.err.println();
+        System.err.println("Note: Core commands invoke corresponding skills (harness-*)");
     }
 
     // 设置测试用的退出处理器（仅供测试使用）

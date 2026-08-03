@@ -12,30 +12,30 @@ public class CommandRegistry {
     private static final Map<String, CommandHandler> handlers = new HashMap<>();
 
     static {
-        // Core command handlers
-        handlers.put("plan", new PlanHandler());
-        handlers.put("work", new WorkHandler());
-        handlers.put("review", new ReviewHandler());
-        handlers.put("release", new ReleaseHandler());
-        handlers.put("sync", new SyncHandler());
+        // Core workflow commands should route to skills, not handlers
+        // handlers.put("plan", new PlanHandler());
+        // handlers.put("work", new WorkHandler());
+        // handlers.put("review", new ReviewHandler());
+        // handlers.put("release", new ReleaseHandler());
+        // handlers.put("sync", new SyncHandler());
 
-        // Utility command handlers
+        // Utility command handlers (these remain as handlers)
         handlers.put("init", new InitHandler());
         handlers.put("doctor", new DoctorHandler());
         handlers.put("validate", new ValidateHandler());
         handlers.put("status", new StatusHandler());
 
-        // Content generation and management
+        // Content generation and management (these remain as handlers for now)
         handlers.put("gen", new GenHandler());
         handlers.put("sprint-contract", new SprintContractHandler());
         handlers.put("evidence", new EvidenceHandler());
 
-        // CLI utilities
+        // CLI utilities (these remain as handlers)
         handlers.put("version", new VersionHandler());
         handlers.put("help", new HelpHandler());
         handlers.put("completion", new CompletionHandler());
 
-        // Hook dispatcher
+        // Hook dispatcher (essential)
         handlers.put("hook", new HookDispatcher());
     }
 
