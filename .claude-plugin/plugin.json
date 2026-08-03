@@ -1,0 +1,29 @@
+{
+  "name": "java-harness",
+  "version": "4.1.0",
+  "description": "Java版本的Claude Code Harness，实现CLI Gateway核心功能，包括Hook协议处理、Guardrail安全引擎和快速响应机制。通过GraalVM编译为Native Image，实现<10ms的hook响应时间。",
+  "author": {
+    "name": "duxvfeng",
+    "url": "https://gitee.com/duxvfeng"
+  },
+  "homepage": "https://gitee.com/duxvfeng/java-harness",
+  "repository": "https://gitee.com/duxvfeng/java-harness.git",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "java",
+    "guardrail",
+    "hook-protocol",
+    "native-image",
+    "security",
+    "cli-gateway"
+  ],
+  "categories": ["security", "productivity"],
+  "skills": [
+    "./skills/"
+  ],
+  "workflows": [
+    "./workflows/"
+  ]
+}

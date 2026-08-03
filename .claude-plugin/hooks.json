@@ -1,0 +1,66 @@
+{
+  "description": "java-harness: automation hooks for Java development",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Review the following Java code change for security issues. Check if the change: (1) introduces hardcoded secrets or credentials, (2) leaves TODO/FIXME stubs without implementation, (3) has obvious security vulnerabilities (SQL injection, XSS, command injection, path traversal), (4) follows Java security best practices. If any critical security issue is found, return JSON with permissionDecision: 'deny' and permissionDecisionReason explaining the issue. If the change looks acceptable, return nothing (exit 0). Input: $ARGUMENTS",
+            "model": "haiku",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash(mvn*)|Bash(gradle*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[java-harness] Allowing Maven/Gradle build command: $COMMAND' >&2",
+            "timeout": 1
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[java-harness] Allowing Git command: $COMMAND' >&2",
+            "timeout": 1
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Perform a lightweight code review on the Java file that was just written/edited. Check for: (1) hardcoded secrets or API keys, (2) TODO/FIXME stubs left without implementation, (3) obvious Java security issues (SQL injection, XSS, command injection, path traversal), (4) basic code quality issues. This is a non-blocking advisory check. If issues found, include them in systemMessage. Input: $ARGUMENTS",
+            "model": "haiku",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[java-harness] Session started - Java security guardrails active' >&2",
+            "timeout": 1,
+            "once": true
+          }
+        ]
+      }
+    ]
+  }
+}
