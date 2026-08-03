@@ -29,7 +29,24 @@ import picocli.CommandLine.Command;
  */
 @Command(name = "hook",
          mixinStandardHelpOptions = true,
-         subcommands = {},
+         subcommands = {
+             PreToolCommand.class,
+             PostToolCommand.class,
+             PermissionCommand.class,
+             SessionStartCommand.class,
+             PostToolFailureCommand.class,
+             PostCompactCommand.class,
+             NotificationCommand.class,
+             PermissionDeniedCommand.class,
+             AskUserQuestionNormalizeCommand.class,
+             SessionInitCommand.class,
+             SessionCleanupCommand.class,
+             SessionMonitorCommand.class,
+             SessionSummaryCommand.class,
+             CiStatusHookCommand.class,
+             SubagentStartHookCommand.class,
+             SubagentStopHookCommand.class
+         },
          description = "Hook subcommands for processing Claude Code hook events")
 public class HookCommand implements Runnable {
     @Override
