@@ -12,14 +12,8 @@ public class CommandRegistry {
     private static final Map<String, CommandHandler> handlers = new HashMap<>();
 
     static {
-        // Commands will be registered here as we implement them
-        // For now, register a placeholder for "plan"
-        handlers.put("plan", new CommandHandler() {
-            @Override
-            public void execute(String[] args) {
-                System.out.println("Plan handler placeholder");
-            }
-        });
+        // Register plan handler
+        handlers.put("plan", new PlanHandler());
 
         // Register hook dispatcher
         handlers.put("hook", new HookDispatcher());
