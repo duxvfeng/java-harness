@@ -25,6 +25,11 @@ public class CommandRegistry {
         handlers.put("validate", new ValidateHandler());
         handlers.put("status", new StatusHandler());
 
+        // Content generation and management
+        handlers.put("gen", new GenHandler());
+        handlers.put("sprint-contract", new SprintContractHandler());
+        handlers.put("evidence", new EvidenceHandler());
+
         // Hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }
