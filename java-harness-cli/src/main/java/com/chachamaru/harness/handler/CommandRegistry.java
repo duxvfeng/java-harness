@@ -24,6 +24,9 @@ public class CommandRegistry {
         // Register release handler
         handlers.put("release", new ReleaseHandler());
 
+        // Register sync handler
+        handlers.put("sync", new SyncHandler());
+
         // Register hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }
