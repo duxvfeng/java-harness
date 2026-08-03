@@ -1,5 +1,6 @@
 package com.chachamaru.harness.handler;
 
+import com.chachamaru.harness.hook.HookDispatcher;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +20,9 @@ public class CommandRegistry {
                 System.out.println("Plan handler placeholder");
             }
         });
+
+        // Register hook dispatcher
+        handlers.put("hook", new HookDispatcher());
     }
 
     /**
