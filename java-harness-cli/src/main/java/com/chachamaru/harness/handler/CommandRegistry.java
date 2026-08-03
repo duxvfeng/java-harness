@@ -12,22 +12,20 @@ public class CommandRegistry {
     private static final Map<String, CommandHandler> handlers = new HashMap<>();
 
     static {
-        // Register plan handler
+        // Core command handlers
         handlers.put("plan", new PlanHandler());
-
-        // Register work handler
         handlers.put("work", new WorkHandler());
-
-        // Register review handler
         handlers.put("review", new ReviewHandler());
-
-        // Register release handler
         handlers.put("release", new ReleaseHandler());
-
-        // Register sync handler
         handlers.put("sync", new SyncHandler());
 
-        // Register hook dispatcher
+        // Utility command handlers
+        handlers.put("init", new InitHandler());
+        handlers.put("doctor", new DoctorHandler());
+        handlers.put("validate", new ValidateHandler());
+        handlers.put("status", new StatusHandler());
+
+        // Hook dispatcher
         handlers.put("hook", new HookDispatcher());
     }
 
