@@ -13,10 +13,23 @@ import java.util.Arrays;
 public class Main {
     private static final String VERSION = "5.0.0-java";
 
+    // 可测试的退出接口（用于依赖注入）
+    interface ExitHandler {
+        void exit(int code);
+    }
+
+    private static ExitHandler exitHandler = code -> System.exit(code);
+
     public static void main(String[] args) {
+        int exitCode = execute(args);
+        exitHandler.exit(exitCode);
+    }
+
+    // 可测试的执行方法
+    static int execute(String[] args) {
         if (args.length == 0) {
             printUsage();
-            System.exit(1);
+            return 1;
         }
 
         String command = args[0];
@@ -24,27 +37,28 @@ public class Main {
 
         if (command.equals("--version") || command.equals("-v")) {
             System.out.println("java-harness " + VERSION);
-            System.exit(0);
+            return 0;
         }
 
         if (command.equals("help") || command.equals("--help") || command.equals("-h")) {
             printUsage();
-            System.exit(0);
+            return 0;
         }
 
         CommandHandler handler = CommandRegistry.getHandler(command);
         if (handler == null) {
             System.err.println("Unknown command: " + command);
             printUsage();
-            System.exit(1);
+            return 1;
         }
 
         try {
             handler.execute(commandArgs);
+            return 0;
         } catch (Exception e) {
             System.err.println("Error executing command: " + e.getMessage());
             e.printStackTrace();
-            System.exit(1);
+            return 1;
         }
     }
 
@@ -64,5 +78,10 @@ public class Main {
         System.err.println("");
         System.err.println("  --version, -v           Print version");
         System.err.println("  help, --help, -h        Show this help");
+    }
+
+    // 设置测试用的退出处理器（仅供测试使用）
+    static void setExitHandlerForTesting(ExitHandler handler) {
+        exitHandler = handler;
     }
 }
