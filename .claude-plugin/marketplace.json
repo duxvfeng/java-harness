@@ -1,30 +1,7 @@
 {
   "name": "java-harness",
-  "version": "4.0.0",
-  "type": "marketplace",
-  "displayName": "Java Harness",
-  "description": "Java implementation of Claude Code Harness with Hook protocol and Guardrail support",
-  "repository": "https://gitee.com/duxvfeng/java-harness.git",
-  "tags": ["java", "harness", "hook", "guardrail", "workflow"],
-  "categories": ["development-tools", "code-quality"],
-  "license": "MIT",
   "author": {
-    "name": "dxf",
-    "email": "395781596@qq.com"
   },
   "homepage": "https://gitee.com/duxvfeng/java-harness",
-  "downloads": {
-    "windows": {
-      "url": "https://github.com/your-org/java-harness/releases/download/v4.0.0/harness-windows-amd64.exe",
-      "checksum": "sha256:placeholder"
-    },
-    "linux": {
-      "url": "https://github.com/your-org/java-harness/releases/download/v4.0.0/harness-linux-amd64",
-      "checksum": "sha256:placeholder"
-    },
-    "macos": {
-      "url": "https://github.com/your-org/java-harness/releases/download/v4.0.0/harness-darwin-amd64",
-      "checksum": "sha256:placeholder"
     }
   }
-}

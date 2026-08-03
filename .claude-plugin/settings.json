@@ -1,17 +1,61 @@
 {
-  "meta" : {
-    "generatedAt" : "2026-08-03T11:15:20.616422400",
-    "generatedBy" : "ConfigSyncTool",
-    "project" : "java-harness",
-    "version" : "4.1.0-SNAPSHOT"
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "description": "Java Harness security and permissions configuration",
+  "env": {
+    "JAVA_HARNES_ENABLE_GUARDRAILS": "true",
+    "JAVA_HARNESS_RESPONSE_TIMEOUT": "10000"
   },
-  "permissions" : {
-    "bash" : "allow",
-    "read" : "allow",
-    "write" : "prompt"
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(mvn test:*)",
+      "Bash(mvn run test:*)",
+      "Bash(mvn run lint:*)",
+      "Bash(mvn run build:*)",
+      "Bash(gradle test:*)",
+      "Bash(gradle run test:*)",
+      "Bash(gradle run lint:*)",
+      "Bash(gradle run build:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)",
+      "Bash(mongod:*)",
+      "Bash(mongo:*)",
+      "Edit(.claude/settings*)",
+      "Write(.claude/settings*)",
+      "Edit(.claude-plugin/settings*)",
+      "Write(.claude-plugin/settings*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*id_rsa*)",
+      "Read(**/*id_ed25519*)",
+      "Read(**/.aws/**)",
+      "Read(**/.ssh/**)",
+      "Read(**/.npmrc)"
+    ],
+    "ask": [
+      "Bash(rm -r:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git clean -fx:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)"
+    ]
   },
-  "skills" : {
-    "autoUpdate" : true,
-    "enabled" : true
   }
 }
