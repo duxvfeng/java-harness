@@ -10,6 +10,7 @@ D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harn
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\orchestration\OrchestrationPlan.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\framework\Skill.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\framework\AgentResult.java
+D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\ReviewResult.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\framework\AgentExecutor.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\orchestration\ExecutionResult.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\framework\SkillRegistry.java
@@ -26,6 +27,7 @@ D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harn
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\framework\AgentType.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\engine\ConditionExpressionEvaluator.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\framework\SkillResult.java
+D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\ReviewSkill.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\model\Constraints.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\core\AdvisorAgent.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\execution\ParallelExecutor.java
@@ -35,6 +37,7 @@ D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harn
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\recovery\AbortStrategy.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\framework\SkillNotFoundException.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\framework\AgentRegistry.java
+D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\WorkResult.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\recovery\RecoveryStrategy.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\engine\OptimizedParallelExecutor.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\integration\WorkflowIntegrationExample.java
@@ -48,6 +51,7 @@ D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harn
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\engine\WorkflowExecutionResult.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\agent\framework\AgentValidationException.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\model\ProjectAnalyzer.java
+D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\WorkSkill.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\orchestration\TaskOrchestrator.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\model\PlansMd.java
 D:\project\java-harness\.claude\worktrees\java-harness-complete-parity\java-harness-workflow\src\main\java\com\chachamaru\harness\workflow\skill\core\model\SpecDelta.java
