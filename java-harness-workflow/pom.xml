@@ -46,6 +46,13 @@
             <version>2.2</version>
         </dependency>
 
+        <!-- TOMLJ for TOML parsing -->
+        <dependency>
+            <groupId>org.tomlj</groupId>
+            <artifactId>tomlj</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
