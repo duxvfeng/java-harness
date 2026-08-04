@@ -298,61 +298,270 @@ Process process = pb.start();
 
 ---
 
-## 测试策略
+## 测试策略（从 Go 版本移植）
 
-### 单元测试
+### ReleaseTrain 核心算法测试
 
-每个类独立测试：
+**测试用例列表**（与 Go 版本完全对等）：
 
-- `SyncSkillTest` - 测试完整同步流程
-- `ReleaseSkillTest` - 测试发布检查逻辑
-- `ChangelogParserTest` - 测试 CHANGELOG 解析
-- `ReleaseTrainTest` - 测试发布列车算法（从 Go 移植测试用例）
-- `ConfigReaderTest` - 测试 TOML 解析
-- `DriftDetectorTest` - 测试漂移检测
+1. **TestEvaluate_Candidate** - 基本候选发布检测
+   - 输入：8 天前的 tag，`### Added` 标题
+   - 预期：`state = "candidate"`, `bump = "minor"`, `thresholdDays = 7`
+
+2. **TestEvaluate_None** - 不满足发布条件
+   - 输入：1 天前的 tag，`### Fixed` 标题
+   - 预期：`state = "none"`（未超过阈值）
+
+3. **TestEvaluate_NotApplicable** - 不适用场景
+   - `no Unreleased heading` - 无 `[Unreleased]` 部分
+   - `no semver tag` - 无 tag
+   - 预期：`state = "not-applicable"`
+
+4. **TestEvaluate_SecurityShortensThreshold** - 安全修复缩短阈值
+   - `3 days old with Security` - 3 天 + Security → `candidate`（阈值 2 天）
+   - `1 day old with Security` - 1 天 + Security → `none`（未超过 2 天阈值）
+   - 预期：`thresholdDays = 2`, `bump = "patch"`
+
+5. **TestEvaluate_BreakingTriggersImmediately** - Breaking 变化立即触发
+   - `Breaking short form` - `### Breaking`
+   - `Breaking Changes long form` - `### Breaking Changes`
+   - 预期：`state = "candidate"`, `bump = "major"`（0 天也触发）
+
+6. **TestEvaluate_EmptyUnreleasedIsNone** - 空 Unreleased 不触发
+   - 输入：30 天前的 tag，但 `[Unreleased]` 无子标题
+   - 预期：`state = "none"`（无标题 = 无变化）
+
+7. **TestEvaluate_BumpLadder** - Bump 类型阶梯
+   - `Removed` → `major`
+   - `Deprecated` → `minor`
+   - `Fixed` + `Changed` → `patch`
+
+**测试覆盖率目标**：
+- 100% 覆盖 ReleaseTrain 核心逻辑
+- 所有边界条件（0 天、1 天、7 天、8 天、30 天）
+- 所有标题组合（Breaking/Removed/Added/Deprecated/Fixed/Changed/Security）
+- 三态输出（candidate/none/not-applicable）
+
+### SyncSkill 测试
+
+**测试用例列表**（与 Go 版本对等）：
+
+1. **TestSync_GeneratesPluginJSON** - plugin.json 生成
+   - 验证：name, version, description, author, homepage, skills 字段
+   - 关键断言：`skills = ["./skills/"]`（v4.0.3 修复）
+
+2. **TestSync_GeneratesSettingsJSON** - settings.json 生成
+   - 验证：agent, env, permissions, sandbox 映射正确
+   - 验证：嵌套结构（permissions.allow/deny/ask, sandbox.network/filesystem）
+
+3. **TestSync_CopiesHooksJSON** - hooks.json 复制
+   - 验证：hooks/hooks.json → .claude-plugin/hooks.json
+   - 验证：JSON 有效性
+
+4. **TestSync_DriftDetection** - 配置漂移检测
+   - 模拟：手动编辑 settings.json
+   - 验证：警告输出到 stderr
+   - 验证：deniedDomains 数量变化检测
+
+5. **TestSync_MinimalConfig** - 最小配置
+   - 仅必填字段
+   - 验证：生成的 JSON 只包含非空字段
+
+6. **TestSync_ErrorHandling** - 错误处理
+   - `harness.toml 不存在` → 退出并显示错误
+   - `TOML 解析失败` → 详细错误信息
+   - `hooks.json 无效` → 错误并继续
+
+### ChangelogParser 测试
+
+1. **TestExtractUnreleased** - 提取 Unreleased 内容
+   - 标准格式
+   - 无 Unreleased 部分
+   - Unreleased 后面有版本标签
+
+2. **TestCollectHeadings** - 收集子标题
+   - 单个标题
+   - 多个标题
+   - 无标题（纯文本）
+
+3. **TestHeadingPrefix** - 标题前缀匹配
+   - `Breaking` 匹配 `Breaking Changes`
+   - `Security` 匹配 `Security Fix`
+
+### TagResolver 测试
+
+1. **TestResolveLatestSemverTag** - 解析最新 tag
+   - 多个 tag，选择最新（按版本号排序）
+   - 排除 `claude-code-harness--v*` 格式
+   - 无 tag → 返回 `hasTag = false`
+
+2. **TestTagDateParsing** - tag 日期解析
+   - 解析 git `log --format=%cI` 输出
+   - RFC3339 格式
 
 ### 集成测试
 
-- `SyncIntegrationTest` - 真实文件系统测试
-- `ReleaseIntegrationTest` - 真实 Git 仓库测试
+1. **SyncIntegrationTest** - 真实文件系统
+   - 临时目录创建
+   - 完整 sync 流程
+   - 文件内容验证
 
-### 测试覆盖重点
+2. **ReleaseIntegrationTest** - 真实 Git 仓库
+   - 临时 Git 仓库
+   - 创建 tag 和 CHANGELOG.md
+   - 验证 ReleaseSkill 输出
 
-- 配置漂移检测逻辑
-- 各种 bump 类型估算（major/minor/patch）
-- 边界条件：
-  - 无 tag
-  - 无 changelog
-  - 空 `[Unreleased]` 内容
-  - Breaking 变化
-  - Security 标题（2 天阈值）
+### 测试工具方法
+
+```java
+// 测试辅助类（参考 Go 版本）
+class TestHelpers {
+    static Path createTempProjectDir(String tomlContent) { ... }
+    static Map<String, Object> readJSON(Path path) { ... }
+    static Instant daysAgo(Instant now, int days) { ... }
+    static String sampleChangelogHeader() {
+        return "# Changelog\n\n## [Unreleased]\n";
+    }
+}
+```
 
 ---
 
-## 与 Go 版本的对等性
+## 与 Go 版本的对等性验证
 
-### 功能对等
+### 功能对等矩阵
 
-| Go 功能 | Java 对等 | 状态 |
-|---------|-----------|------|
-| `harness sync` | `SyncSkill` | 待实现 |
-| 生成 plugin.json | `PluginGenerator` | 待实现 |
-| 同步 hooks.json | `HooksSyncer` | 待实现 |
-| 生成 settings.json | `SettingsGenerator` | 待实现 |
-| 配置漂移检测 | `DriftDetector` | 待实现 |
-| `harness release --check` | `ReleaseSkill` | 待实现 |
-| 发布列车算法 | `ReleaseTrain` | 待实现 |
+| Go 功能 | Java 对等 | 实现类 | 验证方式 |
+|---------|-----------|--------|----------|
+| `runSync()` 主流程 | `SyncSkill.execute()` | SyncSkill | 集成测试 |
+| 解析 harness.toml | `ConfigReader.parse()` | ConfigReader | 单元测试 |
+| 生成 plugin.json | `PluginGenerator.generate()` | PluginGenerator | TestSync_GeneratesPluginJSON |
+| 同步 hooks.json | `HooksSyncer.sync()` | HooksSyncer | TestSync_CopiesHooksJSON |
+| 生成 settings.json | `SettingsGenerator.generate()` | SettingsGenerator | TestSync_GeneratesSettingsJSON |
+| 检测配置漂移 | `DriftDetector.check()` | DriftDetector | TestSync_DriftDetection |
+| `runReleaseCheck()` | `ReleaseSkill.execute()` | ReleaseSkill | 集成测试 |
+| `ReleaseTrain.Evaluate()` | `ReleaseTrain.evaluate()` | ReleaseTrain | 7 个核心测试用例 |
+| `extractUnreleased()` | `ChangelogParser.extractUnreleased()` | ChangelogParser | TestExtractUnreleased |
+| `collectHeadings()` | `ChangelogParser.collectHeadings()` | ChangelogParser | TestCollectHeadings |
+| `estimateBump()` | `BumpEstimator.estimate()` | BumpEstimator | TestEvaluate_BumpLadder |
+| `resolveLatestSemverTag()` | `TagResolver.resolveLatest()` | TagResolver | TestResolveLatestSemverTag |
+| `tagAgeDays()` | `TagResolver.tagAgeDays()` | TagResolver | 内联验证 |
+
+### 算法对等性保证
+
+#### ReleaseTrain 核心算法（与 Go 版本逐行对等）
+
+```java
+// Go 版本逻辑（伪代码）
+if (!hasUnreleased(changelog) || !hasTag) {
+    return Result{State: StateNotApplicable}
+}
+
+headings = collectHeadings(changelog)
+if (headings.isEmpty()) {
+    return Result{State: StateNone}
+}
+
+threshold = hasHeadingPrefix(headings, "Security") ? 2 : 7
+tagAge = now - lastTagDate
+hasBreaking = hasBreakingHeading(headings)
+
+triggered = false
+reasons = []
+
+if (hasBreaking) {
+    triggered = true
+    reasons.add("breaking")
+}
+if (tagAge >= threshold) {
+    triggered = true
+    reasons.add("tag_age")
+}
+
+if (!triggered) {
+    return Result{State: StateNone, TagAgeDays: tagAge, ThresholdDays: threshold}
+}
+
+bump = estimateBump(headings)
+return Result{State: StateCandidate, Bump: bump, Reasons: reasons, ...}
+```
+
+**Java 版本将完全复制此逻辑**，确保：
+- 条件判断顺序一致
+- 阈值计算一致（7 天 / 2 天）
+- 原因收集顺序一致
+- Bump 估算规则一致
+
+#### Bump 估算规则对等
+
+| 标题前缀 | Bump 类型 | 测试用例 |
+|---------|-----------|----------|
+| `Breaking*` | major | TestEvaluate_BreakingTriggersImmediately |
+| `Removed` | major | TestEvaluate_BumpLadder |
+| `Added` | minor | TestEvaluate_Candidate |
+| `Deprecated` | minor | TestEvaluate_BumpLadder |
+| `Fixed` | patch | TestEvaluate_None |
+| `Changed` | patch | TestEvaluate_BumpLadder |
+| `Security` | patch | TestEvaluate_SecurityShortensThreshold |
+
+### 测试用例对等性
+
+**从 Go 版本移植的测试用例**：
+
+| Go 测试用例 | Java 测试用例 | 覆盖场景 |
+|-------------|--------------|----------|
+| `TestEvaluate_Candidate` | `ReleaseTrainTest.testCandidate_Candidate` | 基本候选发布 |
+| `TestEvaluate_None` | `ReleaseTrainTest.testEvaluate_None` | 未超过阈值 |
+| `TestEvaluate_NotApplicable/noUnreleased` | `ReleaseTrainTest.testNotApplicable_NoUnreleased` | 无 Unreleased |
+| `TestEvaluate_NotApplicable/noSemverTag` | `ReleaseTrainTest.testNotApplicable_NoTag` | 无 tag |
+| `TestEvaluate_SecurityShortensThreshold/3days` | `ReleaseTrainTest.testSecurity_ShortensThreshold_3days` | Security + 3 天 |
+| `TestEvaluate_SecurityShortensThreshold/1day` | `ReleaseTrainTest.testSecurity_ShortensThreshold_1day` | Security + 1 天 |
+| `TestEvaluate_BreakingTriggersImmediately/Breaking` | `ReleaseTrainTest.testBreaking_ShortForm` | Breaking 短格式 |
+| `TestEvaluate_BreakingTriggersImmediately/BreakingChanges` | `ReleaseTrainTest.testBreaking_LongForm` | Breaking 长格式 |
+| `TestEvaluate_EmptyUnreleasedIsNone` | `ReleaseTrainTest.testEmptyUnreleased_None` | 空 Unreleased |
+| `TestEvaluate_BumpLadder/Removed` | `ReleaseTrainTest.testBumpLadder_Removed_Major` | Removed → major |
+| `TestEvaluate_BumpLadder/Deprecated` | `ReleaseTrainTest.testBumpLadder_Deprecated_Minor` | Deprecated → minor |
+| `TestEvaluate_BumpLadder/FixedAndChanged` | `ReleaseTrainTest.testBumpLadder_Fixed_Patch` | Fixed → patch |
+
+**总计**：12 个核心测试用例，覆盖所有决策路径
 
 ### 输出格式对等
 
-Go 版本输出：
+#### ReleaseSkill 输出
+
+Go 版本：
 ```
 RELEASE_CANDIDATE: bump=patch tag=v1.2.3 age_days=8 threshold_days=7 reasons=tag_age
 ```
 
-Java 版本输出（完全一致）：
+Java 版本（完全一致）：
+```java
+// ReleaseResult.formatLine()
+String.format("RELEASE_CANDIDATE: bump=%s tag=%s age_days=%d threshold_days=%d reasons=%s",
+    bump, tagName, tagAgeDays, thresholdDays, String.join(",", reasons))
 ```
-RELEASE_CANDIDATE: bump=patch tag=v1.2.3 age_days=8 threshold_days=7 reasons=tag_age
+
+#### SyncSkill 输出
+
+Go 版本：
+```
+harness sync: done
+  wrote .claude-plugin/plugin.json
+  wrote .claude-plugin/settings.json (copied from hooks/hooks.json)
+  wrote .claude-plugin/hooks.json
+  [WARN] .claude-plugin/settings.json drift detected — sync rewrote the file.
+```
+
+Java 版本（一致）：
+```java
+// SyncResult
+System.out.println("harness sync: done");
+for (String file : generatedFiles) {
+    System.out.println("  wrote " + file);
+}
+for (String warning : driftWarnings) {
+    System.err.println("  [WARN] " + warning);
+}
 ```
 
 ---
