@@ -5,6 +5,9 @@ import com.chachamaru.harness.workflow.sync.DriftDetector;
 import com.chachamaru.harness.workflow.sync.HooksSyncer;
 import com.chachamaru.harness.workflow.sync.SettingsGenerator;
 import com.chachamaru.harness.workflow.sync.SyncConfig;
+import com.chachamaru.harness.workflow.skill.framework.Skill;
+import com.chachamaru.harness.workflow.skill.framework.SkillContext;
+import com.chachamaru.harness.workflow.skill.framework.SkillExecutionException;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,18 +49,46 @@ import java.util.List;
  * @see SyncResult
  * @since 4.0.0-java
  */
-public class SyncSkill {
+public class SyncSkill implements Skill {
+    private static final String SKILL_ID = "sync";
+    private static final String SKILL_NAME = "Sync Skill";
+    private static final String VERSION = "1.0.0-java";
+
+    @Override
+    public String getSkillId() {
+        return SKILL_ID;
+    }
+
+    @Override
+    public String getSkillName() {
+        return SKILL_NAME;
+    }
+
+    @Override
+    public String getVersion() {
+        return VERSION;
+    }
+
+    @Override
+    public String getDescription() {
+        return "从 harness.toml（SSOT）生成 Claude Code 插件配置文件";
+    }
 
     /**
      * 执行完整的同步流程
      *
-     * @param projectRoot 项目根目录
+     * @param context 技能执行上下文，必须包含 projectRoot
      * @return 同步结果，包含生成的文件列表和漂移警告
-     * @throws SyncException 如果同步失败（配置文件不存在、解析失败等）
+     * @throws SkillExecutionException 如果同步失败（配置文件不存在、解析失败等）
      */
-    public static SyncResult execute(File projectRoot) throws SyncException {
+    @Override
+    public Object execute(SkillContext context) throws SkillExecutionException {
+        // 从上下文中获取项目根目录
+        File projectRoot = context.getProjectRoot().toFile();
+
         if (projectRoot == null || !projectRoot.exists()) {
-            throw new SyncException("项目根目录不存在: " + projectRoot);
+            throw new SkillExecutionException(SKILL_ID, null,
+                    "项目根目录不存在: " + projectRoot, null);
         }
 
         SyncResult.Builder resultBuilder = SyncResult.builder();
@@ -67,9 +98,10 @@ public class SyncSkill {
             // 1. 查找并读取 harness.toml
             Path tomlPath = findHarnessToml(projectRoot);
             if (tomlPath == null) {
-                throw new SyncException("未找到 harness.toml 文件。已搜索路径: " +
+                throw new SkillExecutionException(SKILL_ID, null,
+                    "未找到 harness.toml 文件。已搜索路径: " +
                     projectRoot.toPath().resolve("harness.toml") + ", " +
-                    projectRoot.toPath().resolve("src/test/resources/harness.toml"));
+                    projectRoot.toPath().resolve("src/test/resources/harness.toml"), null);
             }
 
             // 2. 解析配置
@@ -115,7 +147,7 @@ public class SyncSkill {
             }
 
         } catch (IOException e) {
-            throw new SyncException("同步失败: " + e.getMessage(), e);
+            throw new SkillExecutionException(SKILL_ID, null, "同步失败: " + e.getMessage(), e);
         }
 
         return resultBuilder.build();
@@ -146,26 +178,5 @@ public class SyncSkill {
         }
 
         return null;
-    }
-
-    /**
-     * 同步异常 - 表示同步操作失败
-     */
-    public static class SyncException extends Exception {
-        private final String errorCode;
-
-        public SyncException(String message) {
-            super(message);
-            this.errorCode = "SYNC_ERROR";
-        }
-
-        public SyncException(String message, Throwable cause) {
-            super(message, cause);
-            this.errorCode = "SYNC_ERROR";
-        }
-
-        public String getErrorCode() {
-            return errorCode;
-        }
     }
 }
