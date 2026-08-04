@@ -6,6 +6,7 @@ com\chachamaru\harness\workflow\skill\core\model\AcceptanceCriteria.class
 com\chachamaru\harness\workflow\skill\core\ReviewSkill.class
 com\chachamaru\harness\workflow\recovery\RecoveryStrategy$RecoveryException.class
 com\chachamaru\harness\workflow\agent\framework\AgentResult$Builder.class
+com\chachamaru\harness\workflow\skill\core\SyncResult.class
 com\chachamaru\harness\workflow\agent\framework\AgentStatus$4.class
 com\chachamaru\harness\workflow\parser\RegexPlansParser.class
 com\chachamaru\harness\workflow\recovery\RecoveryStrategy.class
@@ -19,6 +20,7 @@ com\chachamaru\harness\workflow\engine\ParallelExecutionConfig.class
 com\chachamaru\harness\workflow\agent\core\WorkerAgent$1.class
 com\chachamaru\harness\workflow\agent\framework\AgentConfig$Builder.class
 com\chachamaru\harness\workflow\agent\framework\AgentLifecycle.class
+com\chachamaru\harness\workflow\sync\SyncConfig$AgentConfig.class
 com\chachamaru\harness\workflow\loader\ExpressionEvaluator.class
 com\chachamaru\harness\workflow\orchestration\ExecutionResult$ExecutionStatus.class
 com\chachamaru\harness\workflow\orchestration\ExecutionResult$TaskOutcome$TaskOutcomeStatus.class
@@ -37,9 +39,11 @@ com\chachamaru\harness\workflow\model\Status.class
 com\chachamaru\harness\workflow\skill\core\model\SpecChange$Builder.class
 com\chachamaru\harness\workflow\loader\ExpressionEvaluator$OrExpression.class
 com\chachamaru\harness\workflow\skill\core\model\ValidationResult$Builder.class
+com\chachamaru\harness\workflow\sync\SyncConfig$NetworkConfig.class
 com\chachamaru\harness\workflow\parser\PlansParser.class
 com\chachamaru\harness\workflow\recovery\FourPhaseRecovery$1.class
 com\chachamaru\harness\workflow\agent\framework\Agent.class
+com\chachamaru\harness\workflow\sync\SettingsGenerator.class
 com\chachamaru\harness\workflow\loader\ExpressionEvaluator$ExpressionException.class
 com\chachamaru\harness\workflow\skill\core\WorkResult.class
 com\chachamaru\harness\workflow\loader\WorkflowException.class
@@ -51,10 +55,12 @@ com\chachamaru\harness\workflow\agent\framework\AgentValidationException.class
 com\chachamaru\harness\workflow\agent\framework\AgentContext.class
 com\chachamaru\harness\workflow\agent\core\WorkerAgent$WorkStrategy.class
 com\chachamaru\harness\workflow\skill\core\model\PlanningIntent.class
+com\chachamaru\harness\workflow\skill\core\SyncSkill$SyncException.class
 com\chachamaru\harness\workflow\model\Workflow$WorkflowOutput.class
 com\chachamaru\harness\workflow\agent\framework\AgentType.class
 com\chachamaru\harness\workflow\skill\core\model\PlanningIntent$Builder.class
 com\chachamaru\harness\workflow\skill\core\model\SpecDelta.class
+com\chachamaru\harness\workflow\sync\HooksSyncer.class
 com\chachamaru\harness\workflow\engine\WorkflowEngine.class
 com\chachamaru\harness\workflow\skill\framework\SkillResult$Builder.class
 com\chachamaru\harness\workflow\skill\framework\Skill.class
@@ -66,10 +72,13 @@ com\chachamaru\harness\workflow\recovery\FourPhaseRecovery.class
 com\chachamaru\harness\workflow\model\Workflow$StepInput.class
 com\chachamaru\harness\workflow\loader\ExpressionEvaluator$LiteralExpression.class
 com\chachamaru\harness\workflow\recovery\AbortStrategy.class
+com\chachamaru\harness\workflow\sync\DriftDetector.class
+com\chachamaru\harness\workflow\skill\core\SyncSkill.class
 com\chachamaru\harness\workflow\skill\core\model\ProjectContext.class
 com\chachamaru\harness\workflow\skill\core\ReviewResult$Builder.class
 com\chachamaru\harness\workflow\engine\OptimizedParallelExecutor$ExecutionResult.class
 com\chachamaru\harness\workflow\execution\ParallelExecutor.class
+com\chachamaru\harness\workflow\skill\core\SyncResult$Builder.class
 com\chachamaru\harness\workflow\agent\framework\AgentRegistry.class
 com\chachamaru\harness\workflow\skill\core\model\SpecDelta$Builder.class
 com\chachamaru\harness\workflow\agent\framework\AgentStatus$5.class
@@ -80,6 +89,7 @@ com\chachamaru\harness\workflow\engine\OptimizedParallelExecutor.class
 com\chachamaru\harness\workflow\skill\core\WorkSkill.class
 com\chachamaru\harness\workflow\loader\TestRunner.class
 com\chachamaru\harness\workflow\recovery\PeerRecoveryStrategy$WorkerInfo.class
+com\chachamaru\harness\workflow\sync\SyncConfig$ProjectConfig.class
 com\chachamaru\harness\workflow\agent\framework\AgentLifecycleException.class
 com\chachamaru\harness\workflow\agent\framework\AgentNotFoundException.class
 com\chachamaru\harness\workflow\skill\framework\SkillContext.class
@@ -95,6 +105,7 @@ com\chachamaru\harness\workflow\loader\ExpressionEvaluator$LessOrEqualsExpressio
 com\chachamaru\harness\workflow\skill\core\model\SpecDelta$ChangeType.class
 com\chachamaru\harness\workflow\integration\WorkflowIntegrationExample.class
 com\chachamaru\harness\workflow\skill\core\model\PreApprovalSection$Builder.class
+com\chachamaru\harness\workflow\sync\SyncConfig$FilesystemConfig.class
 com\chachamaru\harness\workflow\recovery\FourPhaseRecovery$SessionRecoveryState.class
 com\chachamaru\harness\workflow\skill\core\model\TaskEntry.class
 com\chachamaru\harness\workflow\engine\WorkflowStepExecution.class
@@ -102,6 +113,7 @@ com\chachamaru\harness\workflow\orchestration\OrchestrationPlan.class
 com\chachamaru\harness\workflow\recovery\SelfHealingStrategy.class
 com\chachamaru\harness\workflow\agent\framework\AgentExecutionException.class
 com\chachamaru\harness\workflow\execution\ParallelExecutor$ExecutionException.class
+com\chachamaru\harness\workflow\sync\SyncConfig$SafetyConfig.class
 com\chachamaru\harness\workflow\agent\framework\AgentMessage.class
 com\chachamaru\harness\workflow\recovery\LeadInterventionStrategy$InterventionResult.class
 com\chachamaru\harness\workflow\recovery\RecoveryResult$RecoveryPhase.class
@@ -132,6 +144,7 @@ com\chachamaru\harness\workflow\skill\framework\SkillExecutor.class
 com\chachamaru\harness\workflow\agent\framework\SkillCallTrace.class
 com\chachamaru\harness\workflow\loader\ExpressionEvaluator$GreaterOrEqualsExpression.class
 com\chachamaru\harness\workflow\skill\framework\SkillExecutor$SkillExecution.class
+com\chachamaru\harness\workflow\sync\PluginGenerator.class
 com\chachamaru\harness\workflow\agent\framework\AgentExecutor$AgentExecution.class
 com\chachamaru\harness\workflow\engine\OptimizedParallelExecutor$ParallelTask.class
 com\chachamaru\harness\workflow\recovery\PeerRecoveryStrategy.class
@@ -145,6 +158,7 @@ com\chachamaru\harness\workflow\agent\framework\AgentExecutor.class
 com\chachamaru\harness\workflow\engine\OptimizedParallelExecutor$ExecutionStats.class
 com\chachamaru\harness\workflow\loader\VariableResolver.class
 com\chachamaru\harness\workflow\agent\framework\AgentStatus$2.class
+com\chachamaru\harness\workflow\sync\SyncConfig$PermissionsConfig.class
 com\chachamaru\harness\workflow\agent\framework\AgentConfig.class
 com\chachamaru\harness\workflow\model\Workflow$WorkflowStep.class
 com\chachamaru\harness\workflow\engine\ExecutionContext.class
@@ -152,7 +166,10 @@ com\chachamaru\harness\workflow\recovery\LeadInterventionStrategy.class
 com\chachamaru\harness\workflow\skill\framework\SkillResult.class
 com\chachamaru\harness\workflow\skill\framework\SkillExecutionException.class
 com\chachamaru\harness\workflow\skill\framework\SkillRegistry$SkillMetadata.class
+com\chachamaru\harness\workflow\sync\ConfigReader.class
 com\chachamaru\harness\workflow\agent\framework\AgentFramework.class
 com\chachamaru\harness\workflow\skill\core\model\TaskEntry$Builder.class
 com\chachamaru\harness\workflow\skill\framework\SkillFramework.class
 com\chachamaru\harness\workflow\skill\core\model\AcceptanceCriteria$Builder.class
+com\chachamaru\harness\workflow\sync\SyncConfig$SandboxConfig.class
+com\chachamaru\harness\workflow\sync\SyncConfig.class
