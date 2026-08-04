@@ -1,0 +1,75 @@
+# Java Harness 配置示例
+# 将此文件复制为 harness.toml 并修改为你的项目配置
+#
+# 配置格式支持 camelCase 和 snake_case 两种风格
+# 例如：author_name 和 authorName 都是有效的
+
+[project]
+# 项目名称（必填）
+name = "my-plugin"
+
+# 项目版本（必填）
+version = "1.0.0"
+
+# 项目描述
+description = "My Claude Code plugin"
+
+# 作者信息（可选）
+author_name = "Your Name"
+author_url = "https://github.com/yourname"
+
+# 项目链接（可选）
+homepage = "https://github.com/yourname/my-plugin"
+repository = "https://github.com/yourname/my-plugin.git"
+
+# 许可证
+license = "MIT"
+
+# 关键词（可选）
+keywords = ["claude", "plugin", "tool"]
+
+# 输出格式（可选）
+output_styles = ["markdown"]
+
+[agent]
+# 默认使用的 AI 代理
+default = "claude-sonnet-5"
+
+[env]
+# 环境变量（可选）
+NODE_ENV = "development"
+API_ENDPOINT = "https://api.example.com"
+
+[safety.permissions]
+# 允许的工具/命令
+allow = ["Read", "Write", "Glob", "Grep"]
+
+# 拒绝的工具/命令
+deny = ["Bash(rm -rf *)"]
+
+# 需要确认的工具/命令
+ask = ["Bash"]
+
+[safety.sandbox]
+# 沙箱不可用时是否失败
+fail_if_unavailable = true
+
+[safety.sandbox.network]
+# 拒绝访问的域名列表
+denied_domains = [
+    "malicious.com",
+    "tracking.example.com"
+]
+
+[safety.sandbox.filesystem]
+# 拒绝读取的路径
+deny_read = [
+    "/etc/shadow",
+    "~/.ssh"
+]
+
+# 允许读取的路径（默认允许当前目录）
+allow_read = [
+    ".",
+    "./src"
+]
