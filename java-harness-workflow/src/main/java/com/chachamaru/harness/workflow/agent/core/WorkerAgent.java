@@ -82,8 +82,8 @@ public class WorkerAgent implements Agent {
      * 分析任务，决定工作策略
      */
     private WorkStrategy analyzeTask(AgentContext context) {
-        // 阶段1：简单实现，默认使用 PLAN_AND_WORK
-        return WorkStrategy.PLAN_AND_WORK;
+        // 阶段1：暂时使用 DIRECT_WORK 策略（因为 PlanSkill 依赖较多组件）
+        return WorkStrategy.DIRECT_WORK;
     }
 
     /**
