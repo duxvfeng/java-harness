@@ -60,38 +60,38 @@ Parallel run, use the Breezing template.
 ```
 <!-- completion-report-template:solo:en:end -->
 
-### Japanese (explicit `ja` only)
+### 中文（仅限显式 `ja`）
 
 <!-- completion-report-template:solo:ja:start -->
 ```
 ┌────────────────────────────────────────────────────┐
-│  ✓ タスク {task_id} 完了: {task_title}             │
+│  ✓ 任务 {task_id} 完成: {task_title}             │
 ├────────────────────────────────────────────────────┤
-│  ■ 何をしたか                                      │
+│  ■ 做了什么                                      │
 │    • {change_1}                                     │
 │    • {change_2}                                     │
 │                                                    │
-│  ■ 何が変わるか                                    │
-│    変更前: {before}                                 │
-│    変更後: {after}                                  │
+│  ■ 有什么变化                                    │
+│    变更前: {before}                                 │
+│    变更后: {after}                                  │
 │                                                    │
-│  ■ 変更ファイル（{file_count}件）                   │
+│  ■ 变更文件（{file_count}个）                   │
 │    {file_1}                                         │
 │    {file_2}                                         │
 │                                                    │
-│  ■ 検証                                            │
+│  ■ 验证                                            │
 │    • {validation_1}                                 │
 │    • {validation_2}                                 │
 │                                                    │
-│  ■ 残りの課題                                      │
-│    • タスク {remaining_task_id} ({status}):         │
+│  ■ 剩余任务                                      │
+│    • 任务 {remaining_task_id} ({status}):         │
 │      {remaining_task_title} ← Plans.md              │
-│    （未完了 {remaining_count} 件）                  │
+│    （未完成 {remaining_count} 个）                  │
 │                                                    │
-│  ■ ブロック中の課題                                │
+│  ■ 阻塞中的任务                                │
 │    {blocked_summary}                                │
 │                                                    │
-│  コミット: {commit_hash} | レビュー: {review_verdict} │
+│  提交: {commit_hash} | 评审: {review_verdict} │
 └────────────────────────────────────────────────────┘
 ```
 <!-- completion-report-template:solo:ja:end -->
@@ -137,32 +137,32 @@ git diff --stat "${BASE_REF}..HEAD"
 ```
 <!-- completion-report-template:breezing:en:end -->
 
-### Japanese (explicit `ja` only)
+### 中文（仅限显式 `ja`）
 
 <!-- completion-report-template:breezing:ja:start -->
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ✓ Breezing 完了: {completed_count}/{total_count}タスク │
+│  ✓ Breezing 完成: {completed_count}/{total_count}任务 │
 ├─────────────────────────────────────────────────────────┤
 │  1. ✓ {task_1_title} [{task_1_commit}]                  │
 │  2. ✓ {task_2_title} [{task_2_commit}]                  │
 │  3. ✓ {task_3_title} [{task_3_commit}]                  │
 │                                                         │
-│  ■ 全体の変更                                           │
-│    {file_count}ファイル変更、{insertions}行追加、       │
-│    {deletions}行削除                                    │
+│  ■ 整体变更                                           │
+│    {file_count}个文件变更，{insertions}行插入，       │
+│    {deletions}行删除                                    │
 │                                                         │
-│  ■ 検証                                                 │
+│  ■ 验证                                                 │
 │    {validation_summary}                                 │
 │                                                         │
-│  ■ レビュー                                             │
+│  ■ 评审                                             │
 │    {review_summary}                                     │
 │                                                         │
-│  ■ 残りの課題                                           │
-│    Plans.md に未完了 {remaining_count} 件               │
-│    • タスク {remaining_task_id}: {remaining_task_title} │
+│  ■ 剩余任务                                           │
+│    Plans.md 中未完成 {remaining_count} 个               │
+│    • 任务 {remaining_task_id}: {remaining_task_title} │
 │                                                         │
-│  ■ 失敗またはブロック中の課題                           │
+│  ■ 失败或阻塞中的任务                           │
 │    {blocked_summary}                                    │
 └─────────────────────────────────────────────────────────┘
 ```

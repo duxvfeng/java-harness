@@ -1,12 +1,39 @@
-# Codex Failure Reticketing
+# Failure Reticketing
 
-Codex must not turn a red validation into a green result by weakening tests.
+If validation or CI fails after a task was implemented, do not hide the failure
+by weakening tests.
 
-When validation fails:
+## Trigger Conditions
 
-1. Fix in scope if the failure belongs to the current task.
-2. If the task was already marked complete, create a pending fix proposal.
-3. After three repeats of the same CI cause, stop and escalate.
+| Condition | Action |
+|---|---|
+| Test fails before completion | Fix in the same task if the cause is in scope |
+| Test fails after `cc:完了` | Create a follow-up fix proposal |
+| Same CI cause fails 3 times | Stop and escalate with evidence |
 
-Pending fix proposals belong in `.claude/state/pending-fix-proposals.jsonl`
-until the user approves adding them to `Plans.md`.
+## Proposal Shape
+
+Write pending proposals to `.claude/state/pending-fix-proposals.jsonl`.
+
+Each proposal should include:
+
+- original task id
+- proposed fix task id, usually `<task>.fix`
+- failure category
+- failing command
+- minimal DoD
+- dependency on the original task
+
+Only add the task to `Plans.md` after user approval.
+
+## Commands
+
+- `approve fix <task_id>` — add the proposal to `Plans.md` as `cc:TODO`.
+- `reject fix <task_id>` — discard the proposal.
+- Bare `yes` / `no` — accepted only when exactly one proposal is pending.
+
+## Failure Category Detection
+
+Classify the cause before writing the proposal: `syntax_error` / `import_error` /
+`type_error` / `assertion_error` / `timeout` / `runtime_error`. The category feeds
+the proposed fix task's title (`fix: [original task] - [category]`).

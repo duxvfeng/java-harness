@@ -19,128 +19,128 @@ effort: medium
 
 # Harness Sync
 
-Plans.md と実装状況を照合し、差分を検出・更新する。
-旧 `sync-status` および `harness-plan sync` サブコマンドの独立版。
+对照 Plans.md 与实现状况，检测并更新差分。
+旧 `sync-status` 及 `harness-plan sync` 子命令的独立版。
 
 ## Quick Reference
 
-| ユーザー入力 | 動作 |
+| 用户输入 | 操作 |
 |------------|------|
-| `harness-sync` | 進捗同期 + レトロスペクティブ（デフォルト ON） |
-| `harness-sync --no-retro` | 進捗同期のみ（レトロスキップ） |
-| `harness-sync --snapshot` | スナップショット保存（進捗の時点記録） |
-| `harness-sync --plan roadmap` | named Plans の `roadmap` を同期 |
-| "今どこ？" / "進捗確認" | 同上 |
+| `harness-sync` | 进度同步 + 回顾（默认 ON） |
+| `harness-sync --no-retro` | 仅进度同步（跳过回顾） |
+| `harness-sync --snapshot` | 快照保存（记录当前进度时间点） |
+| `harness-sync --plan roadmap` | 同步名为 `roadmap` 的 Plans |
+| "现在在哪？" / "进度确认" | 同上 |
 
-## オプション
+## 选项
 
-| オプション | 説明 | デフォルト |
+| 选项 | 说明 | 默认值 |
 |----------|------|----------|
-| `--snapshot` | 現在の進捗をスナップショットとして保存 | false |
-| `--no-retro` | レトロスペクティブをスキップ | false（デフォルトで実行） |
-| `--plan NAME` | `plans/manifest.json` の named plan を使う | active/default |
+| `--snapshot` | 将当前进度保存为快照 | false |
+| `--no-retro` | 跳过回顾 | false（默认执行） |
+| `--plan NAME` | 使用 `plans/manifest.json` 中的指定 plan | active/default |
 
-## Step 0: Plans.md 検証
+## Step 0: Plans.md 验证
 
-Plans.md の存在とフォーマットを確認する。問題がある場合は即座に案内して停止する。
-複数 Plans.md がある repo では、対象 plan を `scripts/plan-registry.sh list` または `--plan NAME` で確認してから読む。
+确认 Plans.md 的存在和格式。如有问题立即提示并停止。
+在包含多个 Plans.md 的仓库中，通过 `scripts/plan-registry.sh list` 或 `--plan NAME` 确认目标 plan 后再读取。
 
-| 状態 | 案内 |
+| 状态 | 提示 |
 |------|------|
-| Plans.md が存在しない | `Plans.md が見つかりません。harness-plan create で作成してください。` → **停止** |
-| ヘッダーに DoD / Depends カラムがない（v1 形式） | `Plans.md が旧フォーマット（3カラム）です。harness-plan create で v2（5カラム）に再生成してください。既存タスクは自動的に引き継がれます。` → **停止** |
-| v2 形式（5カラム） | そのまま Step 1 に進む |
+| Plans.md 不存在 | `未找到 Plans.md。请使用 harness-plan create 创建。` → **停止** |
+| 表头缺少 DoD / Depends 列（v1 格式） | `Plans.md 为旧格式（3列）。请使用 harness-plan create 重新生成 v2（5列）。现有任务将自动迁移。` → **停止** |
+| v2 格式（5列） | 直接进入 Step 1 |
 
-## Step 1: 現状収集（並列）
+## Step 1: 现状收集（并行）
 
 ```bash
-# Plans.md の状態
+# Plans.md 状态
 cat Plans.md
 
-# Git 変更状態
+# Git 变更状态
 git status
 git diff --stat HEAD~3
 
-# 直近コミット履歴
+# 最近提交历史
 git log --oneline -10
 
-# エージェントトレース（直近の編集ファイル）
+# Agent 追踪（最近编辑的文件）
 tail -20 .claude/state/agent-trace.jsonl 2>/dev/null | jq -r '.files[].path' | sort -u
 ```
 
 ## Step 1.5: Agent Trace 分析
 
-Agent Trace から直近の編集履歴を取得し、Plans.md のタスクと照合する:
+从 Agent Trace 获取最近的编辑历史，并与 Plans.md 任务对照：
 
 ```bash
-# 直近の編集ファイル一覧
+# 最近编辑文件列表
 RECENT_FILES=$(tail -20 .claude/state/agent-trace.jsonl 2>/dev/null | \
   jq -r '.files[].path' | sort -u)
 
-# プロジェクト情報
+# 项目信息
 PROJECT=$(tail -1 .claude/state/agent-trace.jsonl 2>/dev/null | \
   jq -r '.metadata.project')
 ```
 
-**照合ポイント**:
+**对照要点**：
 
-| チェック項目 | 検出方法 |
+| 检查项 | 检测方法 |
 |------------|----------|
-| Plans.md にないファイル編集 | Agent Trace vs タスク記述 |
-| タスク記述と異なるファイル | 想定ファイル vs 実際の編集 |
-| 長時間編集がないタスク | Agent Trace 時系列 vs WIP 期間 |
+| 编辑了 Plans.md 中没有的文件 | Agent Trace vs 任务描述 |
+| 与任务描述不同的文件 | 预期文件 vs 实际编辑 |
+| 长时间未编辑的任务 | Agent Trace 时间序列 vs WIP 期间 |
 
-## Step 2: 差分検出
+## Step 2: 差分检测
 
-| チェック項目 | 検出方法 |
+| 检查项 | 检测方法 |
 |------------|----------|
-| 完了済みなのに `cc:WIP` | コミット履歴 vs マーカー |
-| 着手済みなのに `cc:TODO` | 変更ファイル vs マーカー |
-| `cc:完了` なのに未コミット | git status vs マーカー |
+| 已完成却标记为 `cc:WIP` | 提交历史 vs 标记 |
+| 已开始却标记为 `cc:TODO` | 变更文件 vs 标记 |
+| 标记为 `cc:完了` 却未提交 | git status vs 标记 |
 
 ## Step 3: Plans.md 更新提案
 
-差分が検出された場合、提案して実行する:
+检测到差分时，提出建议并执行：
 
 ```
-Plans.md 更新が必要です
+Plans.md 需要更新
 
-| Task | 現在 | 変更後 | 理由 |
+| Task | 当前 | 更改后 | 理由 |
 |------|------|--------|------|
-| XX   | cc:WIP | cc:完了 | コミット済み |
-| YY   | cc:TODO | cc:WIP | ファイル編集済み |
+| XX   | cc:WIP | cc:完了 | 已提交 |
+| YY   | cc:TODO | cc:WIP | 已编辑文件 |
 
-更新しますか？ (yes / no)
+是否更新？ (yes / no)
 ```
 
-## Step 4: 進捗サマリー出力
+## Step 4: 进度摘要输出
 
 ```markdown
-## 進捗サマリー
+## 进度摘要
 
-**プロジェクト**: {{project_name}}
+**项目**: {{project_name}}
 
-| ステータス | 件数 |
+| 状态 | 数量 |
 |----------|------|
-| 未着手 (cc:TODO) | {{count}} |
-| 作業中 (cc:WIP) | {{count}} |
-| 完了 (cc:完了) | {{count}} |
-| PM確認済 (pm:確認済) | {{count}} |
+| 未开始 (cc:TODO) | {{count}} |
+| 进行中 (cc:WIP) | {{count}} |
+| 已完成 (cc:完了) | {{count}} |
+| PM已确认 (pm:已确认) | {{count}} |
 
-**進捗率**: {{percent}}%
+**进度率**: {{percent}}%
 
-### 直近の編集ファイル (Agent Trace)
+### 最近编辑的文件 (Agent Trace)
 - {{file1}}
 - {{file2}}
 ```
 
-## Step 4.5: スナップショット保存（`--snapshot` 指定時）
+## Step 4.5: 快照保存（指定 `--snapshot` 时）
 
-`--snapshot` が指定された場合、現在の進捗状態を時刻付きスナップショットとして保存する。
+当指定 `--snapshot` 时，将当前进度状态保存为带时间戳的快照。
 
-### 保存先
+### 保存位置
 
-`.claude/state/snapshots/` ディレクトリに JSON 形式で保存:
+以 JSON 格式保存到 `.claude/state/snapshots/` 目录：
 
 ```bash
 SNAPSHOT_DIR="${PROJECT_ROOT}/.claude/state/snapshots"
@@ -148,7 +148,7 @@ mkdir -p "${SNAPSHOT_DIR}"
 SNAPSHOT_FILE="${SNAPSHOT_DIR}/progress-$(date -u +%Y%m%dT%H%M%SZ).json"
 ```
 
-### スナップショット内容
+### 快照内容
 
 ```json
 {
@@ -168,98 +168,98 @@ SNAPSHOT_FILE="${SNAPSHOT_DIR}/progress-$(date -u +%Y%m%dT%H%M%SZ).json"
 }
 ```
 
-### 差分比較
+### 差分比较
 
-前回スナップショットが存在する場合、差分を表示:
+如果存在上次快照，显示差分：
 
 ```markdown
-## スナップショット差分
+## 快照差分
 
-| 指標 | 前回 ({{prev_time}}) | 今回 | 変化 |
+| 指标 | 上次 ({{prev_time}}) | 本次 | 变化 |
 |------|---------------------|------|------|
-| 進捗率 | {{prev}}% | {{current}}% | +{{diff}}%pt |
-| 完了タスク | {{prev_done}} | {{current_done}} | +{{diff_done}} |
-| WIP タスク | {{prev_wip}} | {{current_wip}} | {{diff_wip}} |
+| 进度率 | {{prev}}% | {{current}}% | +{{diff}}%pt |
+| 已完成任务 | {{prev_done}} | {{current_done}} | +{{diff_done}} |
+| WIP 任务 | {{prev_wip}} | {{current_wip}} | {{diff_wip}} |
 ```
 
-> **設計意図**: snapshot はユーザーが「今の状態を記録しておきたい」と思った時に手動で使う。
-> breezing 中の自動的なプログレスフィード（26.2.3）とは別の機能。
+> **设计意图**: snapshot 是用户在"想记录当前状态"时手动使用的功能。
+> 与 breezing 期间的自动进度反馈（26.2.3）是不同的功能。
 
-## Step 5: 次のアクション提案
+## Step 5: 下一步行动建议
 
 ```
-次にやること
+下一步行动
 
-**優先 1**: {{タスク}}
-- 理由: {{依頼中 / アンブロック待ち}}
+**优先 1**: {{任务}}
+- 理由: {{依赖中 / 等待解除阻塞}}
 
-**推奨**: harness-work, harness-review
+**推荐**: harness-work, harness-review
 ```
 
-## 異常検知
+## 异常检测
 
-| 状況 | 警告 |
+| 情况 | 警告 |
 |------|------|
-| 複数の `cc:WIP` | 複数タスクが同時進行中 |
-| `pm:依頼中` が未処理 | PM の依頼を先に処理する |
-| 大きな乖離 | タスク管理が追いついていない |
-| WIP が 3日以上更新なし | ブロックされていないか確認 |
+| 多个 `cc:WIP` | 多个任务同时进行中 |
+| `pm:请求中` 未处理 | 优先处理 PM 的请求 |
+| 严重偏离 | 任务管理跟不上进度 |
+| WIP 超过3天未更新 | 确认是否被阻塞 |
 
-## Step 6: レトロスペクティブ（デフォルト ON）
+## Step 6: 回顾（默认 ON）
 
-`cc:完了` タスクが 1 件以上あれば自動的に振り返りを実行する。
-`--no-retro` で明示的にスキップ可能。
+当有 1 个以上 `cc:完了` 任务时自动执行回顾。
+可通过 `--no-retro` 显式跳过。
 
-### Step R1: 完了タスク収集
+### Step R1: 完成任务收集
 
 ```bash
-# Plans.md から cc:完了 / pm:確認済 のタスクを抽出
-grep -E 'cc:完了|pm:確認済' Plans.md
+# 从 Plans.md 提取 cc:完了 / pm:已确认 的任务
+grep -E 'cc:完了|pm:已确认' Plans.md
 
-# 直近の完了コミット履歴
+# 最近的完成提交历史
 git log --oneline --since="7 days ago"
 
-# 変更規模
+# 变更规模
 git diff --stat HEAD~10
 ```
 
-### Step R2: 振り返り 4 項目
+### Step R2: 回顾四项
 
-| 項目 | 分析方法 |
+| 项目 | 分析方法 |
 |------|---------|
-| **見積もり精度** | Plans.md のタスク記述から想定ファイル数を推論 → `git diff --stat` の実変更ファイル数と比較 |
-| **ブロック原因** | `blocked` マーカーが付いたタスクの理由パターンを集計（技術的/外部依存/仕様不明確） |
-| **品質マーカー的中率** | `[feature:security]` 等を付けたタスクで実際に関連問題が出たか |
-| **スコープ変動** | Plans.md の初回コミット時のタスク数 vs 現在のタスク数（追加/削除件数） |
+| **估算精度** | 从 Plans.md 任务描述推断预期文件数 → 与 `git diff --stat` 的实际变更文件数比较 |
+| **阻塞原因** | 统计带有 `blocked` 标记的任务的理由模式（技术/外部依赖/规格不明确） |
+| **质量标记命中率** | 带有 `[feature:security]` 等标记的任务实际是否出现相关问题 |
+| **范围变动** | Plans.md 首次提交时的任务数 vs 当前任务数（添加/删除件数） |
 
-### Step R3: 振り返りサマリー出力
+### Step R3: 回顾摘要输出
 
 ```markdown
-## 振り返りサマリー
+## 回顾摘要
 
-**期間**: {{start_date}} 〜 {{end_date}}
+**期间**: {{start_date}} 〜 {{end_date}}
 
-| 指標 | 値 |
+| 指标 | 值 |
 |------|-----|
-| 完了タスク | {{count}} 件 |
-| ブロック発生 | {{blocked_count}} 件 |
-| スコープ変動 | +{{added}} / -{{removed}} 件 |
-| 見積もり精度 | 想定 {{est}} ファイル → 実際 {{actual}} ファイル |
+| 完成任务 | {{count}} 件 |
+| 发生阻塞 | {{blocked_count}} 件 |
+| 范围变动 | +{{added}} / -{{removed}} 件 |
+| 估算精度 | 预期 {{est}} 文件 → 实际 {{actual}} 文件 |
 
-### 学び
-- {{1-2 行の学び}}
+### 学到的经验
+- {{1-2 行的学到的经验}}
 
-### 次に活かすこと
-- {{1-2 行の改善アクション}}
+### 下次改进
+- {{1-2 行的改进行动}}
 ```
 
-### Step R4: harness-mem への記録
+### Step R4: 记录到 harness-mem
 
-振り返り結果を harness-mem に記録し、次回の `create` 時に参照できるようにする。
-記録先: `.claude/agent-memory/` 配下の該当エージェントメモリ。
+将回顾结果记录到 harness-mem，以便在下次 `create` 时可以参考。
+记录位置: `.claude/agent-memory/` 下相应的 agent memory。
 
-## 関連スキル
+## 相关技能
 
-- `harness-plan` — 計画作成・タスク管理
-- `harness-work` — タスク実装
-- `harness-review` — コードレビュー
+- `harness-plan` — 计划创建·任务管理
+- `harness-work` — 任务实现
+- `harness-review` — 代码审查

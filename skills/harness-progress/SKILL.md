@@ -11,31 +11,30 @@ user-invocable: true
 # Harness Progress Tracker
 
 Phase 65.4 (Progress Tracker) — 3rd surface of the cognitive-load HTML triplet.
-Plan Brief / Acceptance Demo に続く 3 つ目の HTML surface で、**進行中セッションの全体像を 1 枚の紙で把握** できるようにする。
+Plan Brief / Acceptance Demo 之后第三个 HTML surface，通过**单页纸掌握进行中会话的整体状况**。
 
 ## Quick Reference
 
-| 入力 | 動作 |
+| 输入 | 动作 |
 |---|---|
-| `/harness-progress` | 現プロジェクトの進捗 snapshot HTML を生成し開く |
-| `/harness-progress --no-open` | 生成のみ (browser 開かない、PostToolUse hook 用) |
-| `/harness-progress --out <path>` | 出力先指定 (default: `out/progress-snapshot.html`) |
+| `/harness-progress` | 生成并打开当前项目的进度快照 HTML |
+| `/harness-progress --no-open` | 仅生成（不开浏览器，用于 PostToolUse hook） |
+| `/harness-progress --out <path>` | 指定输出路径（默认：`out/progress-snapshot.html`） |
 
 ## Mission
 
-> "今のセッションは何件のタスクをどこまで終わらせて、いつ終わる見込みで、いくら使ったか" を、
-> エンジニアじゃない vibecoder が **3 秒でブラウザで把握** できる HTML 1 枚を生成する。
+> "当前会话完成了多少任务、进展到何种程度、预计何时结束、已花费多少"，让非工程师 vibecoder 能够**在浏览器中 3 秒钟掌握**的 1 页 HTML。
 
-**やる**:
-- Plans.md の cc:TODO / cc:WIP / cc:完了 件数を集計
-- progress_pct (完了率) を計算 (cc:完了 ÷ 総タスク × 100)
-- 経過分数 / 推定総分数 / コスト so-far / コスト estimate を表示
-- drift alert を表示 (Phase 65.4.3 以降で populate)
+**功能范围**:
+- 统计 Plans.md 的 cc:TODO / cc:WIP / cc:已完成 数量
+- 计算 progress_pct（完成率，cc:已完成 ÷ 总任务 × 100）
+- 显示已用分钟数 / 预计总分钟数 / 已花费成本 / 预计成本
+- 显示漂移告警（Phase 65.4.3 起填充数据）
 
-**やらない** (本 cycle):
-- WebSocket / SSE による live update (静的 HTML、再生成で更新)
-- 過去 session の history 比較 (Phase 65.4.4 で別軸)
-- 他 project の cross-project view (Phase 65.3 と独立)
+**不在此范围** (本 cycle):
+- WebSocket / SSE 实时更新（静态 HTML，通过重新生成更新）
+- 与历史 session 的比较（Phase 65.4.4 另行处理）
+- 其他项目的跨项目视图（与 Phase 65.3 独立）
 
 ## Schema: progress-snapshot.v1
 
@@ -44,16 +43,16 @@ Plan Brief / Acceptance Demo に続く 3 つ目の HTML surface で、**進行�
 ```yaml
 schema:        progress-snapshot.v1
 project:       <basename of git repo>
-current_task:  <cc:WIP の最初の項目 1 行サマリ、なければ空文字>
-progress_pct:  <0-100 の整数、cc:完了 ÷ 総タスク × 100 の四捨五入>
-todo_tasks:    [{number, title}]    ← cc:TODO のみ
-wip_tasks:     [{number, title}]    ← cc:WIP のみ
-done_tasks:    [{number, title, commit}]   ← cc:完了 [hash] のみ、hash は 7 chars
-elapsed_minutes:          <int, state file から>
-estimated_total_minutes:  <int, state file から>
-cost_so_far_usd:          <float, state file から>
-cost_estimate_usd:        <float, state file から>
-alerts:                    []   ← Phase 65.4.3 以降で populate
+current_task:  <cc:WIP 的第一个任务 1 行摘要，否则空字符串>
+progress_pct:  <0-100 的整数，cc:已完成 ÷ 总任务 × 100 的四舍五入>
+todo_tasks:    [{number, title}]    ← 仅 cc:TODO
+wip_tasks:     [{number, title}]    ← 仅 cc:WIP
+done_tasks:    [{number, title, commit}]   ← 仅 cc:已完成 [hash]，hash 为 7 字符
+elapsed_minutes:          <int, 从 state file 获取>
+estimated_total_minutes:  <int, 从 state file 获取>
+cost_so_far_usd:          <float, 从 state file 获取>
+cost_estimate_usd:        <float, 从 state file 获取>
+alerts:                    []   ← Phase 65.4.3 起填充数据
 generated_at:             <ISO8601 UTC>
 ```
 
@@ -65,7 +64,7 @@ generated_at:             <ISO8601 UTC>
 PROJECT_NAME="$(basename "$(git rev-parse --show-toplevel)" 2>/dev/null || echo "current")"
 ```
 
-### Step 1: snapshot を組み立て
+### Step 1: 构建 snapshot
 
 ```bash
 SNAPSHOT_JSON="$(mktemp /tmp/progress-snapshot-XXXX.json)"
@@ -75,10 +74,10 @@ bash scripts/progress-snapshot.sh \
   > "$SNAPSHOT_JSON"
 ```
 
-`scripts/progress-snapshot.sh` (Phase 65.4.1 で実装) は Plans.md を parse し
-`progress-snapshot.v1` schema 準拠の JSON を出力する。
+`scripts/progress-snapshot.sh` (Phase 65.4.1 实现) 解析 Plans.md 并
+输出符合 `progress-snapshot.v1` schema 的 JSON。
 
-### Step 2: HTML をレンダリング
+### Step 2: 渲染 HTML
 
 ```bash
 OUT_PATH="${OUT_PATH:-out/progress-snapshot.html}"
@@ -90,30 +89,30 @@ bash scripts/render-html.sh \
   --out "$OUT_PATH"
 ```
 
-### Step 3: ブラウザで開く
+### Step 3: 在浏览器中打开
 
-`--no-open` flag が**ない**場合のみ実行 (PostToolUse hook からの背景再生成では skip):
+仅当**没有** `--no-open` flag 时执行（PostToolUse hook 的后台重新生成时跳过）：
 
 ```bash
 bash scripts/plan-brief-open.sh --path "$OUT_PATH"
 ```
 
-## Cross-project search (default OFF)
+## Cross-project search (默认 OFF)
 
-Phase 65.4.4 で `--cross-project-group <name>` flag が追加される。本 cycle (65.4.1) では default OFF、現プロジェクトのみ集計する。
+Phase 65.4.4 起将添加 `--cross-project-group <name>` flag。本 cycle (65.4.1) 默认为 OFF，仅统计当前项目。
 
 ## Failure modes
 
-| 状態 | 動作 |
+| 状态 | 动作 |
 |---|---|
-| Plans.md が無い | `progress-snapshot.sh` が exit 1 (clear error message) |
-| Plans.md にタスクが 1 件もない | `progress_pct: 0`, 空配列 で snapshot 生成 (HTML は「タスクなし」表示) |
-| state file (経過分数等) が無い | `elapsed_minutes: 0`, `cost_so_far_usd: 0` で fallback (warning なし) |
-| `git` 不在 / git repo 外 | `project: "current"` で fallback |
+| Plans.md 不存在 | `progress-snapshot.sh` 退出码 1（清晰的错误消息） |
+| Plans.md 没有任何任务 | `progress_pct: 0`，空数组生成 snapshot（HTML 显示"无任务"） |
+| 缺少 state file（已用分钟数等） | fallback 为 `elapsed_minutes: 0`，`cost_so_far_usd: 0`（无警告） |
+| 没有 `git` / 在 git repo 外 | fallback 为 `project: "current"` |
 
 ## Related
 
-- `harness-plan-brief` (Phase 65.1.x) — 1st surface (実装前の説明会)
-- `harness-accept` (Phase 65.2.x) — 2nd surface (検収判断)
-- `harness-progress` (本 skill, Phase 65.4.x) — 3rd surface (進捗ダッシュボード)
-- 65.4.2 (PostToolUse auto-regen)、65.4.3 (drift alert 5 種)、65.4.4 (過去判断 lookup) で機能拡張
+- `harness-plan-brief` (Phase 65.1.x) — 第 1 个 surface（实施前的说明会）
+- `harness-accept` (Phase 65.2.x) — 第 2 个 surface（验收判断）
+- `harness-progress` (本 skill, Phase 65.4.x) — 第 3 个 surface（进度仪表板）
+- 65.4.2（PostToolUse 自动重新生成）、65.4.3（5 种漂移告警）、65.4.4（历史判断 lookup）扩展功能

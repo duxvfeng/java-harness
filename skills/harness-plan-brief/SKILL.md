@@ -10,34 +10,34 @@ user-invocable: true
 
 # harness-plan-brief
 
-非エンジニアの発注者・プロデューサー職向けに、Claude が着手しようとしている計画を **HTML 1 枚** で提示するスキル。
-発注者の認知負荷ピーク (1) 計画理解の段階で使う。
+面向非工程师的委托方/制作人角色，以 **1 页 HTML** 展示 Claude 即将开始实施的计划。
+在委托方认知负荷峰值 (1) 计划理解阶段使用。
 
 ## Quick Reference
 
-- 「**Plan Brief を作って**」 → このスキル
-- 「**実装前にざっくり整理**」 → このスキル
-- 「**非エンジニア向けに計画を見せて**」 → このスキル
+- "**Plan Brief を作って**" → 此技能
+- "**実装前にざっくり整理**" → 此技能
+- "**非エンジニア向けに計画を見せて**" → 此技能
 
-## 責任境界
+## 责任边界
 
-| 範囲 | このスキルの責務 |
+| 范围 | 此技能的职责 |
 |------|-----------------|
-| 検索 | **現プロジェクトのみ** (`project: <current>`, `strict_project: true` を必ず指定) |
-| クロスプロジェクト | **やらない** (Phase 65.3 以降で `--cross-project-group <name>` flag で opt-in 解放) |
-| 書き込み | やらない (Plan Brief 承認後の memory write は `plan-brief-record-decision.sh` の責務) |
-| plan_readiness 算出 | `scripts/plan-brief-compile.sh` に委譲。互換フィールド名 `confidence` は残すが、意味は DoD 明確度 + 依存解決率に限定 |
+| 搜索 | **仅限当前项目** (`project: <current>`, `strict_project: true` 必须指定) |
+| 跨项目 | **不做** (Phase 65.3 以后通过 `--cross-project-group <name>` flag opt-in 开放) |
+| 写入 | 不做 (Plan Brief 批准后的 memory write 是 `plan-brief-record-decision.sh` 的职责) |
+| plan_readiness 计算 | 委托给 `scripts/plan-brief-compile.sh`。兼容字段名 `confidence` 保留，但含义限定为 DoD 明确度 + 依赖解决率 |
 
-## 入力
+## 输入
 
-引数 `[task-description]` にユーザーの request を渡す。
-引数なしの場合は対話形式で受け取る。
+将用户的 request 传递给参数 `[task-description]`。
+没有参数时以交互形式接收。
 
-## 出力
+## 输出
 
-| 出力 | パス | 形式 |
+| 输出 | 路径 | 形式 |
 |------|------|------|
-| Plan Brief HTML | `.claude/state/views/plan-brief-<timestamp>.html` | 単独で開ける HTML (no server, no JS framework) |
+| Plan Brief HTML | `.claude/state/views/plan-brief-<timestamp>.html` | 可独立打开的 HTML (no server, no JS framework) |
 | Plan Brief context JSON | `.claude/state/views/plan-brief-<timestamp>.context.json` | `plan-brief-context.v1` schema |
 
 ## Schema: `plan-brief-context.v1`
@@ -45,8 +45,8 @@ user-invocable: true
 ```json
 {
   "schema": "plan-brief-context.v1",
-  "user_request": "string (ユーザーの request 原文)",
-  "my_understanding": "string (Claude の理解を 1-3 段落で)",
+  "user_request": "string (用户的 request 原文)",
+  "my_understanding": "string (Claude 的理解用 1-3 段落表达)",
   "options": [
     { "name": "string", "summary": "string", "pros": ["string"], "cons": ["string"] }
   ],
@@ -58,7 +58,7 @@ user-invocable: true
   ],
   "tdd_required": "yes|no|skip:<reason>",
   "confidence": 0,
-  "confidence_evidence": ["string (plan_readiness evidence: DoD clarity + dependency resolution only)"],
+  "confidence_evidence": ["string (plan_readiness evidence: 仅限 DoD clarity + dependency resolution)"],
   "related_decisions": [
     { "id": "string", "title": "string", "relevance": "string" }
   ],
@@ -70,25 +70,25 @@ user-invocable: true
 }
 ```
 
-完全 schema は [`schemas/plan-brief-context.v1.schema.json`](${CLAUDE_SKILL_DIR}/schemas/plan-brief-context.v1.schema.json) を参照。
+完整 schema 请参考 [`schemas/plan-brief-context.v1.schema.json`](${CLAUDE_SKILL_DIR}/schemas/plan-brief-context.v1.schema.json)。
 
 ## Execution Flow
 
-スキル起動時、Claude は以下の手順で動作する。
+技能启动时，Claude 按以下步骤运行。
 
-### Step 1: project name を解決
+### Step 1: 解析 project name
 
 ```bash
 PROJECT_NAME="$(basename "$(git rev-parse --show-toplevel)")"
 ```
 
-`PROJECT_NAME` が空 (git 外) の場合は `current` をデフォルトに使う。
+如果 `PROJECT_NAME` 为空 (git 外)，默认使用 `current`。
 
-### Step 2: harness-mem を **project-only** で検索する (default)
+### Step 2: 以 **project-only** 搜索 harness-mem (默认)
 
-引数に `--cross-project-group <name>` flag が**ない**場合 (default behavior):
+参数中**没有** `--cross-project-group <name>` flag 的情况 (默认行为):
 
-`mcp__harness__harness_mem_search` を **必ず** 以下のパラメータで呼び出す:
+**必须** 用以下参数调用 `mcp__harness__harness_mem_search`:
 
 ```
 project: <PROJECT_NAME>
@@ -98,30 +98,30 @@ expand_links: true
 limit: 5
 ```
 
-> **重要**: `project` パラメータは**必須**。空文字列や `null` を渡してはならない。
-> `strict_project: true` を指定し、cross-project な検索は**絶対に行わない**。
-> 必要なら `tags` filter で `decision` / `pattern` を絞ってもよいが、`project` は固定。
+> **重要**: `project` 参数是**必须的**。不得传递空字符串或 `null`。
+> 指定 `strict_project: true`，**绝不进行**跨项目搜索。
+> 必要时可以用 `tags` filter 筛选 `decision` / `pattern`，但 `project` 固定。
 
-過去 decision (D1-D41) / pattern (P1-P33) / Plans archive 28 件から類似案件を最大 5 件取得する。
+从过去的 decision (D1-D41) / pattern (P1-P33) / Plans archive 28 件中获取最多 5 件类似案件。
 
 ### Step 2 (alt): cross-project search (Phase 65.3.5 opt-in)
 
-引数に `--cross-project-group <name>` flag が**ある**場合のみ:
+参数中**有** `--cross-project-group <name>` flag 的情况:
 
-D43 Option α (MCP N-call) に従い、以下の手順で cross-project 検索を行う。
+按照 D43 Option α (MCP N-call)，以下列步骤进行跨项目搜索。
 
 ```bash
-# (a) group → member projects に解決 (yaml SSOT)
+# (a) 解析 group → member projects (yaml SSOT)
 MEMBERS_JSON="$(bash scripts/load-cross-project-groups.sh --group "<name>" 2>/dev/null)" || {
   echo "ERROR: cross-project group not found: <name>" >&2
   exit 1
 }
-# MEMBERS_JSON は ["proj1","proj2",...] 形式の JSON 配列
+# MEMBERS_JSON 是 ["proj1","proj2",...] 形式的 JSON 数组
 ```
 
-`MEMBERS_JSON` が `[]` (空配列) の場合は warning を出して default の単一 project search に fallback。
+如果 `MEMBERS_JSON` 为 `[]` (空数组)，输出 warning 并 fallback 到默认的单项目搜索。
 
-`MEMBERS_JSON` が非空の場合、**各 member project に対して MCP search を 1 回ずつ発行** する:
+如果 `MEMBERS_JSON` 非空，对**每个 member project 发起 1 次 MCP search**:
 
 ```
 for each project in MEMBERS_JSON:
@@ -134,37 +134,37 @@ for each project in MEMBERS_JSON:
   )
 ```
 
-各 search 結果を **client 側でマージ・dedupe (id 単位)・relevance_score 降順 sort** し、最大 5 件に絞る。
-合計呼び出し数が多くなる (group が 5 project なら 5 回) ため、レイテンシは増える点に注意。
+将各 search 结果在 **client 端合并・去重 (按 id)・按 relevance_score 降序排序**，筛选最多 5 件。
+注意：总调用数会增加 (group 为 5 project 则 5 次)，延迟会增加。
 
-> **D43 判断 1 の根拠**: MCP tool schema には `projects: [array]` も `strict_project: false` も
-> exposed されていないため、横断検索は client 側 N-call が唯一の選択肢。
-> 詳細は `.claude/rules/cross-repo-handoff.md` の「Phase 65.3 実装決定事項 (D43)」参照。
+> **D43 判断 1 的依据**: MCP tool schema 没有暴露 `projects: [array]` 也没有 `strict_project: false`，
+> 因此横断搜索只能用 client 端 N-call。
+> 详情请参考 `.claude/rules/cross-repo-handoff.md` 的「Phase 65.3 实施决定事项 (D43)」。
 
-cross-project 結果には Layer 2/3 (Phase 65.3.2-65.3.4) の redaction を必ず通すこと:
-- HTML レンダリング時に `bash scripts/render-html.sh ... --with-redaction` を使用
-- これにより辞書 + NER + final scan の 3 段で固有名詞が漏れない
+跨项目结果必须经过 Layer 2/3 (Phase 65.3.2-65.3.4) 的 redaction:
+- HTML 渲染时使用 `bash scripts/render-html.sh ... --with-redaction`
+- 通过词典 + NER + final scan 的 3 阶段防止固有名词泄露
 
-### Step 3: context JSON を組み立てる
+### Step 3: 构建 context JSON
 
-`scripts/plan-brief-compile.sh` を使って、mem search 結果から
-`plan-brief-context.v1` schema 準拠の JSON を構築する。
+使用 `scripts/plan-brief-compile.sh`，从 mem search 结果构建符合
+`plan-brief-context.v1` schema 的 JSON。
 
-Phase 105.3 以降、Plan Brief の `confidence` は後方互換のフィールド名であり、
-表示上の意味は `plan_readiness` として扱う。算出軸は次の 2 つだけに固定する。
+Phase 105.3 以后，Plan Brief 的 `confidence` 是向后兼容的字段名，
+显示含义视为 `plan_readiness`。计算轴仅固定为以下 2 个。
 
-- DoD 明確度: request / DoD に機械検証できる数値・条件がどれだけ含まれるか
-- 依存解決率: 類似 Plans のうち依存が完了済みとして扱えるものの割合
+- DoD 明确度: request / DoD 包含多少可机器验证的数值・条件
+- 依赖解决率: 类似 Plans 中可作为已完成处理的依赖的占比
 
-過去類似案件の成功率や関連 Decision / Pattern 件数は context-only の根拠として表示し、
-readiness 点数へ別軸加算しない。これは「AI の理解度」「成功確率」と誤読されるのを避けるため。
+过去类似案件的成功率、相关 Decision / Pattern 件数作为 context-only 依据显示，
+不向 readiness 点数另轴加算。这是为了避免被误读为「AI 的理解度」「成功概率」。
 
-`options` / `risks` / `acceptance_criteria` は常に 1 件以上生成する。
-mem search が空でも、以下を最低限埋める。
+`options` / `risks` / `acceptance_criteria` 始终生成至少 1 件。
+即使 mem search 为空，也至少填充以下内容。
 
-- `options`: 推奨案を 1 件以上。必要なら代替案を追加し、pros / cons を付ける
-- `risks`: readiness 誤読、scope creep、未観測データなど今回の計画固有リスクを 1 件以上
-- `acceptance_criteria`: 実行後に機械検証または目視確認できる条件を 1 件以上
+- `options`: 推荐案至少 1 件。必要时添加替代案，附带 pros / cons
+- `risks`: 本次计划特有风险至少 1 件 (readness 误读、scope creep、未观测数据等)
+- `acceptance_criteria`: 可机器验证或目视确认的条件至少 1 件
 
 例:
 
@@ -176,12 +176,12 @@ jq -n \
   '{
     schema: "plan-brief-context.v1",
     user_request: $req,
-    my_understanding: "(まだ未着手)",
-    options: [{name:"Option A: 最小検証で進める", summary:"DoD と依存を先に確認してから実装", pros:["影響が小さい"], cons:["大きな再設計は別タスク化が必要"]}],
-    risks: [{kind:"readiness-misread", severity:"warn", description:"plan_readiness を AI の理解度として誤読するリスク", mitigation:"DoD 明確度 + 依存解決率だけの指標として evidence に明記"}],
-    acceptance_criteria: [{id:"AC-1", description:"Plan Brief context が非空の options / risks / acceptance_criteria を含む", verifiable_by:"tests/test-plan-brief-compile.sh"}],
+    my_understanding: "(尚未着手)",
+    options: [{name:"Option A: 最小验证前进", summary:"先确认 DoD 和依赖再实现", pros:["影响小"], cons:["大的重新设计需要另外任务化"]}],
+    risks: [{kind:"readiness-misread", severity:"warn", description:"将 plan_readiness 误读为 AI 理解度的风险", mitigation:"在 evidence 中明确记载仅为 DoD 明确度 + 依赖解决率的指标"}],
+    acceptance_criteria: [{id:"AC-1", description:"Plan Brief context 包含非空的 options / risks / acceptance_criteria", verifiable_by:"tests/test-plan-brief-compile.sh"}],
     confidence: 0,
-    confidence_evidence: ["plan_readiness DoD 明確度: 0/60", "plan_readiness 依存解決率: 0/40"],
+    confidence_evidence: ["plan_readiness DoD 明确度: 0/60", "plan_readiness 依赖解决率: 0/40"],
     tdd_required: "no",
     related_decisions: [],
     similar_past_plans: [],
@@ -190,12 +190,12 @@ jq -n \
   }' > "$CONTEXT_JSON"
 ```
 
-### Step 4: HTML を生成する
+### Step 4: 生成 HTML
 
-`scripts/render-html.sh` (Phase 65.1.1) を `templates/html/plan-brief.html.template` で呼ぶ:
+用 `templates/html/plan-brief.html.template` 调用 `scripts/render-html.sh` (Phase 65.1.1):
 
-HTML には TDD 判定を 1 行で表示する。
-形式は `tdd_required: yes`、`tdd_required: no`、または `tdd_required: skip:<reason>` のいずれかにする。
+HTML 以 1 行显示 TDD 判定。
+形式为 `tdd_required: yes`、`tdd_required: no` 或 `tdd_required: skip:<reason>` 之一。
 
 ```bash
 bash scripts/render-html.sh \
@@ -204,34 +204,34 @@ bash scripts/render-html.sh \
   --out "$HTML_OUT"
 ```
 
-### Step 5: ブラウザで自動 open する
+### Step 5: 自动在浏览器中 open
 
-`scripts/plan-brief-open.sh` で OS 別 dispatch:
+通过 `scripts/plan-brief-open.sh` 进行 OS 别 dispatch:
 
 ```bash
 bash scripts/plan-brief-open.sh "$HTML_OUT"
 ```
 
-`BROWSER=true` の env が設定されている場合 (CI 環境)、open は **skip** され `printf` で path だけ出力する。
+如果设置了 `BROWSER=true` 的 env (CI 环境)，open 被 **skip**，仅用 `printf` 输出 path。
 
-### Step 6: ユーザー承認待ち
+### Step 6: 等待用户批准
 
-「この理解で実装に進んでよいか」を確認する。
-承認後の memory write は別スキル (Phase 65.1.4 の `plan-brief-record-decision.sh`) の責務。
+确认「按此理解是否可以前进到实现」。
+批准后的 memory write 是其他技能 (Phase 65.1.4 的 `plan-brief-record-decision.sh`) 的职责。
 
-## 失敗時の挙動
+## 失败时的行为
 
-| 失敗 | 挙動 |
+| 失败 | 行为 |
 |------|------|
-| `mcp__harness__harness_mem_search` 不達 | 警告を表示し、`related_decisions` / `similar_past_plans` を空配列で続行 |
-| `git rev-parse --show-toplevel` 失敗 | `PROJECT_NAME=current` で続行 |
-| `render-html.sh` 失敗 | エラーを stderr に出力し exit 1 |
-| `plan-brief-open.sh` 失敗 | HTML path を stdout に出力するだけで exit 0 (browser open は best-effort) |
+| `mcp__harness__harness_mem_search` 不达 | 显示警告，以空数组继续 `related_decisions` / `similar_past_plans` |
+| `git rev-parse --show-toplevel` 失败 | 以 `PROJECT_NAME=current` 继续 |
+| `render-html.sh` 失败 | 向 stderr 输出错误并 exit 1 |
+| `plan-brief-open.sh` 失败 | 仅向 stdout 输出 HTML path 并 exit 0 (browser open 是 best-effort) |
 
 ## Related
 
-- `scripts/render-html.sh` (Phase 65.1.1) — HTML テンプレートエンジン
+- `scripts/render-html.sh` (Phase 65.1.1) — HTML 模板引擎
 - `scripts/plan-brief-compile.sh` (Phase 65.1.3) — context compilation
-- `scripts/plan-brief-record-decision.sh` (Phase 65.1.4) — 承認 memory write
-- `harness-accept` skill (Phase 65.2.1) — 受け入れ判断スキル (対構造)
-- `harness-progress` skill (Phase 65.4.1) — 進行管理スキル (対構造)
+- `scripts/plan-brief-record-decision.sh` (Phase 65.1.4) — 批准 memory write
+- `harness-accept` skill (Phase 65.2.1) — 验收判断技能 (对结构)
+- `harness-progress` skill (Phase 65.4.1) — 进度管理技能 (对结构)

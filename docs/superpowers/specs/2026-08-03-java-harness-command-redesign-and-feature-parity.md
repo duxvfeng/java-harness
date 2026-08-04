@@ -34,7 +34,7 @@ Java Harness 是 claude-code-harness Go 项目的 Java 实现，当前实现了�
 
 **完全对等 Go 项目**:
 - 移除 picocli 框架，采用类似 Go 的简单命令分发
-- 所有命令改为 `/java-harness-*` 格式
+- 所有命令改为 `/harness-*` 格式
 - 分 3 个阶段实现所有缺失功能
 - 保持命令名称、参数、行为与 Go 完全一致
 
@@ -49,7 +49,7 @@ Java Harness 是 claude-code-harness Go 项目的 Java 实现，当前实现了�
 2. 通过 `main()` switch 语句直接分发命令
 3. 每个命令对应 `run*` 函数
 4. 通过 `hooks.json` 与 Claude Code 集成
-5. 通过 `.claude-plugin/skills/` 提供技能
+5. 通过 `.claude-plugin/skills/` 提供技能（每个技能是包含 SKILL.md 的目录）
 
 ### 2.2 Java 项目改造架构
 
@@ -67,16 +67,23 @@ Java Harness 是 claude-code-harness Go 项目的 Java 实现，当前实现了�
         │   (类似 Go main.go)      │
         └────────────┬────────────┘
                      │
-         ┌───────────┼───────────┐
-         │           │           │
-    ┌────▼────┐ ┌───▼────┐ ┌───▼────┐
-    │ Hook    │ │ Core   │ │ Ext    │
-    │Commands │ │Commands│ │Commands│
-    └────┬────┘ └───┬────┘ └───┬────┘
-         │          │          │
-         └──────────┼──────────┘
-                    │
-         ┌──────────▼──────────┐
+      ┌──────────────┼──────────────┐
+      │              │              │
+ ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
+ │ Hook    │   │ Core   │   │ Ext     │
+ │Commands │   │Commands│   │Commands│
+ └────┬────┘   └────┬────┘   └────┬────┘
+      │              │              │
+      └──────────────┼──────────────┘
+                     │
+      ┌──────────────▼──────────────┐
+      │   多后端执行层               │
+      │  ├─ claude (Codex native)   │
+      │  ├─ codex (Codex CLI)       │
+      │  └─ cursor (Cursor composer)│
+      └──────────────┬──────────────┘
+                     │
+         ┌───────────▼───────────┐
          │   7-Layer Modules   │
          │  shared→foundation  │
          │  →protocol→security │
@@ -84,11 +91,36 @@ Java Harness 是 claude-code-harness Go 项目的 Java 实现，当前实现了�
          └─────────────────────┘
 ```
 
+### 2.3 多后端执行架构
+
+Java Harness 支持多种执行后端，通过 resolver 机制动态选择：
+
+**支持的执行后端**:
+1. **claude** (默认) — Codex native subagent，通过 `spawn_agent` API
+2. **codex** — Codex CLI 委托，通过 `codex-companion.sh` 
+3. **cursor** — Cursor Composer backend，通过 `cursor-companion.sh`
+
+**后端选择优先级**:
+```
+--backend <value> / --cursor / --codex (显式标志)
+  > HARNESS_IMPL_BACKEND 环境变量
+  > 项目 env.local 配置
+  > 用户 ~/.config/claude-harness/impl-backend.env
+  > 默认值: claude
+```
+
+**Resolver 脚本**: `scripts/resolve-impl-backend.sh`
+
+**Role-scoped 限制**:
+- Worker 实现角色使用选定的后端
+- Reviewer 和 Advisor 角色固定使用 claude (brain，Opus model)
+- 防止实现自己输出进行review的情况
+
 **关键改造点**:
 1. 移除 picocli 框架
 2. 单一入口点 `Main.java`
 3. 每个命令一个 `*Handler` 类
-4. 技能文件在 `.claude-plugin/skills/`
+4. 技能文件在 `.claude-plugin/skills/<skill-name>/SKILL.md`（每个技能是目录）
 5. 命令从 `harness <subcommand>` 改为 `java-harness <subcommand>`
 
 ---
@@ -166,23 +198,30 @@ java-harness/
 │   ├── plugin.json
 │   ├── hooks.json
 │   └── skills/
-│       ├── core/
-│       │   ├── java-harness-plan.claude
-│       │   ├── java-harness-work.claude
-│       │   ├── java-harness-review.claude
-│       │   ├── java-harness-sync.claude
-│       │   └── java-harness-release.claude
-│       ├── hook/
-│       │   ├── java-harness-hook-pre-tool.claude
-│       │   └── ...
-│       └── extended/
-│           ├── java-harness-init.claude
-│           └── ...
+│       ├── harness-plan/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── harness-work/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── harness-review/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── harness-sync/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── harness-release/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       ├── breezing/
+│       │   ├── SKILL.md
+│       │   └── references/
+│       └── ...
 ```
 
 ### 4.2 技能文件示例
 
-**文件**: `.claude-plugin/skills/core/java-harness-plan.claude`
+**文件**: `.claude-plugin/skills/harness-plan/SKILL.md`
 
 ```
 ---
@@ -201,11 +240,11 @@ java-harness plan
 ### 4.3 命令映射
 
 ```
-技能名称 (/java-harness-*)  → CLI 命令
+技能名称 (/harness-*)  → CLI 命令
 --------------------------------------------------
-/java-harness-plan         → java-harness plan
-/java-harness-work         → java-harness work <taskID>
-/java-harness-hook-pre-tool → java-harness hook pre-tool
+/harness-plan         → java-harness plan
+/harness-work         → java-harness work <taskID>
+/harness-hook-pre-tool → java-harness hook pre-tool
 ```
 
 ---
@@ -287,8 +326,8 @@ public class HookDispatcher implements CommandHandler {
 
 ### 阶段 1: 命令格式改造 + 核心技能框架
 
-**目标**: 从 35-40% 提升到 60-70% 功能覆盖率
-**工期**: 3-4 周
+**目标**: 从 35-40% 提升到 70-75% 功能覆盖率
+**工期**: 4-5 周
 
 **包含内容**:
 
@@ -297,34 +336,57 @@ public class HookDispatcher implements CommandHandler {
 - ✅ 实现 Main.java 入口点
 - ✅ 实现 86 个命令 Handler
 - ✅ 创建 .claude-plugin/ 结构
-- ✅ 编写所有 /java-harness-* 技能文件
+- ✅ 编写所有 /harness-* 技能文件
 - ✅ 配置 hooks.json 和 plugin.json
 
 **1.2 核心 5 个技能实现 (P0)**
-- ✅ /java-harness-plan
-- ✅ /java-harness-work
-- ✅ /java-harness-review
-- ✅ /java-harness-sync
-- ✅ /java-harness-release
+- ✅ /harness-plan
+- ✅ /harness-work
+- ✅ /harness-review
+- ✅ /harness-sync
+- ✅ /harness-release
 
-**1.3 Plans.md 解析器 (P0)**
+**1.2.1 扩展技能实现 (P0-P1)**
+- ✅ /breezing — 团队执行模式（Codex host）
+- ✅ /cursor-ask — Cursor只读委托
+- ✅ /cursor-do — Cursor写任务委托
+- ✅ /harness-setup — 项目初始化
+- ✅ /harness-progress — 进度报告
+- ✅ /harness-loop — 循环执行
+- ✅ /harness-accept — 发布接受判断
+- ✅ /maintenance — 维护任务
+- ✅ /memory — 内存管理
+- ✅ /ci — CI集成
+- ✅ /agent-browser — 浏览器代理支持
+- ✅ /failure-codifier — 失败编码器
+
+**1.3 多后端执行支持 (P0)**
+- ✅ 后端resolver机制
+- ✅ Codex native subagent支持  
+- ✅ Codex CLI委托支持
+- ✅ Cursor Composer集成
+- ✅ Role-scoped后端限制
+- ✅ 自动模式选择逻辑
+- ✅ 工作树隔离机制
+
+**1.4 Plans.md 解析器 (P0)**
 - ✅ Plans.md 文件格式解析
 - ✅ 任务依赖关系解析
 - ✅ 任务状态跟踪
 - ✅ plans check-deps 命令
 
-**1.4 基础配置管理 (P1)**
+**1.5 基础配置管理 (P1)**
 - ✅ harness.toml 解析器
 - ✅ init 命令生成配置模板
 - ✅ sync 命令同步配置
 
-**1.5 状态管理增强 (P1)**
+**1.6 状态管理增强 (P1)**
 - ✅ 会话状态管理
 - ✅ 工作状态管理
 - ✅ JSONL 持久化
 - ✅ SQLite 数据库操作
 
-**预期成果**: 86 个命令全部可用，核心闭环可用，功能覆盖率约 65-70%
+**预期成果**: 86 个命令全部可用，核心闭环可用，多后端支持完整，功能覆盖率约 70-75%
 
 ---
 
@@ -511,7 +573,7 @@ scripts/install-java-harness.sh
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
 | 命令框架 | 移除 picocli，使用简单 switch | 与 Go 项目对等，降低复杂度 |
-| 技能格式 | .claude-plugin/skills/*.claude | Claude Code 标准格式 |
+| 技能格式 | .claude-plugin/skills/<name>/SKILL.md（目录结构） | 与 Go 项目对等，每个技能是包含 SKILL.md 的目录 |
 | Hook 协议 | JSON stdin/stdout | 与 Go 完全一致 |
 | 状态管理 | SQLite + JSONL | 与 Go 对等 |
 | 部署方式 | GraalVM Native Image | 单一可执行文件，快速启动 |

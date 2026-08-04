@@ -80,197 +80,197 @@ non-trivial planning 以 TeamAgent 或子代理验证为前提。
 
 ```bash
 cat Plans.md
-rg -n "関連キーワード" README.md README_ja.md CLAUDE.md docs skills scripts tests
+rg -n "相关关键字" README.md README_ja.md CLAUDE.md docs skills scripts tests
 rg -n "\"(lint|format)\"|eslint|prettier|biome|oxlint|dprint|ruff|black|isort|gofmt|go vet|cargo fmt|cargo clippy" package.json pyproject.toml go.mod Cargo.toml Makefile .github/workflows scripts docs 2>/dev/null
 find docs -maxdepth 3 -type f | sort
 git status --short --branch
 ```
 
-見る観点:
+查看视点:
 
-- 既存の product promise と矛盾しないか
-- 既存の skill role / trigger / allowed-tools と矛盾しないか
-- Plans.md の未完了タスクと競合しないか
-- 配布 mirror、Codex mirror、OpenCode mirror、i18n に影響しないか
-- 仕様正本があるなら、Plans.md より先に spec SSOT を更新すべきか
-- root `spec.md` の product contract と Plans.md の task contract が分離されているか
-- source code changes を含む plan で lint / formatter baseline があるか。未設定なら implementation の前に setup task が必要か
+- 是否与现有 product promise 矛盾
+- 是否与现有 skill role / trigger / allowed-tools 矛盾
+- 是否与 Plans.md 的未完成任务竞争
+- 是否影响分发 mirror、Codex mirror、OpenCode mirror、i18n
+- 若有规格正本，是否应先于 Plans.md 更新 spec SSOT
+- root `spec.md` 的 product contract 和 Plans.md 的 task contract 是否分离
+- 包含 source code changes 的 plan 是否有 lint / formatter baseline。未设定时实现前是否需要 setup task
 
-## Step 4: 記憶確認
+## Step 4: 记忆确认
 
-harness-mem、harness-recall、ローカル memory file が使える場合は、関連キーワードで過去判断を確認する。
-検索できる場合は現在の project / repo に絞る。cross-project 検索は、ユーザーが明示した場合だけ使う。
-この step は車輪の再発明防止確認であり、non-trivial planning では省略しない。
+harness-mem、harness-recall、本地 memory file 可用时，以相关关键字确认过去判断。
+可搜索时限定为当前的 project / repo。跨项目搜索仅在用户明确时使用。
+此步骤是防止重复发明轮子的确认，non-trivial planning 不可省略。
 
-確認対象の例:
+确认对象示例:
 
-- harness-mem / harness-recall の検索結果
+- harness-mem / harness-recall 的搜索结果
 - `.claude/agent-memory/`
 - `.claude/state/memory-bridge-events.jsonl`
-- `.harness-mem/` の存在確認
-- repo 内 docs / Plans.md に残っている prior decision
+- `.harness-mem/` 的存在确认
+- repo 内 docs / Plans.md 中残留的 prior decision
 
 注意:
 
-- harness-mem の DB を直接読む前提にしない
-- harness-mem が未セットアップ、unhealthy、検索不可なら「記憶未確認」と明示する
-- 記憶は現在の repo 状態より弱い。古い記憶と git / docs が衝突したら、現在の repo 状態を優先する
-- memory や検索で見えないものを absent と断定しない。`not_observed != absent`
+- 不前提直接读取 harness-mem 的 DB
+- harness-mem 未设定、unhealthy、不可搜索时明确标注"记忆未确认"
+- 记忆弱于当前 repo 状态。旧记忆与 git / docs 冲突时优先当前 repo 状态
+- 不将 memory 或搜索中不可见的断定为 absent。`not_observed != absent`
 
-## Step 5: サブエージェント議論
+## Step 5: 子代理讨论
 
-non-trivial planning では、TeamAgent または Task サブエージェントを前提にする。
-Task tool が使える場合は、最低 3 つの独立視点を走らせる。各 agent には「read-only」「根拠付き」「結論先出し」を指定する。
-単発・軽微タスクだけは、この step を明示的に skip してよい。
-Product / Strategy、Architecture / Implementation、Security / Abuse、QA / Regression、Skeptic は perspective 名であり、agent_type 名ではない。
-利用可能な TeamAgent / Task サブエージェントに perspective として渡す。
-任意 agent spawn を要求しない。
+non-trivial planning 以 TeamAgent 或 Task 子代理为前提。
+可使用 Task tool 时，至少运行 3 个独立视点。为各 agent 指定"read-only""有根拠""先出结论"。
+仅单发・轻微任务可明确跳过此步骤。
+Product / Strategy、Architecture / Implementation、Security / Abuse、QA / Regression、Skeptic 是 perspective 名而非 agent_type 名。
+传递给可用的 TeamAgent / Task 子代理作为 perspective。
+不要求任意 agent spawn。
 
-標準ロール:
+标准角色:
 
 | Role | 目的 |
 |------|------|
-| Product / Strategy | 採用価値、差別化、ユーザー価値、機会費用を見る |
-| Architecture / Implementation | 実装可能性、既存設計との整合、保守負荷を見る |
-| Security / Abuse | 権限、秘密情報、prompt injection、サプライチェーン、外部送信リスクを見る |
-| QA / Regression | デグレ、テスト、配布 mirror、互換性、実際に動くかを見る |
-| Skeptic | 採用しない理由、過剰投資、曖昧な前提を攻撃する |
+| Product / Strategy | 看采用价值、差异化、用户价值、机会费用 |
+| Architecture / Implementation | 看实现可能性、与既有设计整合、维护负荷 |
+| Security / Abuse | 看权限、秘密信息、prompt injection、供应链、外部发送风险 |
+| QA / Regression | 看退化、测试、分发 mirror、兼容性、实际是否可动 |
+| Skeptic | 攻击不采用理由、过度投资、模糊前提 |
 
-各 agent の出力に求めるもの:
+对各 agent 输出的要求:
 
-- 採用 / 条件付き採用 / 不採用
+- 采用 / 条件采用 / 不采用
 - 根拠
-- 最大のリスク
-- 追加で確認すべきこと
-- 既存仕様や記憶との衝突
-- test / smoke / CI / review / release gate に落とすべき DoD
+- 最大风险
+- 应追加确认
+- 与既有规格或记忆冲突
+- 应落到 test / smoke / CI / review / release gate 的 DoD
 
-議論のまとめ方:
+讨论总结方法:
 
-1. 合意点を抽出する
-2. 対立点を残す
-3. 自分の判断を出す
-4. Required / Recommended / Optional / Reject に分類する
+1. 提取合意点
+2. 残留对立点
+3. 输出自已判断
+4. 分类为 Required / Recommended / Optional / Reject
 
-サブエージェントが使えない場合は、単独で同じ 5 視点を明示的に分けて評価し、`サブエージェント未使用` と書く。
+子代理不可用时，单独明确分 5 视点评估，写明`未使用子代理`。
 
-## Step 5.5: 実装プラン検証ゲート
+## Step 5.5: 实现计划验证关卡
 
-実装プランは、次の 5 つをすべて満たすまで Required にしない。
+实现计划在满足以下 5 个之前不设为 Required。
 
-| Gate | 見ること | 落ちた場合 |
+| Gate | 看什么 | 未满足时 |
 |------|----------|------------|
-| Spec / Plans Fit | root `spec.md`、sub-spec、`Plans.md` の順序と矛盾しない | `Spec delta` を先に出すか Reject |
-| Memory / Wheel Check | harness-mem / harness-recall / repo memory に同種判断や既存 task がないか | 既存案を再利用、差分だけ task 化 |
-| Product Fit | プロダクト目的と primary user workflow に直結するか | docs / external workflow / Optional へ逃がす |
-| Security Fit | 権限、秘密情報、外部送信、dependency、branch/release gate を弱めないか | spike / security task / Reject |
-| Quality Baseline Fit | source code changes に対して lint / formatter / CI command で品質を Yes/No 判定できるか | setup task を先行、または formatter_baseline の skip reason を残す |
-| Works In Practice | test / smoke / CI / review / release closeout で Yes/No 判定できるか | DoD を作り直す |
+| Spec / Plans Fit | 不与 root `spec.md`、sub-spec、`Plans.md` 的顺序矛盾 | 先输出 `Spec delta` 或 Reject |
+| Memory / Wheel Check | harness-mem / harness-recall / repo memory 中是否有同类判断或现有 task | 重用现有案，仅将差分 task 化 |
+| Product Fit | 是否直连产品目的和 primary user workflow | 逃到 docs / external workflow / Optional |
+| Security Fit | 是否不弱化权限、秘密信息、外部发送、dependency、branch/release gate | spike / security task / Reject |
+| Quality Baseline Fit | source code changes 是否可通过 lint / formatter / CI command 以 Yes/No 判定质量 | 先行 setup task，或保留 formatter_baseline 的 skip reason |
+| Works In Practice | 是否可通过 test / smoke / CI / review / release closeout 以 Yes/No 判定 | 重做 DoD |
 
-この gate は「手戻りを減らすための前工程」であり、感想レビューではない。
-落ちた gate は必ず Plans.md の DoD、Depends、または `[needs-spike]` に反映する。
-Quality Baseline Fit は、formatter や linter を雑に追加するための口実ではない。
-未設定かつ source code changes を含む plan では、実装 task の前に setup task を置く。
-setup task の DoD は config、package script / CI command、validation command の 3 点を含める。
-planning では package install しない。導入は harness-work が setup task として行う。
-広範囲の一括 reformat は、ユーザーが明示した場合か、その setup task の scope に入っている場合だけ実行する。
-Security Fit は secret の実読取を要求しない。
-`.env`、tokens、private keys、customer data などの read が必要になる場合は Risk Gate として止める。
-既存の guardrail、config shape、audit evidence、テスト、GitHub / CI metadata など、秘密値を読まない surface で確認する。
+此关卡是"为减少返工的前工程"，非感想评审。
+未满足的关卡必须反映到 Plans.md 的 DoD、Depends 或 `[needs-spike]`。
+Quality Baseline Fit 不是杂乱添加 formatter 或 linter 的借口。
+未设定且包含 source code changes 的 plan，在实现 task 之前放置 setup task。
+setup task 的 DoD 包含 config、package script / CI command、validation command 3 点。
+planning 中不进行 package install。导入由 harness-work 作为 setup task 执行。
+广范围的一量 reformat 仅在用户明确时，或在其 setup task 的 scope 内执行。
+Security Fit 不要求 secret 的实际读取。
+需要读取 `.env`、tokens、private keys、customer data 等时作为 Risk Gate 停止。
+通过不读秘密值的现有 guardrail、config shape、audit evidence、测试、GitHub / CI metadata 等确认。
 
-## Step 6: 中立採点レビュー
+## Step 6: 中立评分评审
 
-採点は 5 点満点。5 点は良い状態、1 点は弱い状態として扱う。
+评分为 5 分制。5 分为好状态，1 分为弱状态。
 
-| 軸 | 5 点 | 3 点 | 1 点 |
+| 轴 | 5 分 | 3 分 | 1 分 |
 |----|-----|-----|-----|
-| Product Fit | 導入先プロダクトの核に直結 | 便利だが周辺的 | 別製品や運用で足りる |
-| Evidence Strength | 一次情報 + 実測 + 既存根拠あり | 片方だけ確認 | 推測中心 |
-| User Value | 判断品質や実行速度が大きく上がる | 一部 workflow で有効 | 体感価値が薄い |
-| Implementation Feasibility | 小さく局所的 | 中規模だが管理可能 | 大規模で保守負荷大 |
-| Regression Safety | 低リスクでテスト可能 | 影響範囲あり | 既存 flow を壊しやすい |
-| Strategic Leverage | 長期の差別化になる | 便利機能止まり | 一過性 |
-| Security Safety | 権限や秘密情報を弱めず検証可能 | 注意点あり | 危険な権限緩和や未検証外部送信がある |
-| Works In Practice | smoke / CI / review で実証できる | 手動確認中心 | 動作確認が曖昧 |
+| Product Fit | 直连导入产品核心 | 方便但周边 | 别产品或运用足够 |
+| Evidence Strength | 一次信息 + 实测 + 有既有根拠 | 仅确认一方 | 推测中心 |
+| User Value | 判断质量和执行速度大升 | 部分 workflow 有效 | 体感价值薄 |
+| Implementation Feasibility | 小且局地 | 中规模但可管理 | 大规模维护负荷大 |
+| Regression Safety | 低风险可测试 | 有影响范围 | 易坏现有 flow |
+| Strategic Leverage | 成长期差异化 | 止于便利功能 | 一过性 |
+| Security Safety | 不弱化权限和秘密信息可验证 | 有注意点 | 有危险权限缓和或未验证外部发送 |
+| Works In Practice | 可通过 smoke / CI / review 实证 | 手动确认中心 | 动作确认模糊 |
 
-補正ルール:
+修正规则:
 
-- Evidence Strength が 2 以下なら Required 禁止
-- Regression Safety が 2 以下なら、先に spike / spec / test を置く
-- Security Safety が 2 以下なら Required 禁止
-- Works In Practice が 2 以下なら、DoD を作り直すか spike に落とす
-- Quality Baseline Fit が 2 以下で source code changes を含むなら、formatter_baseline setup task を Required dependency にする
-- Implementation Feasibility が 2 以下で User Value が 3 以下なら Reject 寄り
-- Product Fit が 2 以下なら、このプロダクトに入れず docs / external workflow に逃がす
+- Evidence Strength 2 以下禁止 Required
+- Regression Safety 2 以下时，先放置 spike / spec / test
+- Security Safety 2 以下禁止 Required
+- Works In Practice 2 以下时，重做 DoD 或落到 spike
+- Quality Baseline Fit 2 以下且包含 source code changes 时，将 formatter_baseline setup task 设为 Required dependency
+- Implementation Feasibility 2 以下且 User Value 3 以下时偏向 Reject
+- Product Fit 2 以下时，不放入此产品，逃到 docs / external workflow
 
-## Step 7: `$easy` 報告
+## Step 7: `$easy` 报告
 
-最終出力は、難しい評価をそのまま出さず、判断できる形に変換する。
+最终输出不直接输出困难的评价，转换为可判断的形式。
 
-必須構成:
+必须构成:
 
 ```markdown
-ひとことで:
-{{採用判断を 1 文}}
+一句话:
+{{采用判断为 1 句}}
 
-採点レビュー:
-| 案 | 点数 | 判定 | 根拠 | 未検証 |
+评分评审:
+| 案 | 分数 | 判定 | 根据 | 未验证 |
 |----|------|------|------|--------|
 
-取り入れるべき提案:
-| 優先 | 提案内容 | 理由 | どうなるのか |
+应采用的提案:
+| 优先 | 提案内容 | 理由 | 会怎样 |
 |------|----------|------|--------------|
 
-デグレ確認:
+退化确认:
 - team_validation_mode:
-- 仕様:
+- 规格:
 - Plans.md:
-- harness-mem / 記憶:
-- TeamAgent / サブエージェント:
+- harness-mem / 记忆:
+- TeamAgent / 子代理:
 - product fit:
 - security:
 - works in practice:
 - formatter_baseline:
-- mirror / 配布:
+- mirror / 分发:
 - test:
 
-次にやること:
+下一步做:
 1. ...
 2. ...
 3. ...
 ```
 
-文体ルール:
+文体规则:
 
-- 結論を先に出す
-- 専門語はすぐ短く訳す
-- 「すごい」「革新的」などの空気で判断しない
-- 提案は 1〜3 個に絞る。候補を並べすぎない
-- 事実、推測、未検証を分ける
+- 先出结论
+- 专业术语立即简短翻译
+- 不以"厉害""革新"等氛围判断
+- 提案限制为 1〜3 个。不过多并列候选
+- 区分事实、推测、未验证
 
-## Step 8: Plans.md / spec へ落とす時
+## Step 8: 落到 Plans.md / spec 时
 
-採用する案だけを task contract に変換する。
+仅将采用的方案转换为 task contract。
 
-順序:
+顺序:
 
-1. root `spec.md` を読み、必要なら先に `Spec delta` として product contract を更新する
-2. source code changes があり lint / formatter baseline が未設定なら、formatter_baseline setup task を Required dependency として先に置く
-3. Plans.md に Required task だけを追加する
-4. 高リスク案には `[needs-spike]` を付ける
-5. 各 task に検証可能な DoD を置く
-6. TDD が必要な task には `[tdd:required]` を付ける
-7. mirror / i18n / package surface に影響する場合は、検証 task を別に置く
-8. spec 更新が不要なら `Spec skip reason` を task context / sprint contract に残す
-9. non-trivial planning では TeamAgent / サブエージェント検証結果、または `サブエージェント未使用` fallback と 5 gate の結果を task context に残す
-10. `team_validation_mode: unavailable` の plan は Required にしない。軽量 task だけ `not_required_lightweight` を許可する
+1. 读取 root `spec.md`，必要时先作为 `Spec delta` 更新 product contract
+2. 有 source code changes 且 lint / formatter baseline 未设定时，先将 formatter_baseline setup task 作为 Required dependency 放置
+3. 向 Plans.md 仅添加 Required task
+4. 对高风险方案附加 `[needs-spike]`
+5. 为各 task 放置可验证的 DoD
+6. 对需要 TDD 的 task 附加 `[tdd:required]`
+7. 影响到 mirror / i18n / package surface 时，另外放置验证 task
+8. 不需 spec 更新时，在 task context / sprint contract 中保留 `Spec skip reason`
+9. non-trivial planning 中保留 TeamAgent / 子代理验证结果，或 `未使用子代理` fallback 和 5 gate 的结果到 task context
+10. `team_validation_mode: unavailable` 的 plan 不设为 Required。仅轻量 task 允许 `not_required_lightweight`
 
-`Spec delta` は agent が draft する。ユーザーに spec を一から書かせる前提にしない。
-`Spec delta` / `Spec skip reason` は Harness が生成し、consumer は承認・修正だけ行う。
+`Spec delta` 由 agent draft。不前提用户从零开始写 spec。
+`Spec delta` / `Spec skip reason` 由 Harness 生成，consumer 仅进行批准・修正。
 
 禁止:
 
-- 仕様の正解条件が揺れているのに実装 task だけ作る
-- デグレ確認を task 化せずに「注意」で済ませる
-- source code changes を含むのに lint / formatter baseline 不在を無視して実装 task だけ作る
-- docs-only / mechanical task の `Spec skip reason` を省略する
+- 规格正解条件摇摆时仅创建实现 task
+- 不将退化确认 task 化而以"注意"了结
+- 包含 source code changes 时忽视 lint / formatter baseline 不在而仅创建实现 task
+- 省略 docs-only / mechanical task 的 `Spec skip reason`

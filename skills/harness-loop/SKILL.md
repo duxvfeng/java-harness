@@ -1,238 +1,267 @@
 ---
 name: harness-loop
-description: "HAR: Codex-native long-running loop runner. Uses a real background runner that executes one ready batch per cycle through Breezing by default, with status/stop controls. Trigger: long-running, loop, autonomous, background, Codex. Do NOT load for: one-shot implementation, normal review, release."
-description-en: "HAR: Codex-native long-running loop runner. Uses a real background runner that executes one ready batch per cycle through Breezing by default, with status/stop controls. Trigger: long-running, loop, autonomous, background, Codex. Do NOT load for: one-shot implementation, normal review, release."
-description-zh: "HAR：Codex 原生长时循环执行器。使用实际的后台运行器，默认通过 Breezing 每个周期执行一个就绪批次，支持状态/停止控制。当用户提到长时间运行、循环、自主、后台、Codex 时启动。不适用于：一次性实现、普通审查、发布。"
+description: "Long-running task loop using /loop (Claude Code dynamic mode) and ScheduleWakeup to re-enter with fresh context on each wake-up. Internally invokes harness-work through Agent. Trigger: long-running, loop, wake-up, autonomous. Do NOT load for: one-shot task execution, review, release, planning."
+description-en: "Long-running task loop using /loop (Claude Code dynamic mode) and ScheduleWakeup to re-enter with fresh context on each wake-up. Internally invokes harness-work through Agent. Trigger: long-running, loop, wake-up, autonomous. Do NOT load for: one-shot task execution, review, release, planning."
+description-ja: "使用 /loop 和 ScheduleWakeup 在每次唤醒时以全新上下文重新执行长时间任务。内部通过 Agent 调用 harness-work。支持：长时间运行、循环、loop、唤醒、自主执行。"
+description-zh: "使用 /loop 和 ScheduleWakeup 在每次唤醒时以全新上下文重新执行长时间任务。内部通过 Agent 调用 harness-work。支持：长时间运行、循环、loop、唤醒、自主执行。"
 kind: workflow
-purpose: "Run long-lived Codex ready-batch execution loops"
-trigger: "long-running, loop, autonomous, background, Codex"
+purpose: "Re-enter long-running Plans.md execution with fresh context"
+trigger: "long-running, loop, wake-up, autonomous"
 shape: delegate
 role: orchestrator
 base: harness-work
 pair: harness-sync
 owner: harness-core
 since: "2026-05-05"
-allowed-tools: ["Read", "Bash"]
-argument-hint: "[all|TASK|START-END|START..END] [--max-cycles N] [--max-workers N|max] [--executor breezing|task] [--pacing worker|ci|plateau|night]"
-disable-model-invocation: true
+allowed-tools: ["Read", "Edit", "Bash", "Task", "ScheduleWakeup", "mcp__harness__harness_mem_resume_pack", "mcp__harness__harness_mem_record_checkpoint"]
+argument-hint: "[all|N-M] [--max-cycles N] [--pacing worker|ci|plateau|night]"
+user-invocable: true
 ---
 
-# Harness Loop
+# harness-loop
 
-Codex 版の `harness-loop` は、説明だけの擬似ループではなく、
-**実際にバックグラウンドで回るランナー**を起動する。
+将 `/loop`（CC dynamic mode）与 `ScheduleWakeup` 结合，
+对长时间任务 **在每次 wake-up 时以 fresh context 重新执行** 的元技能。
 
-## ひとことで
+在各 wake-up 通过 Agent 调用 `harness-work --breezing`，
+构成 1 cycle = 1 任务完结的可重新进入循环。
 
-`$harness-loop` は、1 回だけの実装依頼ではなく、
-「今すぐ実行できる未完了タスクのまとまりを、Breezing で自動実行し続ける当番」を起動する入口。
+> **Long-session helpers (CC 2.1.108+)**:
+> 人回来时用 `/recap` 重新获取摘要后再看 `/harness-loop status`。
+> 较长的离席和频繁重新进入的操作优先使用 `ENABLE_PROMPT_CACHING_1H=1`。
 
-ここでいう `ready batch` は、Depends が満たされていて、今すぐ並列実行できる `cc:TODO` / `cc:WIP` のまとまり。
-1 cycle は 1 task ではなく、原則として 1 ready batch を処理する。
+> **长时会话推荐 (CC 2.1.108+)**:
+> 会话长度预计超过 30 分钟时，在 plugin bundle root 解决后执行 `bash "${HARNESS_PLUGIN_ROOT}/scripts/enable-1h-cache.sh"` 以 opt-in 1 小时 prompt cache。
 
-## 形象
-
-人不是一直从旁监视，而是
-"同时可推进的作业集中发现 → 委托 Breezing → 确认结果 → 进入下个集合"
-的重复监督系，在后台常驻。
+> **Codex 0.123.0 automatic bug fix inheritance**:
+> manual shell follow-up queue 和 `/copy` after rollback 作为 Codex 本体的 TUI 修正自动继承。
+> loop runner 不追加追加输入 queue、copy wrapper、rollback workaround。
+> 长时间作业中向 manual shell 投递 follow-up 时的 queueing 委托给 Codex runtime。
 
 ## Quick Reference
 
-| 入力 | 動作 |
+| 输入 | 动作 |
 |------|------|
-| `$harness-loop all` | 未完了タスク全体を長時間ループで開始 |
-| `$harness-loop 41.1-41.4` | 範囲を絞って開始 |
-| `$harness-loop JLB3R-02..JLB3R-08` | Plans.md の task ID 順で範囲を絞って開始 |
-| `$harness-loop all --max-cycles 3` | 最大 3 サイクルで停止 |
-| `$harness-loop all --max-workers 4` | 1 cycle の ready batch を最大 4 worker までに制限 |
-| `$harness-loop all --max-workers max` | ready batch 内で実行可能なタスク数を上限として並列化 |
-| `$harness-loop all --plan roadmap` | named Plans の `roadmap` を対象にループ実行 |
-| `$harness-loop all --executor task` | 旧来の 1 task per cycle local worker 実行へ逃がす |
-| `$harness-loop all --pacing night` | サイクル間の待機を長めにする |
-| `$harness-loop status` | 現在の実行状況を確認 |
-| `$harness-loop stop` | 進行中ジョブを止めてループ停止要求を出す |
+| `/harness-loop all` | 循环执行所有未完成任务（default: max 8 cycles） |
+| `/harness-loop all --max-cycles 3` | 3 cycles 后停止 |
+| `/harness-loop 41.1-41.3 --pacing ci` | 以 CI pacing 执行任务范围 |
+| `/harness-loop all --plan roadmap` | 对 named Plans 的 `roadmap` 进行循环执行 |
+| `/harness-loop all --pacing night` | 深夜批处理（3600s 间隔） |
+| `/harness-loop status` | 确认进行中 runner 的状态 |
+| `/harness-loop stop` | 停止进行中 runner 的请求 |
 
-## 実行コマンド
+## 选项
 
-### 開始
+| 选项 | 说明 | 默认 |
+|----------|------|----------|
+| `all` | 所有未完成任务为目标 | - |
+| `N-M` | 任务编号范围指定 | - |
+| `--plan NAME` | 使用 `plans/manifest.json` 的 named plan | active/default |
+| `--max-cycles N` | 最大 cycle 数 | `8` |
+| `--pacing <mode>` | wake-up 间隔模式 | `worker`（270s） |
 
-```bash
-harness codex-loop start all
+### pacing 值映射
+
+| pacing | delaySeconds | 用途 |
+|--------|-------------|------|
+| `worker` | 270 | Worker 完成后（5 min 内 cache warm） |
+| `ci` | 270 | CI 短时间作业等待 |
+| `plateau` | 1200 | 20 min（plateau 检测后的重试间隔） |
+| `night` | 3600 | 深夜长时间放置 |
+
+> **约束**: `ScheduleWakeup` 的 `delaySeconds` 在运行时被 clamp 到 **[60, 3600]**。
+> `worker` / `ci` 的 270s 以及 `night` 的 3600s 在此范围内。
+> `plateau` 的 1200s 也在范围内。直接指定值时务必在 60 以上 3600 以下。
+
+## 启动流程（每次 wake-up 的入口）
+
+详细版: [`${CLAUDE_SKILL_DIR}/references/flow.md`](${CLAUDE_SKILL_DIR}/references/flow.md)
+
+### plugin bundle root 解决
+
+`harness-loop` 不调用 host project 的 cwd，而是调用 plugin bundle root 下的 helper script。
+比喻来说，分开处理作业桌（host project）和工具箱（plugin bundle）。
+
+各 wake-up 的开头按以下顺序决定 `HARNESS_PLUGIN_ROOT`:
+
+1. 如果存在 `CLAUDE_PLUGIN_ROOT` 且包含 `scripts/` 则使用它
+2. 如果没有 `CLAUDE_PLUGIN_ROOT`，则从 `CLAUDE_SKILL_DIR` 反推 plugin bundle root
+   - `skills/harness-loop` 分发则为 `${CLAUDE_SKILL_DIR}/../..`
+   - `.agents/skills/harness-loop` mirror 分发则为 `${CLAUDE_SKILL_DIR}/../../..`
+3. 都无法解决时停止，设置 `CLAUDE_PLUGIN_ROOT` 为 plugin bundle root 后重新执行
+
+`Plans.md` 和 `.claude/state/...` 放在 host project 侧。
+仅从 `${HARNESS_PLUGIN_ROOT}/scripts/...` 调用 helper script。
+
+有多个 Plans.md 的 repo，在启动长时 run 时明确 `--plan NAME`。
+runner 在开始时解析的 Plans file 在 cycle 间保持，因此中途不切换 active plan。
+
+```
+wake-up
+  │
+  ▼
+[Step 0] 将 plugin bundle root 解析为 HARNESS_PLUGIN_ROOT
+  如果 CLAUDE_PLUGIN_ROOT 有效则使用
+  否则从 CLAUDE_SKILL_DIR 反推 plugin bundle root
+  ※ 不参照 host project cwd 的 scripts/
+  │
+  ▼
+[Step 1] 先读取 Plans.md
+  特定 cc:WIP / cc:TODO 的先头任务（获得 task_id）
+  ※ 无未完成任务 → 循环结束（正常完成）
+  │
+  ▼
+[Step 2] sprint-contract 存在确认 & 生成
+  确认 .claude/state/contracts/${task_id}.sprint-contract.json 的有无
+  无则通过 node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" ${task_id} 生成
+  生成后（仅首次）: bash "${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh" <contract-path> \
+    --check "wake-up 自动批准（harness-loop 用 DoD 以 reviewer 视点确认）" \
+    --approve  ← draft → approved 升级
+  （既有 contract 已 approved 因此跳过）
+  │
+  ▼
+[Step 3] contract readiness 检查
+  bash "${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh" <contract-path>
+  │
+  ▼
+[Step 4] Resume pack 重新读取
+  harness-mem resume-pack（重新注入上下文）
+  │
+  ▼
+[Step 4.5] Advisor 咨询（仅必要时）
+  高风险任务首次执行前 / 同一原因 2 次失败后 / plateau 前
+  组装 `advisor-request.v1` 进行咨询
+  │
+  ├── PLAN        → 下次 executor prompt prepend advice
+  ├── CORRECTION  → 作为局部修正指示重新执行
+  └── STOP        → 当场停止 loop，留下理由
+  │
+  ▼
+[Step 5] 1 任务循环执行
+  worker_result = Agent(
+      subagent_type="claude-code-harness:worker",  # worker agent（非 harness-work）
+      prompt="任务: ${task_id}\nDoD: <从 Plans.md 抽取>\ncontract_path: ${CONTRACT_PATH}\nmode: breezing",
+      isolation="worktree",
+      run_in_background=false
+  )
+  # worker_result: { commit, branch, worktreePath, files_changed, summary }
+  │
+  ▼
+[Step 5.5] Lead 评审执行
+  diff_text = git show worker_result.commit
+  verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+  ※ 详细参照 flow.md
+  │
+  ▼
+[Step 5.6] APPROVE → cherry-pick 到 main / REQUEST_CHANGES → 修正循环（contract 的 max_iterations 次，默认 3）
+  APPROVE: git cherry-pick → 将 Plans.md 更新为 cc:完成 [{hash}] → 删除 feature branch
+  REQUEST_CHANGES x MAX_REVIEWS 后仍否决: 升级处理
+  ※ 详细参照 flow.md
+  │
+  ▼
+[Step 6] plateau 判定
+  bash "${HARNESS_PLUGIN_ROOT}/scripts/detect-review-plateau.sh" ${current_task_id}
+  │
+  ├── PIVOT_REQUIRED（exit 2）  → 循环停止 + 用户升级
+  ├── INSUFFICIENT_DATA（exit 1）→ 继续
+  └── PIVOT_NOT_REQUIRED（exit 0）→ 继续
+  │
+  ▼
+[Step 7] 循环数检查
+  │
+  ├── cycles >= max_cycles → 循环停止（到达上限）
+  │
+  ▼
+[Step 8] checkpoint 记录
+  harness_mem_record_checkpoint(
+      session_id, title, content=循环结果摘要
+  )
+  │
+  ▼
+[Step 9] 下次 wake-up 预约
+  ScheduleWakeup(
+      delaySeconds=<pacing值>,
+      prompt="/harness-loop <相同参数>",
+      reason="循环 {N}/{max} 完成 — 下一任务"
+  )
 ```
 
-範囲指定:
+## 循环停止条件
 
-```bash
-harness codex-loop start 41.1-41.4 --max-cycles 5 --pacing worker
-harness codex-loop start JLB3R-02..JLB3R-08 --max-cycles 5 --pacing worker
-harness codex-loop start all --max-workers max --pacing worker
-harness codex-loop start all --plan roadmap --max-cycles 5
-harness codex-loop start all --executor task --max-cycles 5
+| 条件 | 停止种类 | 对应 |
+|------|---------|------|
+| `cycles >= max_cycles` | 正常停止（到达上限） | 向用户报告 |
+| `PIVOT_REQUIRED`（exit 2） | 异常停止（升级处理） | 请示用户判断 |
+| 无未完成任务 | 正常停止（全部完成） | 输出完成报告 |
+
+指定 `--max-cycles 3` 时在 3 循环完成后停止。
+default（`--max-cycles 8`）时在 8 循环停止。
+
+## 途中报告 / Silence Policy
+
+长时 loop 中，途中报告不是"为安心的 heartbeat"而是"判断变化时的通知"。
+Codex `0.123.0` 的 background agent 可接收 transcript delta 的环境中，不因仅 delta 到达而回应，不需要时明确沉默。
+
+应报告的:
+
+- cycle 完成、到达上限、全完成、blocked
+- validation failure、review `REQUEST_CHANGES`、plateau、advisor `STOP`
+- advisor / reviewer drift、contract readiness failure
+- 用户求 `status` 时的摘要
+
+可沉默的:
+
+- 仅 transcript delta 增加，task / review / advisor 状态未变时
+- 仅 log 中残留的细小 stdout 增加时
+- 等待下次 wake-up 的 pacing 期间
+
+default 为"1 cycle 最终报告 1 次"。
+但 Advisor request 未响应、Reviewer result 未到达、plateau 前的警告优先于 silence policy 报告。
+
+## 与 /loop 的协作
+
+此技能与 CC 的 `/loop`（dynamic mode）组合使用。
+
+有效 `/loop` 后 CC 持续自律重新进入执行，
+各循环末尾调用 `ScheduleWakeup` 预约下次 wake-up。
+
+`/loop` 的哨兵: `<<autonomous-loop-dynamic>>`
+
+各 wake-up 以 **fresh context** 开始，防止前循环的上下文污染。
+`harness-mem resume-pack` 的 resume pack 重新读取必须（Step 2）。
+
+## checkpoint 记录
+
+`harness_mem_record_checkpoint` schema:
+
+```json
+{
+  "session_id": "<会话 ID>",
+  "title": "harness-loop cycle {N}/{max}: {任务名}",
+  "content": "cycle_result 的 1 行摘要 + commit hash"
+}
 ```
 
-`START..END` は、`Plans.md` に並んでいる task ID をそのまま使う範囲指定。
-英字やハイフンを含む task ID は `..` を優先する。
-`41.1-41.4` のような従来の数値レンジも引き続き使える。
+## Advisor Strategy
 
-`--max-workers` は、Breezing が 1 cycle で同時に動かす worker 数の上限。
-`max` は、選択範囲内で Depends が満たされた ready task の数をそのまま上限にする。
-`--executor task` は、Breezing ではなく local worker に 1 task だけ渡す互換用の逃げ道。
-問題切り分けや、並列実行したくない危険な作業で使う。
-複数 Plans.md がある repo では、長時間 run の起動時に `--plan NAME` を明示する。
-runner は開始時に解決した Plans file を cycle 間で保持するため、途中で active plan を切り替えない。
+此技能主角是 executor，advisor 仅在必要时调用。
+打个比方，负责人平时自走，仅难点咨询老手。
 
-### 状態確認
+咨询条件固定，不使用自然语言的"自信低"判定。
 
-```bash
-harness codex-loop status
-harness codex-loop status --json
-```
+| 条件 | 是否咨询 |
+|------|-----------|
+| `needs-spike` / `security-sensitive` / `state-migration` | 咨询 |
+| `<!-- advisor:required -->` | 咨询 |
+| 同一原因 2 次失败 | 咨询 |
+| plateau 停止前 | 咨询 |
 
-### 停止
+同一 trigger 仅咨询 1 次。
+该判定使用 `trigger_hash = task_id + reason_code + normalized_error_signature`。
 
-```bash
-harness codex-loop stop
-```
+## 相关技能
 
-## どう動くか
-
-1. project root の `.claude/state/codex-loop/` に Harness loop の実行状態を書き出す
-2. 受け取った selection を Plans.md から正規化する
-3. Plans.md から Depends が満たされた `cc:TODO` / `cc:WIP` を集め、ready batch を作る
-4. `--max-workers` で ready batch の同時実行数を制限する
-5. 既定では Breezing executor が ready batch を Lead / Worker / Reviewer 分離で実行する
-6. `--executor task` の時だけ、互換用 local worker が 1 task per cycle で `codex exec` を起動する（`CODEX_LOOP_TASK_DRIVER=companion` の時だけ `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --background --write ...` を使う）
-7. 高リスク task / 2 回目失敗 / plateau 直前では advisor consult を挟む
-8. ready batch 完了後に review / checkpoint / plateau 判定を行う
-9. まだ対象タスクが残っていれば、待機後に次サイクルへ進む
-
-## Realtime Handoff / Silence Policy
-
-Codex `0.123.0` 以降の background agent は realtime handoff で transcript delta を受け取れる。
-この delta は「状況把握用の追記」であり、毎回ユーザーへ返答する合図ではない。
-
-ひとことで: background agent は、必要な時だけ報告し、何も判断が変わらない時は明示的に沈黙する。
-
-たとえると、見張り役が廊下でずっと実況するのではなく、異常・完了・判断待ちだけを知らせる形。
-
-報告してよいタイミング:
-
-- loop 開始、停止、`already running`、`stop` 受理など、ユーザー操作に関わる lifecycle 境界
-- 1 ready batch cycle の最終結果、commit、`RESULT: APPROVED` / `RESULT: BLOCKED`
-- Breezing Lead が task 完了を progress feed としてまとめて出す時
-- task が blocked、validation failure、review `REQUEST_CHANGES`、plateau、advisor `STOP` で止まる時
-- user が `status` を実行した時、または明示的に途中状況を聞いた時
-- advisor / reviewer drift、contract readiness failure など、放置すると品質判定がずれる時
-
-沈黙するタイミング:
-
-- transcript delta を受け取っただけで、task / review / advisor の状態が変わっていない時
-- `runner.log` / `jobs/*.log` に既に残る細かな stdout だけが増えた時
-- `pacing` 待機中で、次 cycle まで新しい判断材料がない時
-
-途中報告の頻度:
-
-- default は「1 ready batch cycle につき最終報告 1 回」。
-- Breezing の task-level progress feed は、batch 内の完了数が動いた時だけ出す。
-- 長い cycle でも、material state change がない限り heartbeat は出さない。
-- 詳細な流れは `harness codex-loop status --json` と project root の `.claude/state/codex-loop/runner.log` に寄せ、会話側には要点だけ出す。
-
-Advisor / Reviewer drift との関係:
-
-- silence policy は drift 検知を弱めるためのものではない。
-- `advisor-request.v1` に response がない、`review-result.v1` が返らない、contract が未承認などの異常は必ず state / log に残し、必要ならユーザーへ報告する。
-- Advisor は `PLAN` / `CORRECTION` / `STOP` の相談役、Reviewer は最終品質判定役のまま分離する。
-
-## pacing
-
-| 値 | 用途 | 待機秒数 |
-|----|------|---------|
-| `worker` | 通常の開発ループ | 270 |
-| `ci` | 短めに確認したい時 | 270 |
-| `plateau` | 行き詰まり気味の再試行 | 1200 |
-| `night` | 長めの放置実行 | 3600 |
-
-## State Path Policy
-
-Codex 版 `harness-loop` は、Codex native の会話・実行キャッシュと、Harness が共有する project state を分けて扱う。
-
-- **Harness 共通 state**: project root の `.claude/state/` 配下に置く。Claude 側の advisor / review / checkpoint と共有するため、`harness codex-loop status` もここを読む。
-- **Codex loop runner state**: project root の `.claude/state/codex-loop/` 配下に置く。これは「Codex 全体の正本」ではなく、Harness loop runner の job / cycle / log 用 state。
-- **Codex native state**: `${CODEX_HOME:-~/.codex}` 配下に残る Codex 自身の thread / transcript / cache。Harness loop の task status、advisor history、review result の正本にはしない。
-- **禁止**: `.Codex/` や `~/.Codex` を正本 path として案内しない。大文字 `Codex` ディレクトリは historical drift と見なす。
-
-つまり、`.claude/state/codex-loop/` は「この project の Harness loop state」であり、Codex native state 全体の固定保存先ではない。
-
-## 状態ファイル
-
-以下はすべて project root 基準。
-
-- `.claude/state/codex-loop/run.json`
-- `.claude/state/codex-loop/cycles.jsonl`
-- `.claude/state/codex-loop/runner.log`
-- `.claude/state/codex-loop/current-job.json`
-- `.claude/state/codex-loop/jobs/*.json`
-- `.claude/state/codex-loop/jobs/*.log`
-- `.claude/state/codex-loop/jobs/*.out`
-- `.claude/state/advisor/history.jsonl`
-- `.claude/state/advisor/last-request.json`
-- `.claude/state/advisor/last-response.json`
-- `.claude/state/locks/codex-loop.lock.d`
-
-## Advisor Consult
-
-Advisor は「代わりに実装する役」ではなく、「次の一手だけ返す相談役」。
-loop では次の 3 箇所でだけ呼ぶ。
-
-| タイミング | reason_code | 何をするか |
-|-----------|-------------|-----------|
-| 高リスク task の初回実行前 | `high-risk-preflight` | 先に固める観点を聞く |
-| 同じ原因の 2 回目失敗後 | `retry-threshold` | 方針変更か局所修正かを聞く |
-| plateau による停止直前 | `plateau-pre-escalation` | 本当に止めるべきかを聞く |
-
-decision は 3 種だけ。
-
-| decision | loop の扱い |
-|----------|-------------|
-| `PLAN` | advice を次の executor prompt 先頭に足して再実行 |
-| `CORRECTION` | 局所修正の指示として再実行 |
-| `STOP` | loop を停止し、理由を state と runner.log に残す |
-
-同じ trigger は `trigger_hash = task_id + reason_code + normalized_error_signature` で 1 回だけ相談する。
-相談回数は task ごとに最大 3 回で、それ以上はユーザー判断に上げる。
-
-## 注意点
-
-- これは **本当に裏で動く**。説明だけ返して終わるスキルではない。
-- 同時に 2 本は起動できない。既に走っている場合は `already running` で止まる。
-- 既定 executor は Breezing。旧来の 1 task per cycle 挙動が必要な時だけ `--executor task` を使う。
-- 失敗したタスクを無理に飛ばして次へ進めるのではなく、基本はその場で止まって理由を残す。
-- `status` と `runner.log` を見れば、今どこで止まっているか追いやすい。
-
-## 具体例
-
-「Phase 41 の残タスクを、今日の間は自動で回したい」なら:
-
-```bash
-harness codex-loop start 41.1-41.4 --max-cycles 8 --max-workers max --pacing worker
-```
-
-途中で様子を見る:
-
-```bash
-harness codex-loop status
-```
-
-夜になって止めたい:
-
-```bash
-harness codex-loop stop
-```
-
-## なぜこの形か
-
-Codex では Claude の `/loop` と同じ wake-up 機構をそのまま使えない。
-その代わり、**Codex loop runner** を土台にして、
-Harness 側で状態管理と再入制御を持ち、実作業は Breezing の batch 実行に寄せる。
-そうすると、長時間タスクでも「止める」「再開する」「今の状態を見る」が素直になり、
-依存関係を満たした作業だけを安全にまとめて進められる。
+- `harness-work` — 各循环执行的任务实现技能
+- `harness-plan` — 循环对象任务的计划
+- `harness-review` — 个别任务的评审
+- `session-control` — 会话状态管理

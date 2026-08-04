@@ -2,62 +2,62 @@
 
 ## Monitor 工具使用指南 (CC 2.1.98+)
 
-监控长时间运行命令时，不使用轮询（Read 定期读取文件末尾），而是使用 **Monitor 工具**。Monitor 将后台进程的 stdout 每行逐次通知 Lead，因此比轮询更低延迟且更低令牌消耗地掌握状况。
+监控长时间执行命令时，不要用 polling（Read 定期读取文件末尾），而是使用 **Monitor 工具**。Monitor 会将后台进程的 stdout 每行作为通知逐次传给 Lead，比 polling 更低延迟且更低 token 消耗地掌握状况。
 
 **适用示例**:
-- `go test ./... -v` 执行中进度监控
-- `gh run watch` 跟踪 GitHub Actions 进度
+- `go test ./... -v` 执行中的进度监控
+- 通过 `gh run watch` 追踪 GitHub Actions 进度
 - `npm run build --watch` / `vite build --watch` 的构建错误即时检测
-- `codex-companion.sh status <job-id>` 检测 Codex job 完成
-- `docker-compose logs -f` / `kubectl logs -f` 的部署日志跟踪
+- 通过 `codex-companion.sh status <job-id>` 检测 Codex job 完成
+- `docker-compose logs -f` / `kubectl logs -f` 的部署日志追踪
 
-**使用判断标准**:
+**使用区分的判断基准**:
 
 | 对象 | 使用 Monitor? | 理由 |
 |---|---|---|
-| Agent (Worker / Reviewer) 的完成监控 | 不需要 | Agent 层自行完成通知 |
-| `run_in_background: true` 投放的 shell process | 推荐 | 可逐次通知拾取 stdout 每行 |
-| 短时间单发命令 (`go test` 1 次执行) | 不需要 | 通常 Bash tool 执行足够 |
-| 長時間 tail / watch / stream 系コマンド | 推奨 | polling より効率的 |
+| Agent (Worker / Reviewer) 的完成监控 | 不需要 | Agent 层自己进行完成通知 |
+| 用 `run_in_background: true` 投递的 shell process | 推荐 | 可以逐次通知捡起 stdout 每行 |
+| 短时间的一次性命令 (`go test` 执行 1 次) | 不需要 | 通常的 Bash tool 执行就够了 |
+| 长时间 tail / watch / stream 系命令 | 推荐 | 比 polling 更高效 |
 
-**Breezing Lead での典型パターン**:
+**Breezing Lead 中的典型模式**:
 
 ```
 Lead:
-  Task(Worker1, ...)           ← Agent 完了待ち (Monitor 不要)
+  Task(Worker1, ...)           ← 等待 Agent 完成 (不需要 Monitor)
   Task(Worker2, ...)           ← 同上
   Bash(run_in_background, "gh run watch --exit-status")
-  Monitor(tailCommand="...")   ← CI 失敗を即時検知 → Worker に修正指示
+  Monitor(tailCommand="...")   ← 即时检测 CI 失败 → 向 Worker 发出修正指示
 ```
 
-これにより Lead が「Worker 完了 → CI 失敗検知 → 修正指示」の反応速度を上げられる。
+这样可以提高 Lead 的「Worker 完成 → CI 失败检测 → 修正指示」反应速度。
 
-## Universal Violations Injection（セッション内 Worker 間の学習伝播）
+## Universal Violations Injection（会话内 Worker 间的学习传播）
 
-同一 `/breezing` 起動内で蓄積された Reviewer の universal gotchas を次 Worker の briefing 冒頭に自動注入する。**同一セッション内のみ有効**（セッション終了で破棄、`session-memory` には書かない）。
+将同一 `/breezing` 启动内累积的 Reviewer 的 universal gotchas 自动注入到下一个 Worker 的 briefing 开头。**仅同一会话内有效**（会话结束时废弃，不写入 `session-memory`）。
 
 ```python
-# Phase A 開始時に Lead プロセスの in-memory 配列を初期化
-universal_violations = []  # List[str] — このセッション内で蓄積
+# Phase A 开始时初始化 Lead 进程的 in-memory 数组
+universal_violations = []  # List[str] — 此会话内累积
 
-# Phase B で Worker を spawn する直前、briefing 冒頭に注入:
+# Phase B 中 spawn Worker 之前，注入到 briefing 开头:
 def build_worker_briefing(task, contract_path):
     header = ""
     if universal_violations:
         header = (
-            "🚨 同一セッションで既に検出された universal 違反（再発禁止）:\n"
+            "🚨 同一会话中已检测出的 universal 违规（禁止再发）:\n"
             + "\n".join(f"- {v}" for v in universal_violations)
             + "\n\n"
         )
-    return header + f"タスク: {task.内容}\nDoD: {task.DoD}\ncontract_path: {contract_path}\nmode: breezing"
+    return header + f"任务: {task.内容}\nDoD: {task.DoD}\ncontract_path: {contract_path}\nmode: breezing"
 
-# Reviewer が review-result.v1 を返した後、Lead が scope="universal" のみ抽出して累積:
+# Reviewer 返回 review-result.v1 后，Lead 仅抽出 scope="universal" 累积:
 for update in reviewer_result.memory_updates:
-    # 後方互換: 文字列は task-specific 扱い → 無視
+    # 后方兼容: 字符串视为 task-specific → 忽略
     if isinstance(update, str):
         continue
     if update.get("scope") == "universal":
         universal_violations.append(update["text"])
 ```
 
-**方針**: 過剰設計回避のため、`session-memory` や `decisions.md` への永続化は行わない。Lead プロセスの in-memory 配列に保持するだけで、`/breezing` セッション終了時に破棄する（issue #87 本文の方針）。
+**方针**: 为避免过度设计，不向 `session-memory` 或 `decisions.md` 持久化。仅保持在 Lead 进程的 in-memory 数组，`/breezing` 会话结束时废弃（issue #87 本文的方针）。

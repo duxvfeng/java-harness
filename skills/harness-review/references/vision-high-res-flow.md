@@ -1,220 +1,219 @@
 # Vision High-Res Flow (Opus 4.7)
 
-Opus 4.7 の高解像度 vision 機能（短辺最大 2576px）を harness-review で活かすための
-典型シナリオ別フロー。
+在 harness-review 中充分利用 Opus 4.7 的高分辨率 vision 功能（短边最大 2576px）的典型场景流程。
 
-> **解像度上限**: 短辺 2576px が運用上の安全上限。それを超える画像は事前リサイズ推奨。
-> 詳細ガイドは [`docs/opus-4-7-vision-usage.md`](../../../docs/opus-4-7-vision-usage.md) を参照。
+> **分辨率上限**: 短边 2576px 为运营安全上限。超过此限制的图像建议预先调整大小。
+> 详细指南请参考 [`docs/opus-4-7-vision-usage.md`](../../../docs/opus-4-7-vision-usage.md)。
 
 ---
 
-## シナリオ 1: PDF ページレビュー
+## 场景 1: PDF 页面审查
 
-仕様書・設計ドキュメント・リリースノート等の PDF をレビュー対象にする場合。
+审查规格说明书、设计文档、发行说明等 PDF 的情况。
 
-### フロー
+### 流程
 
-1. **ページ範囲を特定する**
+1. **确定页面范围**
 
-   PDF 全体を一括で渡すと token 消費が大きくなるため、まずページ構成を把握する。
+     由于一次性传递整个 PDF 会消耗大量 token，首先掌握页面构成。
 
-   ```
-   Read tool: file_path="<path>.pdf", pages="1-5"
-   ```
+     ```
+     Read tool: file_path="<path>.pdf", pages="1-5"
+     ```
 
-2. **1 ページあたりの実効 DPI を確認する**
+2. **确认每页的实际 DPI**
 
-   PDF の DPI が高い場合、レンダリング後に短辺が 2576px を超えることがある。
-   超える場合は DPI を落として再エクスポートを依頼する（詳細は usage ガイド参照）。
+     PDF 的 DPI 较高时，渲染后短边可能超过 2576px。
+     超过时请求降低 DPI 重新导出（详情请参考 usage 指南）。
 
-3. **レビュー対象ページを Read で読み込む**
+3. **用 Read 读取审查对象页面**
 
-   ```
-   Read tool: file_path="<path>.pdf", pages="<対象ページ範囲>"
-   ```
+     ```
+     Read tool: file_path="<path>.pdf", pages="<对象页面范围>"
+     ```
 
-   Read tool は pages パラメータで指定したページを vision モデルに渡す。
-   1 回あたり最大 20 ページまで指定可能。
+     Read tool 将 pages 参数指定的页面传递给 vision 模型。
+     每次最多可指定 20 页。
 
-4. **Reviewer agent に渡す**
+4. **传递给 Reviewer agent**
 
-   読み込んだページの内容を harness-review のレビューフロー（Step 2: 5 観点）へ流す。
-   Reviewer は視覚的なレイアウト・図表・コードスニペットを含めて評価する。
+     将读取的页面内容流入 harness-review 的审查流程（Step 2: 5 观点）。
+     Reviewer 评估视觉布局、图表、代码片段。
 
-5. **バッチ処理（ページ数が多い場合）**
+5. **批处理（页面数多时）**
 
-   20 ページを超える PDF は 20 ページ単位でバッチ分割する。
+     超过 20 页的 PDF 以 20 页为单位进行批次分割。
 
-   ```
-   pages="1-20"  → レビュー → 指摘を記録
-   pages="21-40" → レビュー → 指摘を記録
-   ...
-   最後にまとめて verdict を統合する
-   ```
+     ```
+     pages="1-20"  → 审查 → 记录指出
+     pages="21-40" → 审查 → 记录指出
+     ...
+     最后整合 verdict
+     ```
 
-### 判定基準
+### 判定标准
 
-PDF レビューは reviewer_profile を `static` として扱い、以下を評価する:
+PDF 审查将 reviewer_profile 视为 `static`，评估以下内容：
 
-| 観点 | チェック内容 |
+| 观点 | 检查内容 |
 |------|------------|
-| **Quality** | 図表の説明が十分か、手順の前後関係が明確か |
-| **Accessibility** | 代替テキストがない画像のみページはないか |
-| **AI Residuals** | "TODO", "TBD", "Draft" 等の未完了マーカー |
+| **Quality** | 图表说明是否充分、步骤前后关系是否明确 |
+| **Accessibility** | 是否存在仅有图像无替代文本的页面 |
+| **AI Residuals** | "TODO", "TBD", "Draft" 等未完成标记 |
 
 ---
 
-## シナリオ 2: 設計図（Architecture Diagram）レビュー
+## 场景 2: 设计图（Architecture Diagram）审查
 
-システム構成図・ER 図・シーケンス図等の画像をレビュー対象にする場合。
+审查系统构成图、ER 图、序列图等图像的情况。
 
-### フロー
+### 流程
 
-1. **画像の解像度を確認する**
+1. **确认图像分辨率**
 
-   ```bash
-   # macOS: sips で解像度確認
-   sips -g pixelWidth -g pixelHeight diagram.png
+     ```bash
+     # macOS: 用 sips 确认分辨率
+     sips -g pixelWidth -g pixelHeight diagram.png
 
-   # ImageMagick がある場合
-   identify diagram.png
-   ```
+     # 有 ImageMagick 的情况
+     identify diagram.png
+     ```
 
-   短辺が 2576px 以下なら Read tool で直接渡せる。
-   超えている場合は事前リサイズ（詳細は usage ガイド参照）。
+     短边在 2576px 以下可直接用 Read tool 传递。
+     超过时预先调整大小（详情请参考 usage 指南）。
 
-2. **Read tool で画像を読み込む**
+2. **用 Read tool 读取图像**
 
-   ```
-   Read tool: file_path="diagram.png"
-   ```
+     ```
+     Read tool: file_path="diagram.png"
+     ```
 
-   Opus 4.7 は 2576px まで視認できるため、細かいラベルや矢印も解析できる。
+     Opus 4.7 可视认最大 2576px，因此可解析细小的标签和箭头。
 
-3. **Reviewer agent に渡すコンテキストを準備する**
+3. **准备传递给 Reviewer agent 的上下文**
 
-   ```
-   以下のアーキテクチャ図をレビューしてください。
-   対象: <システム名> の <図の種類（構成図 / ER 図 / シーケンス図 等）>
-   確認観点: <レビュー目的（整合性確認 / 変更差分確認 / セキュリティ確認 等）>
-   ```
+     ```
+     请审查以下架构图。
+     对象: <系统名> 的 <图类型（构成图 / ER 图 / 序列图 等）>
+     确认观点: <审查目的（整合性确认 / 变更差异确认 / 安全确认 等）>
+     ```
 
-4. **評価項目**
+4. **评估项目**
 
-   | 観点 | チェック内容 |
-   |------|------------|
-   | **Security** | 認証フロー・認可境界・暗号化要件が図に反映されているか |
-   | **Quality** | コンポーネント間の依存関係が明確か、単一責任が保たれているか |
-   | **Performance** | ボトルネックになりやすい箇所（同期処理 / N+1 / キャッシュなし等）が可視化されているか |
+     | 观点 | 检查内容 |
+     |------|------------|
+     | **Security** | 图中是否反映认证流程、授权边界、加密要求 |
+     | **Quality** | 组件间依赖关系是否明确、是否保持单一责任 |
+     | **Performance** | 是否可视化易成为瓶颈的部位（同步处理 / N+1 / 无缓存等） |
 
-5. **実装コードとの照合**
+5. **与实现代码的对照**
 
-   設計図レビュー後、対応する実装コードを Code Review フローで照合し整合性を確認する。
-
----
-
-## シナリオ 3: UI スクリーンショットレビュー
-
-Web / モバイル UI のスクリーンショットを `--ui-rubric` オプションで採点する場合。
-
-### フロー
-
-1. **スクリーンショットを用意する**
-
-   対象ページ・コンポーネントのスクリーンショットを取得する。
-   Retina / HiDPI 環境では論理ピクセルの 2 倍サイズになることが多い。
-
-   ```bash
-   # macOS: screencapture コマンド
-   screencapture -x screenshot.png
-
-   # 解像度確認
-   sips -g pixelWidth -g pixelHeight screenshot.png
-   ```
-
-2. **解像度を確認しリサイズ（必要に応じて）**
-
-   短辺が 2576px を超える場合はリサイズする（詳細は usage ガイド参照）。
-   2576px 以下なら Read tool でそのまま渡せる。
-
-3. **harness-review --ui-rubric で評価する**
-
-   ```
-   /harness-review --ui-rubric
-   ```
-
-   実行前に Read tool でスクリーンショットを読み込み、Reviewer agent に渡す:
-
-   ```
-   Read tool: file_path="screenshot.png"
-   ```
-
-4. **4 軸採点（ui-rubric.md 参照）**
-
-   | 軸 | 評価内容 |
-   |----|---------|
-   | **Design Quality** | ビジュアル階層・余白・カラー整合性 |
-   | **Originality** | 独自性・ブランド表現 |
-   | **Craft** | ピクセル精度・アニメーション・マイクロインタラクション |
-   | **Functionality** | ユーザーフローの完結性・エラー状態の考慮 |
-
-5. **複数解像度の比較（モバイル / タブレット / デスクトップ）**
-
-   各解像度のスクリーンショットを同一セッションで連続 Read し、
-   Reviewer agent にまとめてレスポンシブ対応を評価させる。
-
-   ```
-   Read tool: file_path="mobile.png"    # 375×812 相当
-   Read tool: file_path="tablet.png"    # 768×1024 相当
-   Read tool: file_path="desktop.png"   # 1440×900 相当
-   ```
+     设计图审查后，与对应实现代码通过 Code Review 流程对照确认整合性。
 
 ---
 
-## Reviewer Agent との繋ぎ方
+## 场景 3: UI 截图审查
 
-上記 3 シナリオのいずれでも、画像 / PDF を Read tool で読み込んだ後の
-Reviewer agent への接続は以下の共通パターンで行う。
+用 `--ui-rubric` 选项对 Web / 移动 UI 截图进行评分的情况。
 
-### breezing モードでの繋ぎ方
+### 流程
 
-Lead が Worker から vision 入力ありのタスクを受け取った場合:
+1. **准备截图**
 
-1. Worker は `files_changed` に画像/PDF パスを含めて返す
-2. Lead は Read tool でそのパスを読み込み、vision コンテキストを付加してレビューを実行する
-3. Reviewer agent が `review-result.v1` スキーマで verdict を返す
+     获取对象页面/组件的截图。
+     在 Retina / HiDPI 环境中通常成为逻辑像素的 2 倍尺寸。
+
+     ```bash
+     # macOS: screencapture 命令
+     screencapture -x screenshot.png
+
+     # 确认分辨率
+     sips -g pixelWidth -g pixelHeight screenshot.png
+     ```
+
+2. **确认分辨率并调整大小（必要时）**
+
+     短边超过 2576px 时调整大小（详情请参考 usage 指南）。
+     2576px 以下可直接用 Read tool 传递。
+
+3. **用 harness-review --ui-rubric 评估**
+
+     ```
+     /harness-review --ui-rubric
+     ```
+
+     执行前用 Read tool 读取截图，传递给 Reviewer agent：
+
+     ```
+     Read tool: file_path="screenshot.png"
+     ```
+
+4. **4 轴评分（参考 ui-rubric.md）**
+
+     | 轴 | 评估内容 |
+     |----|---------|
+     | **Design Quality** | 视觉层次、留白、颜色整合性 |
+     | **Originality** | 独创性、品牌表现 |
+     | **Craft** | 像素精度、动画、微交互 |
+     | **Functionality** | 用户流程的完整性、错误状态的考虑 |
+
+5. **多分辨率比较（移动 / 平板 / 桌面）**
+
+     在同一会话连续读取各分辨率截图，
+     让 Reviewer agent 评估响应式支持。
+
+     ```
+     Read tool: file_path="mobile.png"    # 375×812 相当
+     Read tool: file_path="tablet.png"    # 768×1024 相当
+     Read tool: file_path="desktop.png"   # 1440×900 相当
+     ```
+
+---
+
+## 与 Reviewer Agent 的连接方式
+
+上述 3 个场景中，用 Read tool 读取图像 / PDF 后，
+与 Reviewer agent 的连接均通过以下通用模式进行。
+
+### breezing 模式的连接方式
+
+Lead 从 Worker 接收到包含 vision 输入的任务时：
+
+1. Worker 在 `files_changed` 中包含图像/PDF 路径返回
+2. Lead 用 Read tool 读取该路径，添加 vision 上下文执行审查
+3. Reviewer agent 以 `review-result.v1` 架构返回 verdict
 
 ```json
-// Reviewer に渡す追加コンテキスト例
+// 传递给 Reviewer 的附加上下文示例
 {
   "vision_inputs": [
     { "type": "image", "path": "diagram.png", "role": "architecture_diagram" },
     { "type": "pdf",  "path": "spec.pdf",    "role": "specification", "pages": "1-10" }
   ],
-  "review_context": "画像・PDF を含む変更のレビュー"
+  "review_context": "包含图像・PDF 的变更审查"
 }
 ```
 
-### 画像入力を受け取った場合の Reviewer の振る舞い
+### 接收图像输入时 Reviewer 的行为
 
-- Reviewer は画像入力を「通常の diff テキスト」と同等に扱い、`review-result.v1` を返す
-- `observations[].location` には `"diagram.png:全体"` / `"spec.pdf:p3"` のように記載する
-- 画像のみで critical / major を判定できない場合は `minor` または `recommendation` に留める
-- vision 入力の有無によって判定基準（critical / major / minor / recommendation）は変わらない
+- Reviewer 将图像输入视为与"普通 diff 文本"等同，返回 `review-result.v1`
+- `observations[].location` 中记载为 `"diagram.png:整体"` / `"spec.pdf:p3"` 等
+- 仅凭图像无法判定 critical / major 时止步于 `minor` 或 `recommendation`
+- 判定标准（critical / major / minor / recommendation）不因 vision 输入有无而变化
 
 ---
 
-## バッチ処理ガイドライン
+## 批处理指南
 
-複数の画像 / PDF ページを連続してレビューする場合:
+连续审查多个图像 / PDF 页面时：
 
-| 状況 | 推奨アプローチ |
+| 情况 | 推荐方法 |
 |------|--------------|
-| PDF 20 ページ以下 | 1 回の Read で全ページ指定 |
-| PDF 21 ページ以上 | 20 ページ単位でバッチ分割 → 指摘を統合 |
-| 画像 1〜5 枚 | 連続 Read → まとめてレビュー |
-| 画像 6 枚以上 | 5 枚単位でバッチ → verdict を最後に統合 |
-| 高解像度画像が混在 | 事前リサイズ後に処理（usage ガイド参照） |
+| PDF 20 页以下 | 1 次 Read 指定全部页面 |
+| PDF 21 页以上 | 以 20 页为单位批次分割 → 整合指出 |
+| 图像 1〜5 张 | 连续 Read → 一并审查 |
+| 图像 6 张以上 | 以 5 张为单位批次 → 最后整合 verdict |
+| 混有高分辨率图像 | 处理前预先调整大小（参考 usage 指南） |
 
-バッチ処理では各バッチの `observations` を蓄積し、
-全バッチ完了後に `critical` / `major` の有無で最終 verdict を決定する。
+批处理中累积各批次的 `observations`，
+全批次完成后根据 `critical` / `major` 的有无决定最终 verdict。

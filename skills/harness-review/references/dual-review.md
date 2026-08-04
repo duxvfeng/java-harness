@@ -1,85 +1,85 @@
 # Dual Review (--dual) / Triple Review (--cursor opt-in)
 
-Claude Reviewer と Codex Reviewer を並行実行し、異なるモデル視点でレビュー品質を向上させる。
-`--dual` は単なる二重チェックではなく、必要時に TeamAgent Debate を組み合わせて、
-仕様正本・Plans.md・デグレの合格ラインを複数視点で潰し込む。
+并行运行 Claude Reviewer 和 Codex Reviewer，通过不同模型视角提高审查质量。
+`--dual` 不是单纯的双重检查，必要时结合 TeamAgent Debate，
+从多视角填充规格正本、Plans.md、回归的合格线。
 
-`--cursor` flag を併用する (or `--dual --cursor` で triple) と、cursor (composer-2.5-fast) を **second-opinion only** として並走できる。詳細は `references/cursor-review.md`。
+同时使用 `--cursor` flag（或 `--dual --cursor` 进行 triple）时，cursor (composer-2.5-fast) 可作为 **second-opinion only** 并行运行。详情请参考 `references/cursor-review.md`。
 
 ## 前提条件
 
-- Codex CLI がインストール済み（`scripts/codex-companion.sh setup --json` で確認）
-- Codex が利用不可の場合、Claude 単独レビューにフォールバック
-- `--cursor` 併用時は cursor-agent がインストール済み (`setup-cursor.sh --check`)。利用不可なら `cursor_verdict: unavailable` で degrade
+- Codex CLI 已安装（`scripts/codex-companion.sh setup --json` 确认）
+- Codex 不可用时，回退到 Claude 单独审查
+- `--cursor` 并用时 cursor-agent 已安装 (`setup-cursor.sh --check`)。不可用时 `cursor_verdict: unavailable` 降级
 
-## 実行フロー
+## 执行流程
 
-1. Codex の利用可否を確認する
+1. 确认 Codex 可用性
 
    ```bash
    CODEX_AVAILABLE="$(bash scripts/codex-companion.sh setup --json 2>/dev/null | jq -r '.ready // false')"
    ```
 
-2. Claude Reviewer を Task ツールで起動（通常の review フロー）
+2. 用 Task 工具启动 Claude Reviewer（通常 review 流程）
 
-3. Codex が利用可能であれば `scripts/codex-companion.sh review` を並行起動
+3. 如果 Codex 可用，并行启动 `scripts/codex-companion.sh review`
 
    ```bash
-   # BASE_REF が渡されている場合は --base を指定。--json で構造化出力を取得
+   # 如果传递了 BASE_REF，指定 --base。--json 获取结构化输出
    bash scripts/codex-companion.sh review --base "${BASE_REF:-HEAD~1}" --json
    ```
 
-4. 両方の結果を待ち合わせ
+4. 等待双方结果
 
-5. 以下のいずれかに当たる場合は TeamAgent Debate を実行する
-   - Claude と Codex の verdict が割れた
-   - 仕様正本、Plans.md、デグレのいずれかで不一致または未確認がある
-   - `critical` / `major` 候補が 1 件以上ある
-   - `--team-debate` が指定されている
+5. 以下任一情况时执行 TeamAgent Debate
+   - Claude 和 Codex 的 verdict 分歧
+   - 规格正本、Plans.md、回归中存在不一致或未确认项
+   - `critical` / `major` 候选有 1 件以上
+   - 指定了 `--team-debate`
 
-6. 合格ラインを固定してから verdict をマージする
+6. 固定合格线后合并 verdict
 
 ## TeamAgent Debate
 
-TeamAgent Debate は、異なる見解をあえて衝突させる read-only review pass として扱う。
+TeamAgent Debate 作为故意让不同见解冲突的 read-only review pass 处理。
 
-| Agent | 主な問い |
+| Agent | 主要问题 |
 |-------|----------|
-| Spec Agent | 仕様正本と実装は矛盾していないか |
-| Plans Agent | `Plans.md` の task / DoD / Depends と証跡は一致しているか |
-| Regression Agent | 既存挙動、既存テスト、配布 mirror、CLI/skill UX にデグレはないか |
-| Skeptic Agent | 合格させたい前提で見落としている major risk はないか |
+| Spec Agent | 规格正本与实现是否存在矛盾 |
+| Plans Agent | `Plans.md` 的 task / DoD / Depends 与证据是否一致 |
+| Regression Agent | 现有行为、现有测试、分发 mirror、CLI/skill UX 是否存在回归 |
+| Skeptic Agent | 在通过合格的前提下，是否遗漏了主要风险 |
 
-Claude Code では Task tool を使う。
-Codex 環境では native TeamAgent が使えないことがあるため、
-Codex reviewer subagent、`codex-companion.sh review`、または明示的に分けた manual-pass で同じ観点を再現し、
-`team_agent_mode` に記録する。
+在 Claude Code 中使用 Task tool。
+在 Codex 环境中可能无法使用 native TeamAgent，因此
+用 Codex reviewer subagent、`codex-companion.sh review`、或明确分离的 manual-pass 再现相同观点，
+记录在 `team_agent_mode` 中。
 
-## 合格ライン
+## 合格线
 
-最終 `APPROVE` の条件は次のすべて。
+最终 `APPROVE` 的条件是以下全部。
 
-- `critical` / `major` が 0 件
-- 仕様正本または `spec_skip_reason` と矛盾しない
-- `Plans.md` の task / DoD / Depends と矛盾しない
-- 既存挙動・既存テスト・配布 mirror・CLI/skill UX のデグレ証拠がない
-- Claude / Codex / TeamAgent の disagreement が解消済み、または `minor` / `recommendation` として理由付きで格下げ済み
+- `critical` / `major` 为 0 件
+- 与规格正本或 `spec_skip_reason` 不矛盾
+- 与 `Plans.md` 的 task / DoD / Depends 不矛盾
+- 没有现有行为、现有测试、分发 mirror、CLI/skill UX 的回归证据
+- Claude / Codex / TeamAgent 的分歧已解决，或作为 `minor` / `recommendation`` 附带理由降级
 
-## Verdict マージルール
+## Verdict 合并规则
 
-以下の順に評価する:
+按以下顺序评估：
 
-   - 両方 APPROVE → `APPROVE`
-   - どちらかが REQUEST_CHANGES → `REQUEST_CHANGES`（厳しい方を採用）
-   - TeamAgent Debate が `critical` / `major` 相当の disagreement を残した → `REQUEST_CHANGES`
-   - 仕様正本 / Plans.md / デグレ gate が fail → `REQUEST_CHANGES`
-   - `critical_issues` は両方のリストを統合（重複排除なし）
-   - `major_issues` は両方のリストを統合（重複排除なし）
-   - `recommendations` は重複排除して統合
+   - 双方 APPROVE → `APPROVE`
+   - 任一方为 REQUEST_CHANGES → `REQUEST_CHANGES`（采用较严的）
+   - TeamAgent Debate 留下 `critical` / `major` 相当的分歧 → `REQUEST_CHANGES`
+   - 规格正本 / Plans.md / 回归 gate fail → `REQUEST_CHANGES`
+   - `critical_issues` 合并双方列表（不排除重复）
+   - `major_issues` 合并双方列表（不排除重复）
+   - `recommendations` 合并时排除重复
 
-## 出力形式
+## 输出形式
 
-通常の `review-result.v1` スキーマに `dual_review` フィールドを追加する:
+在通常的 `review-result.v1` 架构中添加 `dual_review` 字段：
 
 ```json
 {
@@ -89,7 +89,7 @@ Codex reviewer subagent、`codex-companion.sh review`、または明示的に分
     "claude_verdict": "APPROVE | REQUEST_CHANGES",
     "codex_verdict": "APPROVE | REQUEST_CHANGES | unavailable | timeout",
     "merged_verdict": "APPROVE | REQUEST_CHANGES",
-    "divergence_notes": "判定が分かれた場合の理由。例: Claude は Performance で major 検出、Codex は問題なし"
+    "divergence_notes": "判定分岐时的理由。例: Claude 在 Performance 检测到 major，Codex 无问题"
   },
   "acceptance_bar": {
     "critical_major_zero": true,
@@ -111,31 +111,31 @@ Codex reviewer subagent、`codex-companion.sh review`、または明示的に分
 }
 ```
 
-### `codex_verdict` の特殊値
+### `codex_verdict` 的特殊值
 
-| 値 | 意味 |
+| 值 | 意义 |
 |----|------|
-| `"unavailable"` | Codex CLI がインストールされていないか利用不可 |
-| `"timeout"` | Codex レビューがタイムアウト（120 秒以内に応答なし） |
+| `"unavailable"` | Codex CLI 未安装或不可用 |
+| `"timeout"` | Codex 审查超时（120 秒内无响应） |
 
-## フォールバック
+## 回退
 
-- **Codex が利用不可**: Claude 単独で実行し、`codex_verdict: "unavailable"` を記録する
-- **Codex がタイムアウト**: Claude の verdict をそのまま採用し、`codex_verdict: "timeout"` を記録する
-- **Codex のレビュー出力が不正**: パース失敗として扱い、`codex_verdict: "unavailable"` を記録する
-- **TeamAgent が利用不可**: `team_debate.mode: "unavailable"` と理由を記録し、最低でも Spec / Plans / Regression の manual-pass を行う
+- **Codex 不可用**: 单独执行 Claude，记录 `codex_verdict: "unavailable"`
+- **Codex 超时**: 原样采用 Claude 的 verdict，记录 `codex_verdict: "timeout"`
+- **Codex 审查输出无效**: 视为解析失败，记录 `codex_verdict: "unavailable"`
+- **TeamAgent 不可用**: 记录 `team_debate.mode: "unavailable"` 和理由，至少执行 Spec / Plans / Regression 的 manual-pass
 
-Codex unavailable / timeout の場合でも、仕様正本・Plans.md・デグレの合格ラインは省略しない。
-TeamAgent unavailable のまま manual-pass もできない場合は `REQUEST_CHANGES` ではなく `decision_needed` として止める。
+Codex unavailable / timeout 时，也不省略规格正本、Plans.md、回归的合格线。
+TeamAgent unavailable 且无法 manual-pass 时，作为 `decision_needed` 而非 `REQUEST_CHANGES` 停止。
 
-## Divergence Notes の書き方
+## Divergence Notes 的写法
 
-判定が一致した場合（`claude_verdict == codex_verdict`）は `divergence_notes` を空文字列にする。
+判定一致时（`claude_verdict == codex_verdict`）将 `divergence_notes` 设为空字符串。
 
-判定が分かれた場合は以下の形式で記録する:
+判定分岐时按以下格式记录：
 
 ```
-Claude: REQUEST_CHANGES（Security - SQLインジェクションのリスク）
-Codex: APPROVE（同箇所を問題なしと判定）
-採用: REQUEST_CHANGES（厳しい方を優先）
+Claude: REQUEST_CHANGES（Security - SQL注入风险）
+Codex: APPROVE（判定同处无问题）
+采用: REQUEST_CHANGES（优先采用较严的）
 ```

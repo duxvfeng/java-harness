@@ -1,94 +1,94 @@
-# create サブコマンド — 計画作成フロー
+# create 子命令 — 计划创建流程
 
-アイデア・要件をヒアリングし、実行可能な Plans.md を生成する。
+听取想法和需求，生成可执行的 Plans.md。
 
-**Precedence**: root `spec.md` > sub-spec > Plans.md（product contract が task ledger より上位）。
+**Precedence**: root `spec.md` > sub-spec > Plans.md（product contract 优先于 task ledger）。
 
-## Step 0: 会話コンテキスト確認
+## Step 0: 确认对话上下文
 
-直前の会話から要件を抽出できる場合は確認する:
+如果能从最近的对话中提取需求则进行确认:
 
-> 計画の作り方を選んでください:
-> 1. 直前の会話から — ブレスト内容をベースに計画を作成
-> 2. ゼロから — ヒアリングから開始
+> 请选择计划创建方式:
+> 1. 从最近的对话 — 基于讨论内容创建计划
+> 2. 从零开始 — 从需求收集开始
 
-「直前の会話から」の場合: 要件・アイデア・決定事項を抽出してユーザーに確認。
-確認後、Step 3（技術調査）にスキップ。
+选择"从最近的对话"时: 提取需求・想法・决定事项并请用户确认。
+确认后，跳转到 Step 3（技术调研）。
 
-## Step 1: 何を作るか聞く
+## Step 1: 询问要做什么
 
-ユーザー入力がなければ質問する:
+若无用户输入则询问:
 
-> 何を作りますか？
+> 要构建什么？
 >
-> 例: 予約管理システム / ブログサイト / タスク管理アプリ / APIサーバー
+> 示例: 预约管理系统 / 博客网站 / 任务管理应用 / API服务器
 >
-> ラフなアイデアで OK！
+> 粗略的想法即可！
 
-## Step 2: 解像度を上げる（最大3問）
+## Step 2: 提升清晰度（最多3问）
 
-> もう少し教えてください:
+> 请再告诉我一些信息:
 >
-> 1. 誰が使いますか？（自分だけ？チーム？一般公開？）
-> 2. 参考にしたいサービスはありますか？
-> 3. どこまで作りますか？（MVP？フル機能？）
+> 1. 谁会使用？（仅自己？团队？公开发布？）
+> 2. 有参考服务吗？
+> 3. 要做多少？（MVP？完整功能？）
 
-## Step 3: 計画品質チェック
+## Step 3: 计划质量检查
 
-詳細: `references/planning-quality.md`
+详细说明: `references/planning-quality.md`
 
-ユーザーが渡した情報をそのまま Plans.md に落とさない。
-外部プロダクト、競合、仕様案、改善案、比較材料が含まれる場合は、最新情報・既存仕様・記憶・TeamAgent / サブエージェント複数視点レビューで確認し、取り入れるべき要素だけを task contract にする。
-単発・軽微ではない planning は、TeamAgent またはサブエージェント前提で扱う。
+不要将用户提供的信息直接落到 Plans.md。
+包含外部产品、竞争、规格方案、改善方案、比较材料时，通过最新信息・现有规格・记忆・TeamAgent / 子代理多视点评审进行确认，仅将应采用的要素转换为 task contract。
+非单发・轻微的 planning 以 TeamAgent 或子代理为前提处理。
 
-最低限の確認:
+最低限度的确认:
 
-- 最新情報: WebSearch / 公式 docs / 一次情報を優先し、重要点は複数ソースで確認する
-- 既存仕様: Plans.md、README、docs、CLAUDE.md、関連 skill、tests を確認する
-- 記憶: harness-mem / harness-recall / `.claude/agent-memory/` / `.claude/state/` が使える場合は project-scoped で確認し、車輪の再発明を避ける
-- 議論: Product / Architecture / Security / QA / Skeptic の視点で採用価値とリスクを分ける
-- 品質土台: source code changes を含む plan では `formatter_baseline` を確認し、lint / formatter が未設定なら setup task を先行させる
-- 実装プラン検証: product fit、security fit、works in practice を確認し、test / smoke / CI / review / release gate を DoD に落とす
-- 採点: Product Fit、Evidence Strength、User Value、Implementation Feasibility、Regression Safety、Strategic Leverage、Security Safety、Works In Practice を 5 点満点で見る
+- 最新信息: 优先 WebSearch / 公式 docs / 一次信息，重要点用多个源确认
+- 现有规格: 确认 Plans.md、README、docs、CLAUDE.md、相关 skill、tests
+- 记忆: 如果能使用 harness-mem / harness-recall / `.claude/agent-memory/` / `.claude/state/` 则按 project-scoped 确认，避免重复发明轮子
+- 讨论: 从 Product / Architecture / Security / QA / Skeptic 视点区分采用价值和风险
+- 质量基础: 包含 source code changes 的 plan 确认 `formatter_baseline`，lint / formatter 未设定时先放置 setup task
+- 实现计划验证: 确认 product fit、security fit、works in practice，将 test / smoke / CI / review / release gate 落到 DoD
+- 评分: 以 5 分制评价 Product Fit、Evidence Strength、User Value、Implementation Feasibility、Regression Safety、Strategic Leverage、Security Safety、Works In Practice
 
-`harness-mem` の DB は直接読まない。検索や documented memory surface が使えない場合は「記憶未確認」と明示する。
-Task tool が使えない場合は `サブエージェント未使用` と明示し、同じ観点を単独で分けて評価する。
-`team_validation_mode` は `not_required_lightweight` / `native` / `subagent` / `manual-pass` / `unavailable` のいずれかを出す。
-non-trivial planning では `native` / `subagent` / `manual-pass` のいずれかを使い、`unavailable` のまま Required にしない。
-Product / Architecture / Security / QA / Skeptic は perspective 名であり agent_type 名ではない。
-Security gate は `.env` や secret の実読取を要求しない。
+不直接读取 `harness-mem` 的 DB。无法使用搜索或 documented memory surface 时明确标注"记忆未确认"。
+无法使用 Task tool 时明确标注`未使用子代理`，单独分点评估相同观点。
+`team_validation_mode` 输出 `not_required_lightweight` / `native` / `subagent` / `manual-pass` / `unavailable` 中的任一。
+non-trivial planning 使用 `native` / `subagent` / `manual-pass` 中的任一，不保持 `unavailable` 状态作为 Required。
+Product / Architecture / Security / QA / Skeptic 是 perspective 名而非 agent_type 名。
+Security gate 不要求实际读取 `.env` 或 secret。
 
-小さな typo、format、README/CHANGELOG、marker 更新だけならこの step は軽く済ませてよい。
+仅小的 typo、format、README/CHANGELOG、marker 更新可轻量处理此步骤。
 
 ## Lane taxonomy / stage gate / unknown data contract
 
-Fast / Gate / Release は新 skill ではなく **Plans metadata**（Content または DoD 先頭のタグ）。
-5 column テンプレートは不変。
+Fast / Gate / Release 不是新 skill，而是 **Plans metadata**（Content 或 DoD 开头的标签）。
+5 column 模板不变。
 
 ### Lane taxonomy
 
-| タグ | いつ使う |
+| 标签 | 何时使用 |
 |------|---------|
 | `[lane:fast]` | low-risk local work（refactor / docs / typo） |
-| `[lane:gate]` | spec / workflow / mirror / guardrail / 機能実装の大半 |
+| `[lane:gate]` | spec / workflow / mirror / guardrail / 大部分功能实现 |
 | `[lane:release]` | public artifact / version / tag / GitHub Release |
 
 ### Stage gate
 
-planning output は次の 5 段階で構造化する:
+planning output 按以下 5 个阶段结构化:
 
-1. 検証・調査 — research evidence、`unknown` data 明示
-2. 実装計画確定 — lane タグ + DoD 確定
-3. 実装(TDD) — `[tdd:required]` / `[tdd:skip:<reason>]`
-4. レビュー — review artifact を DoD に
+1. 验证・调查 — research evidence、`unknown` 数据明示
+2. 实现计划确定 — lane 标签 + DoD 确定
+3. 实现(TDD) — `[tdd:required]` / `[tdd:skip:<reason>]`
+4. 评审 — 将 review artifact 落到 DoD
 5. PR closeout — evidence pack → PR body
 
 ### Unknown data contract
 
-`not_observed != absent`。failed search / 未読 file / missing fixture / API unavailable は **`unknown`**。
-存在しないと断定するのは repo evidence で確認できた場合のみ。
+`not_observed != absent`。failed search / 未读 file / missing fixture / API unavailable 为 **`unknown`**。
+仅在 repo evidence 可确认时断定不存在。
 
-### Lane examples（最小サンプル）
+### Lane examples（最小示例）
 
 `[lane:fast]`:
 
@@ -114,235 +114,235 @@ planning output は次の 5 段階で構造化する:
 | 3.3 | `[Dependency]` `[lane:release]` `[tdd:skip:dependency-bump]` Dependabot major merge + main CI green | merge commit + main validate-plugin PASS | - | cc:TODO |
 ```
 
-## Step 4: 技術調査（WebSearch）
+## Step 4: 技术调研（WebSearch）
 
-ユーザーには聞かず、Claude Code が調査・提案する。
+不询问用户，由 Claude Code 调研・提案。
 
 ```
 WebSearch:
-- "{{プロジェクトタイプ}} tech stack 2025"
-- "{{類似サービス}} architecture"
+- "{{项目类型}} tech stack 2025"
+- "{{类似服务}} architecture"
 ```
 
-## Step 4.4: spec.md / Plans.md 二正本チェック
+## Step 4.4: spec.md / Plans.md 双正本检查
 
-Plans.md は「やるべきこと」を固定する task contract。
-root `spec.md` は「何が正しいか」を固定する product contract。
-この 2 つを混ぜない。`/harness-plan create` は Plans.md 生成コマンドではなく、spec.md product contract and Plans.md task contract の co-required planning output を返す surface として扱う。
-precedence は `spec.md > sub-spec > Plans.md` のまま維持する。
+Plans.md 是固定"要做什么"的 task contract。
+root `spec.md` 是固定"什么是正确的"的 product contract。
+不混淆这二者。`/harness-plan create` 不是 Plans.md 生成命令，而是返回 spec.md product contract and Plans.md task contract 的 co-required planning output 的 surface。
+precedence 仍维持 `spec.md > sub-spec > Plans.md`。
 
-`/harness-plan create` の出力は必ず次の 2 点セット:
+`/harness-plan create` 的输出必须包含以下 2 点:
 
-1. `Spec delta` または `Spec skip reason`
+1. `Spec delta` 或 `Spec skip reason`
 2. `Plans.md` task 生成
 
-root `spec.md` を毎回読む。実装判断がぶれそうな場合は、Plans.md を作る前に root `spec.md` を更新する。
-ユーザーに spec を一から書かせない。`Spec delta` / `Spec skip reason` は Harness が生成し、consumer は承認・修正だけ行う。
-agent が既存 spec、repo evidence、記憶、テスト、入力要件から最小の delta を draft し、判断が割れる時だけ選択肢を出す。
+每次读取 root `spec.md`。实现判断可能产生偏差时，在创建 Plans.md 之前更新 root `spec.md`。
+不让用户从零开始写 spec。`Spec delta` / `Spec skip reason` 由 Harness 生成，consumer 仅进行批准・修正。
+agent 根据现有 spec、repo evidence、记忆、测试、输入需求 draft 最小 delta，仅在判断分歧时输出选择。
 
-### 仕様正本を作る/更新する条件
+### 创建/更新规格正本的条件
 
-- ユーザーに見える振る舞いが増える、または変わる
-- API、データモデル、権限、課金、外部連携、tenant boundary を決める
-- 複数の実装案があり、選び方で product behavior が変わる
-- 過去または今回の会話で、仕様の曖昧さによる実装 drift が見えている
-- Plans.md には task があるが、project としての正解条件が文書化されていない
+- 增加或改变用户可见行为
+- 决定 API、数据模型、权限、计费、外部联动、tenant boundary
+- 有多个实现方案，选择方式会影响 product behavior
+- 在过去或本次对话中，看到规格模糊导致的实现 drift
+- Plans.md 中有 task，但 project 的正解条件未文档化
 
-### スキップしてよい条件
+### 可跳过的条件
 
-- typo / format / lint のみ
-- dependency bump のみ
-- README / CHANGELOG のみ
+- 仅 typo / format / lint
+- 仅 dependency bump
+- 仅 README / CHANGELOG
 - docs-only / mechanical task
-- 動作変更なしの狭い refactor
-- 既存 spec とテストで正解が明確
+- 无行为变更的狭义 refactor
+- 现有 spec 和测试已明确正解
 
-スキップ時も `Spec skip reason` を省略しない。
-docs-only / mechanical task でも task context / sprint contract に skip reason を残す。
+跳过时也不省略 `Spec skip reason`。
+docs-only / mechanical task 也在 task context / sprint contract 中保留 skip reason。
 
-### 保存先
+### 保存位置
 
-最優先は root `spec.md`。
-consumer repo に root `spec.md` がない時だけ、既存の project-level spec を fallback として更新する。
-root `spec.md` も既存 project spec もなければ次を作る:
+最优先 root `spec.md`。
+仅在 consumer repo 没有 root `spec.md` 时，更新现有的 project-level spec 作为 fallback。
+既无 root `spec.md` 也无现有 project spec 时创建:
 
 ```text
 docs/spec/00-project-spec.md
 ```
 
-最初の spec は短くてよい。最低限、Purpose、Users And Workflows、Core Rules、Data And Contracts、Non-Goals、Open Decisions、Links を置く。
+最初的 spec 可以简短。最低包含 Purpose、Users And Workflows、Core Rules、Data And Contracts、Non-Goals、Open Decisions、Links。
 
-詳細: `docs/plans/spec-ssot.md`
+详细说明: `docs/plans/spec-ssot.md`
 
-## Step 4.6: lint / formatter baseline チェック
+## Step 4.6: lint / formatter baseline 检查
 
-source code changes を含む plan では、実装 task を作る前に lint / formatter baseline を確認する。
-これは「綺麗にする作業」ではなく、実装後に Yes/No で品質確認できる土台を先に作るための gate である。
+包含 source code changes 的 plan，在创建实现 task 之前确认 lint / formatter baseline。
+这不是"清理工作"，而是预先创建能在实现后以 Yes/No 确认质量的基础。
 
-確認するもの:
+确认内容:
 
-- JavaScript / TypeScript: `package.json` の `lint` / `format` scripts、ESLint / Prettier / Biome / Oxlint / dprint の config または dependency
-- Python: `pyproject.toml` の Ruff / Black / isort / mypy などの config
-- Go: `gofmt` / `go test` / `go vet` / lint 相当の CI command
+- JavaScript / TypeScript: `package.json` 的 `lint` / `format` scripts、ESLint / Prettier / Biome / Oxlint / dprint 的 config 或 dependency
+- Python: `pyproject.toml` 的 Ruff / Black / isort / mypy 等 config
+- Go: `gofmt` / `go test` / `go vet` / 相当于 lint 的 CI command
 - Rust: `cargo fmt` / `cargo clippy` / `cargo test`
-- 既存 CI: `.github/workflows`、`scripts/ci/*`、`Makefile` などの品質 command
+- 现有 CI: `.github/workflows`、`scripts/ci/*`、`Makefile` 等质量 command
 
-出力には `formatter_baseline` を残す:
+输出需保留 `formatter_baseline`:
 
 ```text
 formatter_baseline: configured | missing | not_applicable | unknown
-formatter_baseline_evidence: [見た file / command]
+formatter_baseline_evidence: [看到的 file / command]
 formatter_baseline_action: none | add_setup_task | skip_with_reason | spike
 ```
 
-未設定かつ source code changes を含む場合は、Plans.md の実装 task より前に setup task を追加する。
-setup task の DoD は「config / script / validation command が揃い、広範囲の一括 reformat は明示 scope 外にする」こと。
-planning では package install しない。導入作業は harness-work が setup task として実行する。
+未设定且包含 source code changes 时，在 Plans.md 的实现 task 之前添加 setup task。
+setup task 的 DoD 为"config / script / validation command 齐备，明确将广范围的一批量 reformat 排除在 scope 外"。
+planning 中不进行 package install。导入作业由 harness-work 作为 setup task 执行。
 
-スキップしてよい条件:
+可跳过的条件:
 
 - docs-only / markdown-only / changelog-only
-- 既存 lint / formatter / CI command があり、今回の変更で触る言語を十分に覆っている
-- consumer repo の制約で導入不可の場合。ただし `formatter_baseline_action: spike` または skip reason を残す
+- 有现有 lint / formatter / CI command，充分覆盖本次变更涉及的语言
+- consumer repo 约束导致无法导入。此时保留 `formatter_baseline_action: spike` 或 skip reason
 
-## Step 5: 機能リスト抽出
+## Step 5: 功能列表提取
 
-要件から具体的な機能リストを抽出する。
+从需求提取具体功能列表。
 
-例: 予約管理システムの場合
-- ユーザー登録/ログイン
-- 予約カレンダー表示
-- 予約の作成/編集/キャンセル
-- 管理者ダッシュボード
-- メール通知
-- 決済機能
+示例: 预约管理系统的情况
+- 用户注册/登录
+- 预约日历显示
+- 预约的创建/编辑/取消
+- 管理员仪表板
+- 邮件通知
+- 支付功能
 
 ## Step 5.5: optional brief 生成
 
-必要なときだけ brief を添える。brief は Plans.md を置き換えず、実装の前提を短く固定する補助資料。
+仅在必要时附加 brief。brief 不替代 Plans.md，是简短固定实现前提的辅助资料。
 
-- UI を含むタスクでは `design brief`
-- API を含むタスクでは `contract brief`
-- UI と API が混在する場合は brief を分ける
+- 包含 UI 的 task 使用 `design brief`
+- 包含 API 的 task 使用 `contract brief`
+- UI 和 API 混在时分开 brief
 
 ### design brief
 
-UI タスク向けの brief には、最低限次を入れる:
+UI task 的 brief 最低包含:
 
-- 何を達成したいか
-- 誰が使うか
-- 重要な画面状態
-- 見た目や操作感の制約
-- 完了条件
+- 想达成什么
+- 谁使用
+- 重要画面状态
+- 外观和操作感的约束
+- 完成条件
 
 ### contract brief
 
-API タスク向けの brief には、最低限次を入れる:
+API task 的 brief 最低包含:
 
-- 何を受け取るか / 返すか
-- 入力検証の条件
-- 失敗時の振る舞い
-- 外部依存
-- 完了条件
+- 接收什么 / 返回什么
+- 输入验证条件
+- 失败时的行为
+- 外部依赖
+- 完成条件
 
-## Step 6: 優先度マトリクス作成（2 軸評価）
+## Step 6: 优先度矩阵创建（2轴评估）
 
-各機能を **Impact（影響度）× Risk（リスク/不確実性）** の 2 軸で評価する:
+以 **Impact（影响度）× Risk（风险/不确定性）** 的 2 轴评估各功能:
 
-- **Impact**: ユーザー価値 × 対象ユーザー数（高/低）
-- **Risk**: 技術的未知 × 外部依存（高/低）
+- **Impact**: 用户价值 × 目标用户数（高/低）
+- **Risk**: 技术未知 × 外部依赖（高/低）
 
-| Impact＼Risk | 低リスク | 高リスク |
+| Impact＼Risk | 低风险 | 高风险 |
 |-------------|---------|---------|
-| **高 Impact** | ★ **Required** — 最優先（確実に価値が出る） | ▲ **Required + [needs-spike]** — 早期検証が必要 |
-| **低 Impact** | ○ **Recommended** — 余力で対応 | ✕ **Optional** — 見送り or スコープ縮小 |
+| **高 Impact** | ★ **Required** — 最优先（确实有价值） | ▲ **Required + [needs-spike]** — 需要早期验证 |
+| **低 Impact** | ○ **Recommended** — 有余力时处理 | ✕ **Optional** — 延后 or 缩小范围 |
 
-### `[needs-spike]` マーカー
+### `[needs-spike]` 标记
 
-高 Impact × 高 Risk のタスクには `[needs-spike]` マーカーを自動付与する。
-`[needs-spike]` が付いたタスクには、**spike（技術検証）タスク** を自動生成して先行させる:
+高 Impact × 高 Risk 的任务自动附加 `[needs-spike]` 标记。
+附加 `[needs-spike]` 的任务，自动生成 **spike（技术验证）任务** 并优先执行:
 
 ```markdown
-| N.X-spike | [spike] {{タスク名}} の技術検証 | 検証結果レポート作成 | - | cc:TODO |
-| N.X       | {{タスク名}} [needs-spike] | {{DoD}} | N.X-spike | cc:TODO |
+| N.X-spike | [spike] {{任务名}} 的技术验证 | 生成验证结果报告 | - | cc:TODO |
+| N.X       | {{任务名}} [needs-spike] | {{DoD}} | N.X-spike | cc:TODO |
 ```
 
-spike タスクの完了条件は「検証結果レポート（実現可能/不可能/要設計変更）を残す」こと。
+spike 任务的完成条件为"保留验证结果报告（可实现/不可实现/需设计变更）"。
 
-## Step 6.5: TDD スキップ判断（デフォルト有効）
+## Step 6.5: TDD 跳过判断（默认启用）
 
-TDD はデフォルトで有効。以下のいずれかに該当するタスクのみ `[skip:tdd]` マーカーを付与してスキップ:
+TDD 默认启用。仅对符合以下任一条件的任务附加 `[skip:tdd]` 标记跳过:
 
-| スキップ条件 | 理由 |
+| 跳过条件 | 理由 |
 |-------------|------|
-| ドキュメント/コメントのみ | 実行コードに影響しない |
-| 設定ファイルのみ（JSON, YAML, .env） | テスト対象のロジックがない |
-| 1行以下の単純修正（typo） | テストコストが効果を上回る |
-| スタイル/フォーマット変更のみ | 動作に影響しない |
-| 依存関係更新のみ | 実装ロジック変更なし |
-| README/CHANGELOG 更新 | ドキュメントのみ |
-| リファクタリング（動作変更なし） | 既存テストでカバー済み |
+| 仅文档/注释 | 不影响执行代码 |
+| 仅配置文件（JSON, YAML, .env） | 无测试逻辑 |
+| 1 行以下简单修正（typo） | 测试成本超过效果 |
+| 仅样式/格式变更 | 不影响行为 |
+| 仅依赖更新 | 无实现逻辑变更 |
+| README/CHANGELOG 更新 | 仅文档 |
+| 重构（无行为变更） | 已被现有测试覆盖 |
 
-上記に該当しないタスクは TDD が自動適用される（テスト先行を推奨）。
+不符合上述条件的任务自动应用 TDD（推荐测试先行）。
 
-## Step 6.7: Plans.md v3 フォーマット仕様
+## Step 6.7: Plans.md v3 格式规范
 
-Plans.md v3 は以下のフォーマット拡張を含む:
+Plans.md v3 包含以下格式扩展:
 
-### Phase ヘッダーの Purpose 行（任意）
+### Phase 头部的 Purpose 行（可选）
 
-各 Phase のヘッダーに、1 行の Purpose（目的）を記載できる。入力がない場合は省略する:
+各 Phase 的头部可记载 1 行 Purpose（目的）。无输入时省略:
 
 ```markdown
-### Phase N.X: [フェーズ名] [Px]
+### Phase N.X: [阶段名] [Px]
 
-Purpose: [このフェーズが解く課題を 1 行で]
+Purpose: [此阶段解决的课题，1 行]
 ```
 
-- **デフォルト**: 入力を求めない（空欄で省略）
-- **記載時の効果**: breezing Phase 0 のスコープ確認で表示される
-- **生成ルール**: ユーザーがフェーズの目的を明示的に述べた場合のみ自動記載
+- **默认**: 不要求输入（空时省略）
+- **记载时的效果**: 在 breezing Phase 0 的 scope 确认时显示
+- **生成规则**: 仅在用户明确陈述阶段目的时自动记载
 
-### Artifact 表記（Status カラム）
+### Artifact 记法（Status 列）
 
-タスク完了時に commit hash を Status に付与する:
+任务完成时在 Status 附加 commit hash:
 
 ```markdown
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 1.1  | ... | ... | - | cc:完了 [a1b2c3d] |
+| 1.1  | ... | ... | - | cc:完成 [a1b2c3d] |
 | 1.2  | ... | ... | 1.1 | cc:TODO |
 ```
 
-- **形式**: `cc:完了 [7文字hash]`
-- **付与タイミング**: `harness-work` Solo Step 7 で自動付与
-- **後方互換**: hash なし `cc:完了` も引き続き有効
+- **形式**: `cc:完成 [7字符hash]`
+- **附加时机**: 在 `harness-work` Solo Step 7 自动附加
+- **向后兼容**: 无 hash 的 `cc:完成` 继续有效
 
-### 影響ファイル一覧
+### 影响文件列表
 
-v3 フォーマットに関連するファイル:
+与 v3 格式相关的文件:
 
-| ファイル | 影響 |
+| 文件 | 影响 |
 |---------|------|
-| `skills/harness-plan/references/create.md` | Step 6 テンプレートに Purpose 行を追加 |
-| `skills/harness-plan/references/sync.md` | 差分検出で `cc:完了 [hash]` 形式を認識 |
-| `skills/harness-work/SKILL.md` | Solo Step 7 で hash 付与、失敗時再チケット化 |
-| `skills/harness-sync/SKILL.md` | --snapshot でスナップショット保存 |
-| `skills/breezing/SKILL.md` | Progress Feed で進捗表示 |
+| `skills/harness-plan/references/create.md` | Step 6 模板添加 Purpose 行 |
+| `skills/harness-plan/references/sync.md` | 差异检测识别 `cc:完成 [hash]` 格式 |
+| `skills/harness-work/SKILL.md` | Solo Step 7 附加 hash，失败时重新票据化 |
+| `skills/harness-sync/SKILL.md` | --snapshot 保存快照 |
+| `skills/breezing/SKILL.md` | Progress Feed 显示进度 |
 
 ## Step 7: Plans.md 生成
 
-先に `Spec delta` または `Spec skip reason` を出し、その後に品質マーカー + DoD + Depends を自動生成して Plans.md を生成する。
+先输出 `Spec delta` 或 `Spec skip reason`，之后自动生成质量标记 + DoD + Depends 生成 Plans.md。
 
-### Spec result 出力
+### Spec result 输出
 
-`Spec delta` / `Spec skip reason` は Harness が生成し、consumer は承認・修正だけ行う。
+`Spec delta` / `Spec skip reason` 由 Harness 生成，consumer 仅进行批准・修正。
 
 ```markdown
 Spec delta:
 - path: spec.md
-- change: [追加/変更する product rule]
-- why: [この task contract の前提として必要な理由]
+- change: [追加/变更的 product rule]
+- why: [作为此 task contract 前提必要的理由]
 
 Plans.md:
 | Task | 内容 | DoD | Depends | Status |
@@ -352,7 +352,7 @@ Plans.md:
 ```markdown
 Spec skip reason:
 - path checked: spec.md
-- reason: [docs-only / mechanical task / 既存 spec とテストで正解が固定済み]
+- reason: [docs-only / mechanical task / 现有 spec 和测试已固定正解]
 - preserve in: task context or sprint contract
 
 Plans.md:
@@ -360,9 +360,9 @@ Plans.md:
 |------|------|-----|---------|--------|
 ```
 
-### 品質マーカー付与ロジック
+### 质量标记附加逻辑
 ```
-タスク内容を分析
+分析任务内容
     ↓
 ├── "auth" "login" "API" → [feature:security]
 ├── "component" "UI" "screen" → [feature:a11y]
@@ -370,137 +370,137 @@ Plans.md:
 ├── "docs" "comment" "README" "CHANGELOG" → [skip:tdd]
 ├── "config" "json" "yaml" "env" → [skip:tdd]
 ├── "style" "format" "lint" → [skip:tdd]
-├── "refactor" (動作変更なし) → [skip:tdd]
+├── "refactor" (无行为变更) → [skip:tdd]
 ├── "payment" "billing" → [feature:security]
-└── その他 → マーカーなし（TDD はデフォルト有効）
+└── 其他 → 无标记（TDD 默认启用）
 ```
 
-### DoD 自動推論ロジック
+### DoD 自动推理逻辑
 
-タスクの「内容」からキーワードベースで DoD を推論し、自動埋めする:
+根据任务的"内容"以关键字为基础推理 DoD，自动填充:
 
-| タスク内容のキーワード | DoD 推論 |
+| 任务内容关键字 | DoD 推理 |
 |---------------------|---------|
-| "作成" "新規" "追加" | ファイルが存在し、期待する構造を持つ |
-| "テスト" "test" | テスト通過（`npm test` / `pytest` 等） |
-| "修正" "fix" "bug" | 問題が再現しなくなる |
-| "UI" "画面" "コンポーネント" | 表示確認（スクリーンショット or ブラウザ） |
-| "API" "エンドポイント" | curl/httpie でレスポンス確認 |
-| "設定" "config" | 設定値が反映される |
-| "ドキュメント" "docs" | ファイルが存在し、リンク切れなし |
-| "マイグレーション" "DB" | マイグレーション実行可能 |
-| "リファクタリング" | 既存テスト全通過 + lint エラー 0 |
+| "创建" "新建" "添加" | 文件存在，具有预期结构 |
+| "测试" "test" | 测试通过（`npm test` / `pytest` 等） |
+| "修正" "fix" "bug" | 问题不再重现 |
+| "UI" "画面" "组件" | 显示确认（截图或浏览器） |
+| "API" "端点" | curl/httpie 确认响应 |
+| "设置" "config" | 设置值生效 |
+| "文档" "docs" | 文件存在，无链接损坏 |
+| "迁移" "DB" | 可执行迁移 |
+| "重构" | 现有测试全部通过 + lint 错误 0 |
 
-推論結果はあくまでデフォルト値。ユーザーが具体的な受入条件を指定した場合はそちらを優先する。
+推理结果仅为默认值。用户指定具体验收条件时优先。
 
-### Depends 自動推論ロジック
+### Depends 自动推理逻辑
 
-フェーズ内のタスク間の依存関係を以下のルールで推論する:
+按以下规则推理阶段内任务间的依赖关系:
 
-1. **DB/スキーマ系タスク** → 他の実装タスクから依存される（先行タスク）
-2. **UI タスク** → API/ロジック タスクに依存（後行タスク）
-3. **テスト/検証タスク** → 実装タスクに依存（最後尾）
-4. **設定/環境タスク** → 他タスクから依存される（先行タスク）
-5. **明確な依存がないタスク** → `-`（並列実行可能）
+1. **DB/模式系任务** → 被其他实现任务依赖（先行任务）
+2. **UI 任务** → 依赖 API/逻辑 任务（后续任务）
+3. **测试/验证任务** → 依赖实现任务（最后）
+4. **设置/环境任务** → 被其他任务依赖（先行任务）
+5. **无明确依赖的任务** → `-`（可并行执行）
 
-推論に自信がない場合は `-` にして、ユーザーに確認を求める。
+推理无自信时设为 `-`，请求用户确认。
 
-**生成テンプレート**:
+**生成模板**:
 
 ```markdown
-# [プロジェクト名] Plans.md
+# [项目名] Plans.md
 
-作成日: YYYY-MM-DD
+创建日: YYYY-MM-DD
 
 ---
 
-## Phase 1: [フェーズ名]
+## Phase 1: [阶段名]
 
-Purpose: [フェーズの目的（省略可）]
+Purpose: [阶段的目的（可省略）]
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 1.1  | [タスク説明] [feature:security] | [検証可能な完了条件] | - | cc:TODO |
-| 1.2  | [タスク説明] | [検証可能な完了条件] | 1.1 | cc:TODO |
+| 1.1  | [任务说明] [feature:security] | [可验证的完成条件] | - | cc:TODO |
+| 1.2  | [任务说明] | [可验证的完成条件] | 1.1 | cc:TODO |
 ```
 
 **Purpose 行**:
-- ユーザーがフェーズの目的を述べた場合のみ自動記載
-- 入力がなければ Purpose 行ごと省略（空行にしない）
-- 1 行で完結させる（複数行禁止）
+- 仅在用户陈述阶段目的时自动记载
+- 无输入时省略 Purpose 行（不空行）
+- 以 1 行完成（禁止多行）
 
-**DoD（Definition of Done）記法**:
-- 検証可能な1行で書く（例: 「テスト通過」「マイグレーション実行可能」「lint エラー 0」）
-- 「いい感じ」「ちゃんと動く」は禁止。Yes/No で判定できる形にする
+**DoD（Definition of Done）记法**:
+- 以可验证的 1 行书写（例: "测试通过""可执行迁移""lint 错误 0"）
+- 禁止"感觉良好""正常运行"。以 Yes/No 可判定的形式
 
-**Depends 記法**:
-- 依存なし: `-`
-- 単一依存: タスク番号（例: `1.1`）
-- 複数依存: カンマ区切り（例: `1.1, 1.2`）
-- フェーズ依存: フェーズ番号（例: `Phase 1`）
+**Depends 记法**:
+- 无依赖: `-`
+- 单一依赖: 任务编号（例: `1.1`）
+- 多重依赖: 逗号分隔（例: `1.1, 1.2`）
+- 阶段依赖: 阶段编号（例: `Phase 1`）
 
 ### Team mode output
 
-ユーザーが team mode を明示した場合だけ、Plans.md と別に issue bridge の dry-run も案内する。
+仅用户明确 team mode 时，另行提示 issue bridge 的 dry-run。
 
-- tracking issue は 1 つだけ
-- task ごとの sub-issue payload を並べる
-- Plans.md は正本のまま維持する
-- `scripts/plans-issue-bridge.sh --team-mode` の dry-run をそのまま使える形で案内する
+- tracking issue 仅 1 个
+- 并排每个 task 的 sub-issue payload
+- Plans.md 保持为正本
+- 提示可直接使用 `scripts/plans-issue-bridge.sh --team-mode` 的 dry-run 形式
 
-## Step 8: セッション起動コマンドと最初の入力を必ず案内する
+## Step 8: 必须提示会话启动命令和首次输入
 
-Plans.md を出した直後に、ユーザーが次の一歩で迷わないよう、
-**新しいセッションの起動コマンド** と
-**起動後にそのまま入れる最初の入力** をセットで案内する。
+Plans.md 输出后，为使用户不迷失下一步，
+**必须**成套提示 **新会话启动命令** 和
+**启动后可直接输入的首次输入**。
 
-### 出し方のルール
+### 提示规则
 
-1. 少なくとも 1 組は具体的な起動コマンド + 最初の入力を書く
-2. 可能なら「最有力 1 組 + 代替 1 組」までに絞る
-3. コマンドだけでなく、なぜその組み合わせなのかを 1 行で添える
-4. 長時間タスクなら `bash scripts/claude-longrun.sh` を先に案内する
+1. 至少写 1 组具体启动命令 + 首次输入
+2. 可能的话限制为"最有力的 1 组 + 替代 1 组"
+3. 不仅命令，还以 1 行附加为何此组合
+4. 长时任务优先提示 `bash scripts/claude-longrun.sh`
 
-### 推奨マッピング
+### 推荐映射
 
-| 状況 | 起動コマンド | 最初の入力 |
+| 情况 | 启动命令 | 首次输入 |
 |------|--------------|------------|
-| 最初の 1 タスクから始める | `claude` | `/harness-work 1.1` のような単一 task 実行 |
-| 複数 task をまとめて進める | `claude` | `/breezing all` |
-| 直列で全部進めたい | `claude` | `/harness-work all` |
-| 長時間・再入前提 | `bash scripts/claude-longrun.sh` | `/harness-loop all` |
+| 从第 1 个任务开始 | `claude` | `/harness-work 1.1` 等单任务执行 |
+| 多任务一起推进 | `claude` | `/breezing all` |
+| 直列全部推进 | `claude` | `/harness-work all` |
+| 长时・再入前提 | `bash scripts/claude-longrun.sh` | `/harness-loop all` |
 
-### 出力例
+### 输出示例
 
 ```text
-次の一歩:
-- 新しいセッションの起動コマンド: claude
-- 起動後の最初の入力: /breezing all
-- 向いている場面: 今回の Plans.md は複数 task をまとめて進める構成なので、チーム実行が一番自然です
+下一步:
+- 新会话启动命令: claude
+- 启动后首次输入: /breezing all
+- 适用场景: 本次 Plans.md 是多任务一起推进的构成，团队执行最自然
 ```
 
 ```text
-次の一歩:
-- 新しいセッションの起動コマンド: bash scripts/claude-longrun.sh
-- 起動後の最初の入力: /harness-loop all
-- 向いている場面: 長時間タスクで、5 分を超える待機や再開が起こりやすいためです
+下一步:
+- 新会话启动命令: bash scripts/claude-longrun.sh
+- 启动后首次输入: /harness-loop all
+- 适用场景: 长时任务，容易发生超过 5 分钟的等待或重开
 ```
 
-## Step 9: 次のアクション案内
+## Step 9: 下一步行动指引
 
 > Plans.md 完成！
 >
-> 次のステップ:
-> - `harness-work` で実装開始
-> - または「Phase 1 から始めて」と言う
-> - 機能の追加は `harness-plan add [機能名]`
-> - 機能の後回しは `harness-plan update [タスク] blocked`
+> 下一步:
+> - `harness-work` 开始实现
+> - 或说"从 Phase 1 开始"
+> - 添加功能: `harness-plan add [功能名]`
+> - 延后功能: `harness-plan update [任务] blocked`
 
-## CI モード（--ci）
+## CI 模式（--ci）
 
-ヒアリングなし。既存の Plans.md をそのまま利用してタスク分解のみ行う。
+无需需求收集。直接使用现有 Plans.md，仅进行任务分解。
 
-1. Plans.md を読み込む
-2. cc:TODO タスクを優先度順にリスト化
-3. 並列可能なタスクに `[P]` マークを付与
-4. 次の実行タスクを提案
+1. 读取 Plans.md
+2. cc:TODO 任务按优先级列表化
+3. 可并行任务附加 `[P]` 标记
+4. 提示下个执行任务

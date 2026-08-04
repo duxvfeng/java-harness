@@ -1,16 +1,16 @@
-# harness-loop: wake-up フロー詳細
+# harness-loop: wake-up 流程详细
 
-`harness-loop` の各 wake-up エントリ手順の詳細版。
-SKILL.md のサマリを補完する実装リファレンス。
+`harness-loop` 各 wake-up 入口手续的详细版。
+补全 SKILL.md 摘要的实现参考。
 
 ---
 
-## wake-up 毎のエントリ手順（詳細）
+## 各 wake-up 的入口手续（详细）
 
-### Step 0: plugin bundle root 解決
+### Step 0: plugin bundle root 解析
 
-`harness-loop` は host project の cwd ではなく、plugin bundle root 配下の helper script を呼ぶ。
-作業対象の `Plans.md` や `.claude/state/...` は host project 側に残し、工具にあたる script だけを plugin bundle から読む。
+`harness-loop` 不调用 host project 的 cwd，而是调用 plugin bundle root 下的 helper script。
+作业对象的 `Plans.md` 或 `.claude/state/...` 保留在 host project 侧，仅从 plugin bundle 读取相当于工具的 script。
 
 ```bash
 resolve_harness_plugin_root() {
@@ -36,20 +36,20 @@ resolve_harness_plugin_root() {
 HARNESS_PLUGIN_ROOT="$(resolve_harness_plugin_root)" || exit 1
 ```
 
-- `CLAUDE_PLUGIN_ROOT` が有効なら最優先で使う
-- `CLAUDE_PLUGIN_ROOT` がない場合は `CLAUDE_SKILL_DIR` から配布元を逆算する
-  - `skills/harness-loop` 配布なら `${CLAUDE_SKILL_DIR}/../..`
-  - `.agents/skills/harness-loop` mirror 配布なら `${CLAUDE_SKILL_DIR}/../../..`
-- `scripts/` と `.claude-plugin/plugin.json` がある候補だけを plugin root として扱う
-- host project cwd の `scripts/` は使わない
+- `CLAUDE_PLUGIN_ROOT` 有效时最优先使用
+- 无 `CLAUDE_PLUGIN_ROOT` 时从 `CLAUDE_SKILL_DIR` 反推分发源
+  - `skills/harness-loop` 分发则为 `${CLAUDE_SKILL_DIR}/../..`
+  - `.agents/skills/harness-loop` mirror 分发则为 `${CLAUDE_SKILL_DIR}/../../..`
+- 仅将有 `scripts/` 和 `.claude-plugin/plugin.json` 的候选用作 plugin root
+- 不使用 host project cwd 的 `scripts/`
 
-### Step 0.1: 多重起動防止ロック（冪等性ガード (a)）
+### Step 0.1: 多重启动防止锁（幂等性防护 (a)）
 
 ```bash
 LOCK_DIR=".claude/state/locks/loop-session.lock.d"
 mkdir -p ".claude/state/locks"
 
-# アトミック作成（既存なら即失敗 — TOCTOU レース回避）
+# 原子创建（已存在则立即失败 — 避免 TOCTOU 竞争）
 if ! mkdir "${LOCK_DIR}" 2>/dev/null; then
     existing=$(cat "${LOCK_DIR}/meta.json" 2>/dev/null || echo '{}')
     echo "ERROR: harness-loop is already running (lock dir exists: ${LOCK_DIR})" >&2
@@ -58,7 +58,7 @@ if ! mkdir "${LOCK_DIR}" 2>/dev/null; then
     exit 10
 fi
 
-# lock メタデータを lock ディレクトリ内に書く
+# 将 lock 元数据写入 lock 目录内
 SESSION_ID="${CLAUDE_SESSION_ID:-unknown}"
 ARGS_STR="$*"
 cat > "${LOCK_DIR}/meta.json" <<EOF
@@ -70,126 +70,126 @@ cat > "${LOCK_DIR}/meta.json" <<EOF
 }
 EOF
 
-# 終了時（正常・異常問わず）lock を削除
+# 结束时（正常・异常都删除）lock
 cleanup_loop_lock() {
     rm -rf "${LOCK_DIR}" 2>/dev/null || true
 }
 trap cleanup_loop_lock EXIT INT TERM
 ```
 
-- `LOCK_DIR` は `.claude/state/locks/loop-session.lock.d`（ディレクトリ）
-- `mkdir` はアトミックなので TOCTOU レースが発生しない（2 プロセスが同時に実行しても一方だけが成功する）
-- lock メタデータは `${LOCK_DIR}/meta.json` に書く: `{"pid": <pid>, "session_id": <session>, "started_at": <ISO8601>, "args": "<args>"}` の JSON
-- 既存 lock がある場合は `already running` エラー（exit 10）で即停止
-- `EXIT` / `INT` / `TERM` いずれでも lock を削除（正常・異常問わず cleanup）
-- `rm -rf` で冪等（2 回削除しても安全）
+- `LOCK_DIR` 为 `.claude/state/locks/loop-session.lock.d`（目录）
+- `mkdir` 是原子的，不会发生 TOCTOU 竞争（2 进程同时执行也只有一方成功）
+- lock 元数据写入 `${LOCK_DIR}/meta.json`: `{"pid": <pid>, "session_id": <session>, "started_at": <ISO8601>, "args": "<args>"}` 的 JSON
+- 已有 lock 时为 `already running` 错误（exit 10）立即停止
+- `EXIT` / `INT` / `TERM` 任一都删除 lock（正常・异常都 cleanup）
+- `rm -rf` 幂等（删除 2 次也安全）
 
-### Step 0.5: state 整合性チェック（冪等性ガード (b)）
+### Step 0.5: state 完整性检查（幂等性防护 (b)）
 
 ```bash
-# wake-up 冒頭で --quick モードの軽量整合性チェックを実行
-# 失敗した場合はループを即停止する（Plans.md 破損・未初期化環境への保護）
+# wake-up 开头以 --quick 模式执行轻量完整性检查
+# 失败时立即停止循环（保护 Plans.md 损坏・未初始化环境）
 if bash "${HARNESS_PLUGIN_ROOT}/tests/validate-plugin.sh" --quick; then
-    : # OK — 続行
+    : # OK — 继续
 else
-    echo "harness-loop: state 整合性チェック失敗 — ループを停止します" >&2
-    echo "詳細: bash \"${HARNESS_PLUGIN_ROOT}/tests/validate-plugin.sh\" --quick を実行して確認してください" >&2
+    echo "harness-loop: state 完整性检查失败 — 停止循环" >&2
+    echo "详细: 请执行 bash \"${HARNESS_PLUGIN_ROOT}/tests/validate-plugin.sh\" --quick 确认" >&2
     exit 1
 fi
 ```
 
-- `${HARNESS_PLUGIN_ROOT}/tests/validate-plugin.sh --quick` は軽量で数秒以内に完了する
-- チェック内容: `.claude/state/` の存在 / Plans.md の存在+v2フォーマット / sprint-contract の形式
-- フル validate（39 検証項目）は走らせない
-- Plans.md を意図的に破損した状態でこのチェックが失敗すれば、ループは即停止する
+- `${HARNESS_PLUGIN_ROOT}/tests/validate-plugin.sh --quick` 轻量且数秒内完成
+- 检查内容: `.claude/state/` 的存在 / Plans.md 的存在+v2格式 / sprint-contract 的形式
+- 不运行完整 validate（39 验证项）
+- 若故意损坏 Plans.md 时此检查失败，循环立即停止
 
-### Step 1: Plans.md を先に読む
+### Step 1: 先读取 Plans.md
 
 ```bash
-# cc:WIP / cc:TODO タスクを抽出し、先頭タスクの task_id を特定
+# 抽取 cc:WIP / cc:TODO 任务，特定先头任务的 task_id
 grep -E "cc:(WIP|TODO)" Plans.md | head -1
 ```
 
-- `cc:WIP` タスクが残っている場合: 前サイクルで中断された可能性あり → task_id を取得して継続
-- `cc:TODO` タスクがある場合: 次のターゲットタスクとして task_id を取得
-- どちらもない場合: **全タスク完了** → ループ正常終了
+- 残留 `cc:WIP` 任务时: 前循环可能中断 → 取得 task_id 继续
+- 有 `cc:TODO` 任务时: 作为下个目标任务取得 task_id
+- 都无时: **全任务完成** → 循环正常结束
 
-> **41.1.2 前提**: `plans-watcher.sh` が flock で Plans.md を保護している場合、
-> Plans.md 読み取りはその flock スコープ内で実行すること。
-> 41.1.2 リリース前は flock なしで直接読み取り可。
+> **41.1.2 前提**: `plans-watcher.sh` 以 flock 保护 Plans.md 时，
+> Plans.md 读取在该 flock 范围内执行。
+> 41.1.2 发布前可无 flock 直接读取。
 
-### Step 2: sprint-contract 存在確認 & 生成
+### Step 2: sprint-contract 存在确认 & 生成
 
 ```bash
 CONTRACT_PATH=".claude/state/contracts/${task_id}.sprint-contract.json"
 
 if [ ! -f "${CONTRACT_PATH}" ]; then
-    # contract 未生成 → 生成する
+    # contract 未生成 → 生成
     node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" "${task_id}"
 
-    # Step 2.5: draft → approved に昇格（初回生成時のみ）
-    # generate-sprint-contract.js は review.status == "draft" で初期化するため、
-    # ensure-sprint-contract-ready.sh（approved 要求）の前に必ず昇格させる
+    # Step 2.5: draft → approved 升级（仅初回生成时）
+    # generate-sprint-contract.js 以 review.status == "draft" 初始化，
+    # ensure-sprint-contract-ready.sh（approved 要求）之前必须升级
     bash "${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh" "${CONTRACT_PATH}" \
-      --check "wake-up 自動承認（harness-loop のため DoD を reviewer 観点で確認）" \
+      --check "wake-up 自动批准（harness-loop 用 DoD 以 reviewer 视点确认）" \
       --approve
 fi
 ```
 
-- `.claude/state/contracts/${task_id}.sprint-contract.json` の有無を確認
-- 存在しない場合は `node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" ${task_id}` で生成
-  （※ 41.5.1 で .sh→.js リネーム予定だが、現時点は既存名を node 経由で呼ぶ）
-- **生成直後（初回のみ）**: `enrich-sprint-contract.sh --approve` で `draft` → `approved` に昇格
-  - `generate-sprint-contract.js` は `review.status == "draft"` で初期化する
-  - `ensure-sprint-contract-ready.sh`（次の Step 3）は `approved` しか受け付けない
-  - `if [ ! -f ... ]` ブロック内に入れることで、既存 contract（前サイクルで approved 済み）には適用しない
-- 生成後は `${CONTRACT_PATH}` を以降のステップで使い回す
+- 确认 `.claude/state/contracts/${task_id}.sprint-contract.json` 的有无
+- 不存在时以 `node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" ${task_id}` 生成
+  （※ 41.5.1 预定 .sh→.js 重命名，但现时点经 node 调用既有名）
+- **生成后（仅首次）**: `enrich-sprint-contract.sh --approve` 升级 `draft` → `approved`
+  - `generate-sprint-contract.js` 以 `review.status == "draft"` 初始化
+  - `ensure-sprint-contract-ready.sh`（下个 Step 3）仅接受 `approved`
+  - 放入 `if [ ! -f ... ]` 块，不适用于既有 contract（前循环已 approved）
+- 生成后 `${CONTRACT_PATH}` 在后续步骤复用
 
-### Step 3: contract readiness チェック
+### Step 3: contract readiness 检查
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh" "${CONTRACT_PATH}"
 ```
 
-- sprint-contract の `review.status == "approved"` を確認
-- 未承認 contract が残っている場合はエラーで停止
+- 确认 sprint-contract 的 `review.status == "approved"`
+- 残留未批准 contract 时错误停止
 
-### Step 4: Resume pack 再読込
+### Step 4: Resume pack 重新读取
 
 ```
-Step 4. harness-mem resume-pack 再読込:
-  mcp__harness__harness_mem_resume_pack ツールを呼ぶ。
-  必須引数:
-    - project: 現在のプロジェクト名（既存 session-init スキルの実装例に倣う。
-              例: リポジトリ root を `basename $(git rev-parse --show-toplevel)` で取得して渡す）
-  optional: session_id（前セッションから再開する場合）
+Step 4. harness-mem resume-pack 重新读取:
+  调用 mcp__harness__harness_mem_resume_pack 工具。
+  必须参数:
+    - project: 当前项目名（仿现有 session-init 技能实现例。
+              例: 以 `basename $(git rev-parse --show-toplevel)` 取得 repository root 并传递）
+  可选: session_id（从前会话恢复时）
 
-  例（擬似コード）:
+  例（伪代码）:
     resume_pack = mcp__harness__harness_mem_resume_pack(
       project="claude-code-harness",
-      session_id=<前回 checkpoint の session_id>
+      session_id=<上次 checkpoint 的 session_id>
     )
 ```
 
-fresh context での wake-up 直後は前サイクルのメモリが失われている。
-`harness-mem resume-pack` 相当の操作で以下を再注入する:
+fresh context 的 wake-up 后失去前循环的记忆。
+以相当于 `harness-mem resume-pack` 的操作重新注入以下:
 
-- `decisions.md` — アーキテクチャ決定事項
-- `patterns.md` — 再利用パターン
-- `session-state` — 前回の作業状態
-- 直前サイクルの `checkpoint` — 何を完了したか
+- `decisions.md` — 架构决定事项
+- `patterns.md` — 可复用模式
+- `session-state` — 上次的作业状态
+- 直前循环的 `checkpoint` — 完成了什么
 
-> **注意**: resume pack 再読込は Step 3（contract readiness チェック）の後に実行すること。
-> スキップすると前サイクルの成果物を重複実装するリスクがある。
+> **注意**: resume pack 重新读取在 Step 3（contract readiness 检查）之后执行。
+> 跳过时有重复实现前循环成果物的风险。
 
-### Step 4.5: Advisor consult（必要時のみ）
+### Step 4.5: Advisor 咨询（仅必要时）
 
-loop は executor 主導で進め、advisor は必要な時だけ呼ぶ。
-相談するタイミングは次の 3 つに固定する。
+loop 以 executor 为主推进，advisor 仅在必要时调用。
+咨询时机固定为以下 3 个:
 
-1. 高リスク task の初回実行前
-2. 同じ原因の失敗が 2 回続いた後
-3. `PIVOT_REQUIRED` による停止直前
+1. 高风险任务首次执行前
+2. 同一原因失败连续 2 次后
+3. `PIVOT_REQUIRED` 停止前
 
 ```bash
 TRIGGER_HASH="${task_id}:${reason_code}:$(normalize_error_signature "${summary_or_risk}")"
@@ -204,81 +204,80 @@ if ! advisor_trigger_seen "${TRIGGER_HASH}"; then
 fi
 ```
 
-- `PLAN` / `CORRECTION` は次の executor prompt 先頭に advice を入れて再実行
-- `STOP` は loop を止め、`run.json` の `last_decision`, `last_trigger`, `last_model` に記録
-- 同じ `trigger_hash` は 1 回だけ相談する
-- task ごとの相談回数は最大 3 回
+- `PLAN` / `CORRECTION` 下次 executor prompt 头部放入 advice 再执行
+- `STOP` 停止 loop，在 `run.json` 的 `last_decision`, `last_trigger`, `last_model` 记录
+- 同一 `trigger_hash` 仅咨询 1 次
+- 每任务咨询次数最多 3 次
 
-### Step 5: 1 タスクサイクル実行
+### Step 5: 1 任务循环执行
 
-Agent tool 経由で `claude-code-harness:worker` を spawn する:
+经 Agent tool spawn `claude-code-harness:worker`:
 
-> **重要**: `subagent_type` には `"harness-work"` ではなく `"claude-code-harness:worker"` を指定すること。
-> `harness-work` はスキルであり agent ではない。実在する agent は `worker` / `reviewer`。
-> `"harness-work"` を指定すると Agent spawn が失敗し、ループが初回 Worker 起動で停止する。
+> **重要**: `subagent_type` 应指定 `"claude-code-harness:worker"` 而非 `"harness-work"`。
+> `harness-work` 是技能而非 agent。实际存在的 agent 是 `worker` / `reviewer`。
+> 指定 `"harness-work"` 会导致 Agent spawn 失败，循环在首次 Worker 启动时停止。
 
 ```python
 worker_result = Agent(
-    subagent_type="claude-code-harness:worker",  # ← worker エージェント（スキルではない）
+    subagent_type="claude-code-harness:worker",  # ← worker agent（非技能）
     prompt="""
-    タスク: ${task_id}
-    DoD: <Plans.md から抽出>
+    任务: ${task_id}
+    DoD: <从 Plans.md 抽取>
     contract_path: ${CONTRACT_PATH}
     mode: breezing
-    完了後: commit hash・branch・変更サマリを返却してください。
+    完成后请返回 commit hash・branch・变更摘要。
     """,
     isolation="worktree",
-    run_in_background=false  # フォアグラウンド実行（完了まで待機）
+    run_in_background=False  # 前台执行（等待完成）
 )
 # worker_result: { commit, branch, worktreePath, files_changed, summary }
 ```
 
-Worker は `mode: breezing` で動作するため:
-- feature branch 上に commit するだけで main には触らない
-- `worktreePath` に変更内容が格納される
-- Lead（harness-loop）が Step 5.5/5.6 でレビュー → cherry-pick を担当する
+Worker 以 `mode: breezing` 动作:
+- 仅在 feature branch 提交，不碰 main
+- 变更内容存储在 `worktreePath`
+- Lead（harness-loop）在 Step 5.5/5.6 负责评审 → cherry-pick
 
-> **Codex loop 実装差分**: Codex 版は `${HARNESS_PLUGIN_ROOT}/scripts/codex-loop.sh` が background task を起動し、
-> advisor が返した guidance を次回 prompt に prepend して同じ task を再実行する。
+> **Codex loop 实现差分**: Codex 版 `${HARNESS_PLUGIN_ROOT}/scripts/codex-loop.sh` 启动 background task，
+> 将 advisor 返回的 guidance prepend 到下次 prompt 重新执行同一 task。
 
-> **実装上の注意**: `Bash("harness-work --breezing")` でも代替可能だが、
-> Agent tool 経由の方がコンテキスト分離が明確でデバッグしやすい。
+> **实现注意**: `Bash("harness-work --breezing")` 也可替代，
+> 但经 Agent tool 上下文分离明确且易调试。
 
-### Step 5.5: Lead レビュー実行
+### Step 5.5: Lead 评审执行
 
-Worker が返却した commit に対して Lead がレビューを実行する:
+Lead 对 Worker 返回的 commit 执行评审:
 
 ```bash
-# diff 取得（worktree 内の commit を対象）
+# 取得 diff（以 worktree 内的 commit 为对象）
 diff_text=$(git -C "${worker_result.worktreePath}" show "${worker_result.commit}")
 
-# ── (a) Codex companion review: Worker の worktree ディレクトリで実行 ──────────────
-# Lead が main repo dir にいると diff が空になる（無条件 APPROVE の危険）。
-# Worker の worktreePath に cd してから review を呼ぶことで正しい差分を渡す。
+# ── (a) Codex companion review: 在 Worker 的 worktree 目录执行 ──────────────
+# Lead 在 main repo dir 时 diff 为空（无条件 APPROVE 的危险）。
+# cd 到 Worker 的 worktreePath 后调用 review 传递正确差分。
 #
-# worktreePath が空 or main repo と同一（worktree isolation が効かない環境）の場合は
-# Lead dir で実行（既存挙動と同等のフォールバック）。
-
+# worktreePath 为空或与 main repo 同一（worktree isolation 不生效的环境）时
+# 在 Lead dir 执行（与既有行为同等的 fallback）。
 MAIN_REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
 WORKER_PATH="${worker_result.worktreePath:-}"
 
 if [ -n "${WORKER_PATH}" ] && [ "${WORKER_PATH}" != "${MAIN_REPO_ROOT}" ]; then
-    # Worker の worktree 内で review を実行 → Worker feature branch の実際の差分を見る
+    # 在 Worker 的 worktree 内执行 review → 看 Worker feature branch 的实际差分
     ( cd "${WORKER_PATH}" && bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}" )
     REVIEW_EXIT=$?
-    # review-output.json は Worker worktree dir に作られるので絶対パスで管理する
+    # review-output.json 在 Worker worktree dir 创建，因此以绝对路径管理
     REVIEW_OUTPUT_PATH="${WORKER_PATH}/review-output.json"
 else
-    # フォールバック: Lead dir で実行（worktree isolation が効かない環境）
+    # fallback: 在 Lead dir 执行（worktree isolation 不生效的环境）
     bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}"
     REVIEW_EXIT=$?
     REVIEW_OUTPUT_PATH="$(pwd)/review-output.json"
 fi
-# → REVIEW_OUTPUT_PATH が示すファイルに verdict が書き込まれる
-# 後続はすべて $REVIEW_OUTPUT_PATH を使用すること（相対パス "review-output.json" を直接参照しない）
+# → REVIEW_OUTPUT_PATH 指示的文件中写入 verdict
+# 后续全部使用 $REVIEW_OUTPUT_PATH（不直接参照相对路径 "review-output.json"）
 
-# ── (b) reviewer_profile 分岐（sprint-contract の review.reviewer_profile を確認）──
-# CONTRACT_PATH は Step 2/3 で決定済みの値をそのまま使う（ここで上書きしない）
+# ── (b) reviewer_profile 分歧（确认 sprint-contract 的 review.reviewer_profile）──
+# CONTRACT_PATH 使用 Step 2/3 确定的值（不在此覆盖）
 if command -v jq >/dev/null 2>&1; then
     REVIEWER_PROFILE=$(jq -r '.review.reviewer_profile // "static"' "${CONTRACT_PATH}" 2>/dev/null || echo "static")
 else
@@ -287,9 +286,9 @@ fi
 
 case "${REVIEWER_PROFILE}" in
     runtime)
-        # runtime 検証コマンドを実行し、verdict を上書きする可能性がある
-        # run-contract-review-checks.sh は Worker の worktree 内で実行する（テスト環境が worktree 内にあるため）
-        # 重要: run-contract-review-checks.sh の stdout は artifact の「ファイルパス」（JSON payload ではない）
+        # 执行 runtime 验证命令，可能覆盖 verdict
+        # run-contract-review-checks.sh 在 Worker 的 worktree 内执行（测试环境在 worktree 内）
+        # 重要: run-contract-review-checks.sh 的 stdout 是 artifact 的"文件路径"（非 JSON payload）
         if [ -n "${WORKER_PATH}" ] && [ "${WORKER_PATH}" != "${MAIN_REPO_ROOT}" ]; then
             RUNTIME_ARTIFACT_PATH=$(
                 cd "${WORKER_PATH}" && bash "${HARNESS_PLUGIN_ROOT}/scripts/run-contract-review-checks.sh" "${CONTRACT_PATH}" 2>/dev/null
@@ -300,12 +299,12 @@ case "${REVIEWER_PROFILE}" in
             ) || RUNTIME_ARTIFACT_PATH=""
         fi
 
-        # 空（スクリプト失敗）の場合は DOWNGRADE_TO_STATIC 扱い
+        # 空（脚本失败）时作为 DOWNGRADE_TO_STATIC 处理
         if [ -z "${RUNTIME_ARTIFACT_PATH}" ]; then
             RUNTIME_ARTIFACT_PATH=""
             RUNTIME_VERDICT="DOWNGRADE_TO_STATIC"
         else
-            # 相対パスの場合は WORKER_PATH（または Lead dir）を基点に絶対パス化する
+            # 相对路径时以 WORKER_PATH（或 Lead dir）为基点绝对路径化
             if [[ "${RUNTIME_ARTIFACT_PATH}" != /* ]]; then
                 if [ -n "${WORKER_PATH}" ] && [ "${WORKER_PATH}" != "${MAIN_REPO_ROOT}" ]; then
                     RUNTIME_ARTIFACT_PATH="${WORKER_PATH}/${RUNTIME_ARTIFACT_PATH}"
@@ -396,7 +395,7 @@ if review_count >= MAX_REVIEWS and verdict != "APPROVE":
     raise PivotRequired(f"{MAX_REVIEWS} 回修正後も REQUEST_CHANGES: {issues}")
 ```
 
-### Step 5.6: APPROVE → main に cherry-pick
+### Step 5.6: APPROVE → cherry-pick 到 main
 
 ```bash
 # trunk ブランチに戻る（Worker は feature branch で作業）
@@ -474,7 +473,7 @@ harness-loop: plateau 検知により停止（サイクル {N}/{max}）
 現在の Plans.md 状態を確認してください。
 ```
 
-### Step 7: サイクル数チェック
+### Step 7: 循环数检查
 
 ```
 cycles_completed += 1
@@ -494,7 +493,7 @@ if cycles_completed >= max_cycles:
   ```
 - wake-up 時に `--cycles-done N` を読み取り、カウントを復元する
 
-### Step 8: checkpoint 記録
+### Step 8: checkpoint 记录
 
 ```json
 {
@@ -507,7 +506,7 @@ if cycles_completed >= max_cycles:
 `harness_mem_record_checkpoint` ツールでメモリに記録する。
 次の wake-up の resume pack に自動的に含まれる。
 
-### Step 9: 次 wake-up 予約
+### Step 9: 下次 wake-up 预约
 
 ```
 ScheduleWakeup(
@@ -528,54 +527,54 @@ ScheduleWakeup(
 
 > **clamp 制約**: `ScheduleWakeup` は `delaySeconds` を `[60, 3600]` にランタイムで clamp する。
 > 60 未満を指定すると 60 に切り上げ、3600 超を指定すると 3600 に切り下げられる。
-> 設計値は全て範囲内だが、将来的な変更時は要注意。
+> 设计值都在范围内，但将来变更时要注意。
 
 ---
 
-## サイクル停止条件マトリクス
+## 循环停止条件矩阵
 
-| 条件 | サイクル数 | exit | 停止理由 | ユーザー通知 |
+| 条件 | 循环数 | exit | 停止理由 | 用户通知 |
 |------|-----------|------|---------|------------|
-| `cycles >= max_cycles` | N (上限) | 0 | 正常上限 | 「{N} サイクル完了で停止」 |
-| `PIVOT_REQUIRED` | 任意 | 2 | plateau 検知 | エスカレーション詳細 |
-| 未完了タスクなし | 任意 | 0 | 全タスク完了 | 完了報告 |
-| ユーザーキャンセル | 任意 | - | 手動中断 | - |
+| `cycles >= max_cycles` | N (上限) | 0 | 正常上限 | 「{N} 循环完成停止」 |
+| `PIVOT_REQUIRED` | 任意 | 2 | plateau 检测 | 升级详细 |
+| 无未完成任务 | 任意 | 0 | 全任务完成 | 完成报告 |
+| 用户取消 | 任意 | - | 手动中断 | - |
 
 ---
 
-## pacing 選択ガイド
+## pacing 选择指南
 
-### どの pacing を使うべきか
+### 应使用哪个 pacing
 
 ```
-タスクの性質は？
+任务性质是？
 │
-├── Worker 完了直後に再入したい
+├── Worker 完成后想立即重新进入
 │     → worker（270s）
 │
-├── CI / テストの完了を待つ必要がある
+├── 需要等待 CI / 测试完成
 │     → ci（270s）
-│     ※ CI が 270s 以上かかる場合は手動で --pacing を調整
+│     ※ CI 超过 270s 时手动调整 --pacing
 │
-├── plateau を検知して間隔を空けたい
+├── 检测到 plateau 想空开间隔
 │     → plateau（1200s）
 │
-└── 深夜に放置して翌朝確認したい
+└── 深夜放置翌晨确认
       → night（3600s）
 ```
 
-### pacing 変更のタイミング
+### pacing 变更时机
 
-- **初回起動時**: 通常は `worker`（デフォルト）で良い
-- **CI 待ちが多い場合**: `--pacing ci` に切り替え
-- **plateau 検知後**: `--pacing plateau` で自動切り替えを検討（Step 5 参照）
-- **夜間放置**: `--pacing night` で起動してそのまま就寝
+- **首次启动时**: 通常 `worker`（默认）即可
+- **CI 等待多时**: 切换到 `--pacing ci`
+- **plateau 检测后**: 考虑 `--pacing plateau` 自动切换（参照 Step 5）
+- **夜间放置**: `--pacing night` 启动后直接就寝
 
 ---
 
-## ScheduleWakeup の制約詳細
+## ScheduleWakeup 约束详细
 
-### delaySeconds のランタイム制約
+### delaySeconds 的运行时约束
 
 ```
 ScheduleWakeup(delaySeconds=X)
@@ -584,37 +583,37 @@ ScheduleWakeup(delaySeconds=X)
   → 60 <= X <= 3600 → そのまま使用
 ```
 
-### cache TTL との関係
+### 与 cache TTL 的关系
 
-ScheduleWakeup の cache TTL は **5 min（300s）**。
+ScheduleWakeup 的 cache TTL 为 **5 min（300s）**。
 
-- `worker` / `ci` の 270s は 5 min 以内 → cache warm な状態で wake-up
-- `plateau` の 1200s、`night` の 3600s は cache 失効後に wake-up
-  → Step 2（resume pack 再読込）が特に重要
+- `worker` / `ci` 的 270s 在 5 min 以内 → cache warm 状态下 wake-up
+- `plateau` 的 1200s、`night` 的 3600s 在 cache 失效后 wake-up
+  → Step 2（resume pack 重新读取）特别重要
 
-### prompt の引数引き継ぎ
+### prompt 参数继承
 
-サイクルカウントを次の wake-up に引き継ぐ方法:
+将循环计数继承到下次 wake-up 的方法:
 
 ```bash
-# 現在の cycle count を prompt に埋め込む
+# 将当前 cycle count 嵌入 prompt
 NEXT_PROMPT="/harness-loop ${SCOPE} --max-cycles ${MAX_CYCLES} --cycles-done ${CYCLES_DONE} --pacing ${PACING}"
 
 ScheduleWakeup(
     delaySeconds=${DELAY},
     prompt="${NEXT_PROMPT}",
-    reason="cycle ${CYCLES_DONE}/${MAX_CYCLES} 完了"
+    reason="循环 ${CYCLES_DONE}/${MAX_CYCLES} 完成"
 )
 ```
 
 ---
 
-## 参考: spike 41.0.0 の検証結果
+## 参考: spike 41.0.0 的验证结果
 
-この設計は spike 41.0.0 の実証結果に基づく:
+此设计基于 spike 41.0.0 的实证结果:
 
-- `ScheduleWakeup`: 内部ツールとして存在確認済み。delay [60, 3600] clamp、cache 5min TTL
-- `/loop`: CC dynamic mode として存在確認済み。sentinel `<<autonomous-loop-dynamic>>`
-- `harness_mem_record_checkpoint`: 存在確認済み（schema: session_id / title / content 必須）
+- `ScheduleWakeup`: 确认作为内部工具存在。delay [60, 3600] clamp、cache 5min TTL
+- `/loop`: 确认作为 CC dynamic mode 存在。sentinel `<<autonomous-loop-dynamic>>`
+- `harness_mem_record_checkpoint`: 确认存在（schema: session_id / title / content 必需）
 
-これらの前提が変わった場合は本ファイルを更新すること。
+这些前提变化时请更新本文件。

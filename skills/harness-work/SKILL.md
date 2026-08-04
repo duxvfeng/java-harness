@@ -4,227 +4,184 @@ description: "HAR: Execute Plans.md tasks from single task to full parallel team
 description-en: "HAR: Execute Plans.md tasks from single task to full parallel team run. Trigger: implement, execute, do everything, breezing, team run, parallel, composer, composer 2.5. Do NOT load for: planning, review, release, setup."
 description-zh: "HAR：负责从单个任务到全并行团队执行的 Plans.md 任务。当用户提到实现、执行、全部完成、breezing、团队执行、并行、composer、作曲器、composer 2.5 时启动。不适用于：计划、审查、发布、设置。"
 kind: workflow
-purpose: "Execute Plans.md tasks end to end through Codex-native tools"
-trigger: "implement, execute, do everything, breezing, team run, parallel, composer, composer 2.5, composer mode, コンポーザー"
+purpose: "Execute Plans.md tasks end to end"
+trigger: "implement, execute, do everything, breezing, team run, parallel, composer, composer 2.5, composer mode, 作曲器"
 shape: workflow
 role: executor
 pair: harness-review
 owner: harness-core
 since: "2026-05-05"
-allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash", "spawn_agent", "send_input", "wait_agent", "close_agent"]
-argument-hint: "[all] [task-number|range] [--backend claude|codex|cursor] [--cursor] [--codex] [--parallel N] [--no-commit] [--resume id] [--breezing] [--auto-mode] [--tdd-bypass]"
+allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash", "Task", "Monitor"]
+argument-hint: "[all] [task-number|range] [--codex] [--parallel N] [--no-commit] [--resume id] [--breezing] [--auto-mode] [--tdd-bypass]"
+user-invocable: true
 effort: high
 ---
 
 # Harness Work
 
-Harness の統合実行スキル。
-以下の旧スキルを統合:
+Harness 的集成执行技能。
+整合以下旧技能:
 
-- `work` — Plans.md タスクの実装（スコープ自動判断）
-- `impl` — 機能実装（タスクベース）
-- `breezing` — チームフル自動実行
-- `parallel-workflows` — 並列ワークフロー最適化
-- `ci` — CI 失敗時の復旧
+- `work` — Plans.md 任务的实现（范围自动判断）
+- `impl` — 功能实现（基于任务）
+- `breezing` — 团队全自动执行
+- `parallel-workflows` — 并行工作流优化
+- `ci` — CI 失败时的恢复
 
 ## Quick Reference
 
-| ユーザー入力 | モード | 動作 |
+| 用户输入 | 模式 | 动作 |
 |------------|--------|------|
-| `harness-work` | **auto** | タスク数で自動判定（下記参照） |
-| `harness-work all` | **auto** | 全未完了タスクを自動モードで実行 |
-| `harness-work 3` | solo | タスク3だけ即実行 |
-| `harness-work --parallel 5` | parallel | 5ワーカーで並列実行（強制） |
-| `harness-work --codex` | codex | Codex CLI に委託（明示時のみ） |
-| `harness-work --breezing all` | breezing | resolved backend でチーム実行（配布既定は claude、user/project default で cursor 可） |
-| `harness-work --breezing --backend cursor all` | breezing | Cursor worker backend を明示してチーム実行 |
-| `harness-work --breezing --backend claude all` | breezing | Codex native subagent worker を明示してチーム実行 |
-| `harness-work --breezing` | breezing | チーム実行を強制 |
-| `harness-work 3 --plan roadmap` | solo | named Plans の `roadmap` からタスク3を実行 |
+| `/harness-work` | **auto** | 按任务数自动判定（参见下文） |
+| `/harness-work all` | **auto** | 以自动模式执行所有未完成任务 |
+| `/harness-work 3` | solo | 仅立即执行任务3 |
+| `/harness-work --parallel 5` | parallel | 5工作器并行执行（强制） |
+| `/harness-work --codex` | codex | 向 Codex CLI 委托（仅明确时） |
+| Cursor host (adapter candidate) | cursor | Task/subagent routing via `.cursor/AGENTS.md`; not auto-selected |
+| `/harness-work --breezing` | breezing | 强制团队执行 |
+| `/harness-work 3 --plan roadmap` | solo | 从名为 Plans 的 `roadmap` 执行任务3 |
 
-## Execution Mode Auto Selection（フラグなし時の自動判定）
+## Execution Mode Auto Selection（无标志时的自动判定）
 
-明示的なモードフラグ（`--parallel`, `--breezing`, `--codex`）がない場合、
-対象タスク数に応じて最適なモードを自動選択する:
+没有明确的模式标志（`--parallel`, `--breezing`, `--codex`）时，
+根据对象任务数自动选择最优模式:
 
-| 対象タスク数 | 自動選択モード | 理由 |
+| 对象任务数 | 自动选择模式 | 理由 |
 |-------------|---------------|------|
-| **1 件** | Solo | オーバーヘッド最小。直接実装が最速 |
-| **2〜3 件** | Parallel（Task tool） | Worker 分離のメリットが出始める閾値 |
-| **4 件以上** | Breezing | Lead 調整 + Worker 並列 + Reviewer 独立の三者分離が効果的 |
+| **1 件** | Solo | 开销最小。直接实现最快 |
+| **2-3 件** | Parallel（Task tool） | Worker 分离的效益开始显现的阈值 |
+| **4 件以上** | Breezing | Lead 协调 + Worker 并行 + Reviewer 独立的三者分离有效 |
 
-### ルール
+### 规则
 
-1. **明示フラグは常にオートモードを上書き**する
-   - `--parallel N` → Parallel モード（タスク数に関係なく）
-   - `--breezing` → Breezing モード（タスク数に関係なく）
-   - `--codex` → Codex モード（タスク数に関係なく）
-2. **`--codex` は明示時のみ発動**。Codex CLI が未インストールの環境があるため、自動選択しない
-3. `--codex` は他モードと組み合わせ可能: `--codex --breezing` → Codex + Breezing
+1. **明确标志始终覆盖自动模式**（`--parallel N` / `--breezing` / `--codex` 与任务数无关强制执行）
+2. **`--codex` 仅在明确时触发**。因存在 Codex CLI 未安装的环境，不自动选择
+3. `--codex` 可与其他模式组合: `--codex --breezing` → Codex + Breezing
 
-## Execution Backend Selection（実装バックエンド選択）
+## Execution Backend Selection（实现后端选择）
 
-バックエンド（どのランタイムが**実装するか**）は、トポロジー（実行モード: solo / parallel / breezing）と直交する。
-トポロジーが「何ワーカーで・どう分割して回すか」を決めるのに対し、バックエンドは「実装の手を誰が動かすか」を決める。
-この契約は host-neutral であり（spec.md「Execution Backend Contract」）、Codex host から harness を駆動しても Claude Code から駆動しても同じに振る舞う。
+后端（哪个运行时**实现**）与执行模式（拓扑: solo / parallel / breezing）正交。
 
-| backend | 実装の担い手 | 委託コマンド |
+| backend | 实现承担者 | 委托命令 |
 |---------|------------|------------|
-| `claude`（global fallback） | Codex native subagent（`spawn_agent({message, fork_context})`） | spawn_agent で worker を spawn |
+| `claude`（默认） | Task subagent（`agents/worker.md`） | 用 Agent tool spawn worker |
 | `codex` | Codex CLI | `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "<prompt>"` |
 | `cursor` | cursor-agent（model `composer-2.5-fast`） | `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task --write --workspace <worktree> "<prompt>"` |
 
-### 解決手順
+Codex 调用的治理详情（禁止事项、verdict 映射等）
+参见 [references/codex-cli-only.md](${CLAUDE_SKILL_DIR}/references/codex-cli-only.md)。
 
-run 開始時に 1 回だけ解決する。backend 判定は **必ず resolver 経由**にし、`HARNESS_IMPL_BACKEND` env だけを直読みして判定しない:
+run 开始时用 resolver 仅解析一次。不得直接读取 `HARNESS_IMPL_BACKEND` env 来决定后端:
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"
 ```
 
-precedence（高い順）: `--backend <v>` / `--cursor` / `--codex` フラグ > `HARNESS_IMPL_BACKEND` 環境変数 > プロジェクト `env.local` の同名行 > ユーザー `~/.config/claude-harness/impl-backend.env` の同名行 > call-site default。
-明示フラグ（`--backend` / `--cursor` / `--codex`）は env / file / default を常に上書きする。プロジェクト設定はユーザースコープを上書きする。
+precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex`） > env > project file > user file > 默认 `claude`。项目设置覆盖用户范围。
 
-Codex host の `--breezing` / `breezing` も配布 plugin では call-site default を変えない。
-フラグなしは `resolve-impl-backend.sh` の結果に従い、未設定時の fallback は `claude`。
-Cursor を既定にしたい環境は `HARNESS_IMPL_BACKEND=cursor` を env / project `env.local` / user-scope config に設定する。
-明示的に Cursor を使う場合は `--backend cursor` / `--cursor`、Codex native subagent worker へ戻す場合は `--backend claude` を渡す。
+### Backend 默认（`claude` 是意图的默认，警告仅在无效值 fallback 时）
 
-> モデル名の正本は `model-routing.sh`。本ドキュメント中の `composer-2.5-fast` は参照値であり、実解決は `bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model` に従う（drift 防止）。
+默认 backend 是 `claude`（Native subagent）。resolver 的未设定 fallback 也是 `claude`，正常解析为 `claude` 时不输出警告（2026-07-24 operator 裁定。格式与 `breezing` 的 Narration Rules「Backend 默认和 per-run 的扁平判断」相同，cross-ref: `skills/breezing/SKILL.md`）。
 
-### 自然言語 backend trigger
+- ⚠️ 警告仅在 resolver 输出 **无效值 fallback** 的 stderr 警告时输出。banner 后立即 1 行，同一 run 内不重复
+- Lead 可以根据作业内容、量 per-run 扁平选择 backend。选择时使用对 resolver 的明确 override（`--backend <v>` / `--codex` / `--cursor`）
+- `composer` / `作曲器` / `composer 2.5` 等自然语言表现作为 `--cursor` 相同 intent 处理，向 resolver 明示 override 传递 `--backend cursor`（自然语言 backend trigger）
 
-ユーザーが `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` と言った場合は、`cursor backend` 指定として扱う。
-これは `--cursor` と同じ intent だが、backend の確定値は必ず `resolve-impl-backend.sh` で解決する。
-解決時は明示 override として `--backend cursor` を渡し、env / project / user file / default より優先させる。
-Lead は `composer` を Codex native Worker 内の追加 agent と解釈せず、非 `claude` backend の規約どおり Worker agent を挟まずに `cursor-companion.sh` を直接呼ぶ。
+后端是 **role-scoped**: 遵循已解决后端的仅是实现（worker）角色。Reviewer / Advisor 总是固定为 brain（`--host claude`）（不向 primary reviewer routing cursor/codex）。唯一例外是 **fresh-context advisory pre-review**: 不与会话状态共享生成 diff 的 session 的 cursor `review` tier 可以输出 advisory findings，primary verdict（`APPROVE | REQUEST_CHANGES`）仅由 brain 输出。
 
-### role-scoped 制約
-
-バックエンドは **role-scoped**。解決済みバックエンドを使うのは実装（worker）ロールだけ。
-Reviewer と Advisor の両ロールは常に brain（`--host claude`、Opus）に固定する。
-Reviewer を cursor / codex バックエンドに routing しない（実装したバックエンドが自分の出力をレビューしてはならない）。
-
-### 非 `claude` バックエンドの self_review ゲート
-
-backend が `codex` または `cursor` の場合、`worker-report.v1` も `self_review` 配列も生成されない。
-そのため Lead は self_review ゲートを**スキップ**し、Lead の diff レビューを唯一の品質ゲートとする（既存の codex path と同じ扱い）。
-
-### cursor バックエンドの banner（委託前に必須）
-
-backend が `cursor` のとき、Lead は委託前に次の 1 行 banner を必ず出力する:
-
-```
-⚠️ cursor backend: model=composer-2.5-fast / R01-R13 ガードレールは cursor-agent 内部に適用されない / 出力は Lead レビューまで untrusted
+```bash
+bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model
+bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role reviewer --field model
 ```
 
-cursor の write 委託は専用 `.git` を持つ worktree 内で実行し、Lead が main へ cherry-pick する（cherry-pick 経路で R01-R13 が適用される）。
-ガバナンス詳細は `.claude/rules/cursor-cli-only.md` を参照。
+后端为 `codex` / `cursor` 时，Lead 不会 spawn Worker agent，而是直接调用 companion（无 Worker 介入的拓扑）。跳过 self_review 门控，Lead 的 diff 审查成为唯一的质量门控。在委托前输出 cursor backend banner，在 cherry-pick 前通过两道 contract grep 门控（`test-support-claim-wording.sh` / `check-consistency.sh` / `validate-plugin.sh`）。Mode 1 的 Producer → Sub-Lead → Composer 层级、review→iterate 循环详情参见
+[references/backend-selection.md](${CLAUDE_SKILL_DIR}/references/backend-selection.md)。
 
-## オプション
+## 选项
 
-| オプション | 説明 | デフォルト |
+| 选项 | 说明 | 默认值 |
 |----------|------|----------|
-| `all` | 全未完了タスクを対象 | - |
-| `N` or `N-M` | タスク番号/範囲指定 | - |
-| `--parallel N` | 並列ワーカー数 | auto |
-| `--sequential` | 直列実行強制 | - |
-| `--codex` | Codex CLI で実装委託（明示時のみ、自動選択しない） | false |
-| `--backend <claude\|codex\|cursor>` | 明示バックエンド選択（worker ロールのみ適用、precedence 最上位） | resolver result（未設定時は claude） |
-| `--cursor` | cursor backend（`--backend cursor` の別名） | false |
-| `--plan NAME` | `plans/manifest.json` の named plan を使う | active/default |
-| `--no-commit` | 自動コミット抑制 | false |
-| `--resume <id\|latest>` | 前回セッション再開 | - |
-| `--breezing` | Lead/Worker/Reviewer のチーム実行 | false |
-| `--no-tdd` | TDD フェーズスキップ | false |
-| `--tdd-bypass` | 緊急時だけ TDD 強制を bypass。`HARNESS_TDD_BYPASS_REASON` または明示理由を audit に残す | false |
-| `--no-simplify` | Auto-Refinement スキップ | false |
-| `--auto-mode` | Auto Mode rollout を明示。親セッションの permission mode が互換な場合のみ採用を検討 | false |
+| `all` | 以全部未完成为对象 | - |
+| `N` or `N-M` | 指定任务编号/范围 | - |
+| `--parallel N` | 并行 Worker 数量 | auto |
+| `--sequential` | 强制串行执行 | - |
+| `--codex` | 委托给 Codex CLI 实现（仅在明确指定时，不自动选择） | false |
+| `--backend <claude\|codex\|cursor>` | 明确选择后端（仅应用于 worker 角色，优先级最高） | claude |
+| `--cursor` | cursor 后端（同 `--codex`，仅在明确指定时。因存在未安装 cursor-agent 的环境，不自动选择） | false |
+| `--plan NAME` | 使用 `plans/manifest.json` 中的指定 plan | active/default |
+| `--no-commit` | 抑制自动提交 | false |
+| `--resume <id\|latest>` | 恢复上一次会话。在长时间中断后推荐与 `/recap` 一起使用 | - |
+| `--breezing` | Lead/Worker/Reviewer 团队执行 | false |
+| `--no-tdd` | 跳过 TDD 阶段 | false |
+| `--tdd-bypass` | 仅在紧急情况下绕过 TDD 强制。将 `HARNESS_TDD_BYPASS_REASON` 或明确理由保留在 audit 中 | false |
+| `--no-simplify` | 跳过 Auto-Refinement | false |
+| `--auto-mode` | 明确 Harness 侧的 Auto Mode rollout。与在 CC 2.1.111 中已不需要的 `--enable-auto-mode` 不同 | false |
 
 ## Progressive Disclosure
 
-まずこの本文で入口、自動選択、停止条件だけを確認する。
-詳細は必要になった時だけ読む。
+首先在此正文中确认入口、自动选择、停止条件。详细内容仅在必要时阅读。
 
-| 詳細 | 参照 |
+| 详细 | 参照 |
 |---|---|
-| Codex native Solo / Parallel / Breezing の具体手順 | `references/execution-modes.md` |
-| companion review、Reviewer fallback、AI Residuals、修正ループ | `references/review-loop.md` |
-| 完了報告の生成 | `references/completion-report.md` |
-| テスト/CI 失敗時の再チケット化 | `references/failure-reticketing.md` |
-| 仕様正本チェックの基準 | `docs/plans/spec-ssot.md` |
+| Solo / Breezing 的 1-17 步骤完整版、Phase A/B/C 完整版 | `references/execution-modes.md` |
+| Backend role-scoped 限制、非 claude 拓扑、Mode 1 层级、review→iterate | `references/backend-selection.md` |
+| Codex review、Reviewer fallback、verdict mapping、修正循环 | `references/review-loop.md` |
+| Sprint Contract 字段一览、PR Closeout | `references/sprint-contract.md` |
+| effort tier 的多要素得分详情 | `references/effort-routing.md` |
+| Solo / Breezing 完成报告的生成 | `references/completion-report.md` |
+| 测试/CI 失败时的重新票决命令 | `references/failure-reticketing.md` |
+| 规格权威版本检查的基准 | `docs/plans/spec-ssot.md` |
 
 ### 重要停止条件
 
-- `Plans.md` が旧フォーマットで DoD / Depends / Status を読めない時は停止する。
-- 仕様が実装判断に影響するのに project spec SSOT が見つからない時は、先に仕様正本を作成/更新してから実装する。
-- sprint-contract が required なのに ready でない時は実装に進まない。
-- critical / major review finding が残っている時は完了にしない。
-- テストを弱める、skip する、期待値を実装に合わせて緩める形では解決しない。
-- helper script は host project の `scripts/` ではなく `${HARNESS_PLUGIN_ROOT}/scripts/` から呼ぶ。
-- 複数 Plans.md がある場合は、1 run の中で plan を切り替えない。必要なら `--plan NAME` を明示して新しい run を開始する。
+- `Plans.md` 为旧格式无法读取 DoD / Depends / Status 时停止。
+- 规格影响实现判断但找不到 project spec SSOT 时，先创建/更新规格权威版本后再实现。
+- sprint-contract 为 required 但未 ready 时不进入实现。
+- 残留 critical / major review findings 时不完成。
+- 不能以减弱测试、skip 测试、将期待值配合实现放宽的形式解决。
+- helper script 从 `${HARNESS_PLUGIN_ROOT}/scripts/` 而非 host project 的 `scripts/` 调用。
+- 有多个 Plans.md 时，不在 1 run 中切换 plan。必要时明确 `--plan NAME` 并启动新的 run。
 
-> **Token Optimization (v2.1.69+)**: git 操作を伴わない軽量タスクでは
-> plugin settings の `includeGitInstructions: false` を有効にして
-> プロンプトトークンを削減できる。
+> **Token Optimization (v2.1.69+)**: 在不伴随 git 操作的轻量任务中
+> 可以在 plugin settings 中启用 `includeGitInstructions: false` 来减少 prompt token。
 
-## スコープダイアログ（引数なし時）
+> **Prompt Cache (CC 2.1.108+)**: 在较长的实现或频繁使用 `--resume` 的工作中
+> 优先使用 `ENABLE_PROMPT_CACHING_1H=1`。
+
+## 范围对话框（无参数时）
 
 ```
-harness-work
-どこまでやりますか?
-1) 次のタスク: Plans.md の次の未完了タスク → Solo で実行
-2) 全部（推奨）: 残りのタスクをすべて完了 → タスク数で自動モード選択
-3) 番号指定: タスク番号を入力（例: 3, 5-7）→ 件数で自動モード選択
+/harness-work
+执行到什么程度？
+1) 下一个任务: Plans.md 的下一个未完成任务 → Solo 执行
+2) 全部（推荐）: 完成所有剩余任务 → 根据任务数自动选择模式
+3) 指定编号: 输入任务编号（例: 3, 5-7）→ 根据件数自动选择模式
 ```
 
-引数ありなら即実行（対話スキップ）:
-- `harness-work all` → 全タスク、自動モード選択
-- `harness-work 3-6` → 4件なので Breezing 自動選択
+有参数时立即执行（跳过交互）:
+- `/harness-work all` → 全部任务，自动模式选择
+- `/harness-work 3-6` → 4 件所以自动选择 Breezing
 
-## Effort レベル制御（Opus 4.8 / v2.1.111+）
+## Effort 级别控制（Opus 4.8 / v2.1.111+）
 
-effort はモデルの推論強度を選ぶ正式なノブ。`low(○)/medium(◐)/high(●)/xhigh` の 4 段階で、
-`/effort auto` でデフォルトにリセットできる（`max` は v2.1.72 で廃止、`xhigh` が後継）。
+effort 是选择模型推理强度的正式旋钮。分为 `low(○)/medium(◐)/high(●)/xhigh` 4 个级别，
+可以用 `/effort auto` 重置为默认值。从复杂度得分（文件数·目标目录·关键字·失败历史·明确指定之合计）
+决定 tier，不采用向 spawn prompt 注入 free-text marker（旧 `ultrathink`）的方式。
 
-Opus 4.8 では thinking は既定 off で、effort が推論深度の主レバー（過去のどの Opus より effort の影響が大きい）。
-「浅い推論」を観測したら prompt で回避せず effort を上げる。
-そのため複雑タスクの強化は **free-text marker（旧 `ultrathink`）を spawn prompt に注入する方式を廃止**し、
-複雑度スコアから **Worker spawn の effort tier を選ぶ**方式に統一する。
-
-### 多要素スコアリング
-
-タスク着手時に以下のスコアを合算する。
-
-| 要素 | 条件 | スコア |
-|------|------|--------|
-| ファイル数 | 変更対象 4 ファイル以上 | +1 |
-| ディレクトリ | core/, guardrails/, security/ を含む | +1 |
-| キーワード | architecture, security, design, migration を含む | +1 |
-| 失敗履歴 | agent memory に同タスクの失敗記録あり | +2 |
-| 明示指定 | PM テンプレートに `effort: high` / `effort: xhigh`（旧 `ultrathink` も互換受理）記載あり | +3（自動採用） |
-
-### effort tier の決め方（注入しない）
-
-スコアから effort tier を **escalation signal** として決める（`ultrathink` 等の marker 文字列を spawn prompt に **書かない**）。
-適用 lever は次の 2 つだけ:
-
-- **session `/effort`**: 複雑タスクのバッチに入る前に host が `/effort high` / `/effort xhigh` を設定する（session 単位で効く確実な lever）。
-- **worker frontmatter**: `agents/worker.md` の `effort`（既定 `medium`）が floor。CC の Agent / Task spawn API は per-spawn の effort 指定を公開しないため、worker 1 体ごとに effort を上げる機構はない。スコアは `worker-report.v1` の `task_complexity_note` に記録し、Lead が session effort 引き上げの判断材料にする。
-
-| スコア | code-risk（core/guardrails/security/architecture/migration を含む） | effort tier |
+| 得分 | code-risk（包含 core/guardrails/security/architecture/migration） | effort tier |
 |--------|-----------------------------------|-------------|
-| 0-2 | 不問 | `medium`（Worker frontmatter 既定のまま） |
-| ≥ 3 | なし | `high` |
-| ≥ 3 | あり | `xhigh` |
+| 0-2 | 不问 | `medium`（Worker frontmatter 默认） |
+| ≥ 3 | 无 | `high` |
+| ≥ 3 | 有 | `xhigh` |
 
-breezing モードでも同じロジックを適用する（harness-work が一本化して管理）。
+在 breezing 模式下也应用相同的逻辑（harness-work 统一管理）。得分详情·lever 详情参见
+[references/effort-routing.md](${CLAUDE_SKILL_DIR}/references/effort-routing.md)。
 
-## 実行モード詳細
+## 执行模式详情
 
 ### Harness helper script root
 
-Harness が同梱する helper script は、作業対象プロジェクトの `scripts/` ではなく、必ず plugin bundle root から呼ぶ。
+Harness 捆绑的 helper script 必须从 plugin bundle root 调用，而不是工作目标项目的 `scripts/`。
 
 ```bash
 HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
@@ -237,12 +194,13 @@ if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then
 fi
 ```
 
-以降の `node "${HARNESS_PLUGIN_ROOT}/scripts/..."` / `bash "${HARNESS_PLUGIN_ROOT}/scripts/..."` は、この解決済み root を前提にする。
+以后的 `node "${HARNESS_PLUGIN_ROOT}/scripts/..."` / `bash "${HARNESS_PLUGIN_ROOT}/scripts/..."` 以此已解析的 root 为前提。
 
 ### Backend-resolved executor path (Solo / Parallel / Breezing)
 
-Solo / Parallel / Breezing は同じ resolver result から実装 executor を選ぶ。
-`harness-work 3 --cursor` と user/project `HARNESS_IMPL_BACKEND=cursor` は、1 件タスクでも local Read/Write/Edit/Bash に fall through してはいけない。
+Solo / Parallel / Breezing 从相同的 resolver result 选择实现 executor。
+`harness-work 3 --cursor` 或 resolver 输出为 `cursor` 的 run（包含通过 project / user file 的 default），
+即使是 1 件任务也不能 fall through 到 local Read/Write/Edit/Bash。
 
 ```
 resolver_backend_arg = ""
@@ -274,524 +232,190 @@ if topology in ["solo", "parallel"] and backend in ["cursor", "codex"]:
     if latest_commit == BASE_REF:
         raise EscalationError("{backend} companion produced no commit")
     worker_result = {type: "companion-result.v1", baseCommit: BASE_REF, commit: latest_commit, worktreePath: worktree_path, branch: worktree_branch, files_changed: git("-C", worktree_path, "diff", "--name-only", "{BASE_REF}..HEAD"), summary: companion_output}
-    enter_shared_review_loop(worker_result)
+    enter_non_claude_companion_review_loop(worker_result)
 else:
     run_native_solo_or_parallel()
+
+def enter_non_claude_companion_review_loop(worker_result):
+    # companion-result.v1 has no worker_id and no worker_result.self_review.
+    # Do not use the Worker-only SendMessage/self_review loop for cursor/codex.
+    latest_commit = worker_result.commit
+    diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
+    verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+    review_count = 0
+    MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
+    while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
+        previous_commit = latest_commit
+        if backend == "cursor":
+            companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
+        else:
+            companion_state_file = "{worker_result.worktreePath}/.claude/state/codex-primary-environment.json"
+            companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
+        latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
+        if backend == "cursor" and git("-C", worker_result.worktreePath, "status", "--porcelain") != "":
+            git("-C", worker_result.worktreePath, "add", "-A")
+            git("-C", worker_result.worktreePath, "-c", "user.name=cursor-composer", "-c", "user.email=cursor-composer@local", "commit", "--no-verify", "-m", "cursor: review fix")
+            latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
+        if latest_commit == previous_commit:
+            raise EscalationError("{backend} companion retry produced no new commit")
+        worker_result.commit = latest_commit
+        worker_result.summary = companion_output
+        diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
+        verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+        review_count++
+    if verdict == "APPROVE":
+        git cherry-pick --no-commit {worker_result.baseCommit}..{worker_result.commit}
 ```
 
-Parallel は task ごとにこの resolver path を適用する。
-backend=`cursor` / `codex` の場合は native Worker spawn を使わず、task ごとに isolated companion worktree を作成して `companion-result.v1` に正規化してから共通 review / cherry-pick loop に入る。
+Parallel 对每个 task 应用这个 resolver path。
+backend=`cursor` / `codex` 时不使用 native Worker spawn，而是为每个 task 创建 isolated companion worktree，规范化为 `companion-result.v1` 后进入 non-Claude companion 专用的 range review / cherry-pick 循环。
 
-### Solo モード（1 件時の自動選択）
+### Solo 模式（1 件时的自动选择）
 
-1. Plans.md を読み込み、対象タスクを特定
-   - **Plans.md が存在しない場合**: `harness-plan create --ci` を自動呼び出し → Plans.md を生成して続行
-   - ヘッダーに DoD / Depends カラムがない場合: `Plans.md が旧フォーマットです。harness-plan create で再生成してください。` → **停止**
-   - **会話に未記載タスクがある場合**: 直前の会話コンテキストから要件を抽出し、Plans.md に `cc:TODO` で自動追記
-     - 抽出ロジック: ユーザー発言からアクション動詞（「〜を追加」「〜を修正」「〜を実装」）を検出
-     - 追記時は v2 フォーマット（Task / 内容 / DoD / Depends / Status）に準拠
-     - 追記後、ユーザーに「Plans.md に以下を追記しました」と表示（5 秒タイムアウト付きプロンプト、デフォルト: 続行）
-1.5. **タスク背景確認**（30 秒）:
-   - タスクの「内容」と「DoD」から **目的**（このタスクが解く課題）を 1 行で推論表示
-   - `git grep` / `Glob` で **影響範囲**（変更が及ぶファイル/モジュール）を推論表示
-   - 推論に自信がある場合: そのまま実装に進む（フロー遅延なし）
-   - 推論に自信がない場合: ユーザーに 1 問だけ確認（「この理解で合っていますか？」）
-1.6. **仕様正本 preflight**:
-   - 既存の project spec SSOT を探す（例: `docs/spec/00-project-spec.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/oem/PROJECT_COMPASS.md`, `docs/specs/`）
-   - task が product behavior / API / data model / permission / billing / integration / tenant boundary を変える場合、spec がなければ `docs/spec/00-project-spec.md` を作る
-   - spec が古い、または task と矛盾する場合は、実装前に spec を更新する
-   - typo / format / dependency bump / docs-only / 動作変更なし refactor は skip 理由を残して続行する
-   - Worker / Reviewer へ渡す context には `spec_path` または `spec_skip_reason` を含める
-2. タスクを `cc:WIP` に更新
-3. **TDD フェーズ**（`[skip:tdd]` なし & テストFW存在時）:
-   a. テストファイルを先に作成（Red）
-   b. 失敗を確認
-   c. `bash "${HARNESS_PLUGIN_ROOT}/scripts/log-tdd-red.sh"` で `.claude/state/tdd-red-log/<task-id>.jsonl` に FAIL 証跡を残す。script が利用できない環境では、literal な failing test output を worker-report の `self_review` evidence に添付する
-   d. `--tdd-bypass` を使う場合は、`HARNESS_TDD_BYPASS=1` と `HARNESS_TDD_BYPASS_REASON="<理由>"` を明示し、TDD を省略した理由を sprint-contract / worker-report に残す
-4. `node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" <task-id>` で `sprint-contract.json` を生成
-5. Reviewer 観点の追記を `bash "${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh"` で加え、`bash "${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh"` で approved を確認
-6. **Advisor consult（必要時のみ）**:
-   - 高リスク task（`needs-spike` / `security-sensitive` / `state-migration`）は、初回実行前に 1 回だけ相談する
-   - 同じ原因の失敗が 2 回続いたら、3 回目に入る前に相談する
-   - plateau（行き詰まり検知）が `PIVOT_REQUIRED` を返した時は、ユーザーへ止めて投げる前に 1 回だけ相談する
-   - 相談結果は `advisor-response.v1` で受け取り、`PLAN` は進め方の組み替え、`CORRECTION` は局所修正、`STOP` は即エスカレーションとして扱う
-   - 同じ `trigger_hash` では 1 回しか相談しない。task ごとの相談回数は最大 3 回
-7. backend-resolved executor path でコードを実装（Green）
-   - backend=`claude`: local / native Read/Write/Edit/Bash path で実装
-   - backend=`cursor` / `codex`: 上記 companion worktree path で実装し、`companion-result.v1` を共通 review loop に渡す
-8. `/simplify` で Auto-Refinement（`--no-simplify` で省略可）
-9. **自動レビューステージ**（「レビューループ」参照）:
-   - Codex exec 優先でレビュー実行 → フォールバックで内部 Reviewer agent
-   - `sprint-contract.json` の `reviewer_profile` が `runtime` の場合は `bash "${HARNESS_PLUGIN_ROOT}/scripts/run-contract-review-checks.sh"` を実行
-   - REQUEST_CHANGES の場合: 指摘を元に修正→再レビュー（`MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3`）
-   - APPROVE で次ステップへ。self-check だけでは完了を確定しない
-10. `bash "${HARNESS_PLUGIN_ROOT}/scripts/write-review-result.sh"` で review artifact を正規化して保存（browser profile は `--browser-result` を渡し、`browser_verdict == PENDING_BROWSER` の時は static verdict を採用）
-11. `git commit` で自動コミット（`--no-commit` で省略可）
-12. タスクを `cc:完了` に更新（commit hash 付与）
-   - `git log --oneline -1` で直近の commit hash（短縮形 7 文字）を取得
-   - Plans.md の Status を `cc:完了 [a1b2c3d]` 形式で更新
-   - commit がない場合（`--no-commit` 時）は hash なしで `cc:完了` のみ
-13. **リッチ完了報告**（`Completion Report Output Contract` と `references/completion-report.md` を参照）
-14. **失敗時の自動再計画**（テスト/CI 失敗時のみ）:
-    - テスト実行結果を確認
-    - 失敗した場合: 修正タスク案を state に保存し、承認コマンド経由で Plans.md に追加（「失敗タスクの自動再チケット化」参照）
-    - 成功した場合: 次タスクへ進む
+从 Plans.md 读入到 `cc:完了 [hash]` 的 1-17 步骤完整版参见
+[references/execution-modes.md#solo-detailed-steps](${CLAUDE_SKILL_DIR}/references/execution-modes.md)。
+要点：在**规格权威版本 preflight** 确认 spec SSOT 的有无并将 `spec_path` 传递给 Worker/Reviewer。应用 plan-time 事前确认，
+将工作中因已声明事项引起的 `AskUserQuestion` 降为零。按 TDD Red → sprint-contract → 实现 → 审查循环 → commit → `cc:完了` 的顺序进行。
 
-### Parallel モード（2〜3 件時の自動選択 / `--parallel N` で強制）
+### Parallel 模式（2-3 件时的自动选择 / `--parallel N` 强制）
 
-`[P]` マーク付きタスクを N ワーカーで並列実行。
-`--parallel N` で明示指定した場合は、タスク数に関係なくこのモードを使用。
-同一ファイルへの書き込みが競合する場合は git worktree で分離。
-各 task の実装 executor は Backend-resolved executor path に従う。
-`--parallel N --cursor`、`--backend cursor`、または default `HARNESS_IMPL_BACKEND=cursor` の場合、Parallel でも native Worker spawn ではなく task ごとの Cursor companion worktree を使う。
+用 N 个 Worker 并行执行带 `[P]` 标记的任务。
+用 `--parallel N` 明确指定时，无论任务数如何都使用此模式。
+向同一文件的写入发生冲突时用 git worktree 分离。
+各 task 的实现 executor 遵循 Backend-resolved executor path。
+`--parallel N --cursor`、`--backend cursor`、或 resolver 输出为 `cursor` 时，Parallel 也不使用 native Worker spawn，而是使用每个 task 的 Cursor companion worktree。
 
-### Codex モード（`--codex` 明示時のみ）
+### Codex 模式（`--codex` 仅在明确指定时）
 
-公式プラグイン `codex-plugin-cc` の companion 経由で Codex CLI にタスクを委託する。
+通过官方插件 `codex-plugin-cc` 的 companion 将任务委托给 Codex CLI。
 
 ```bash
-# タスク委託（書き込み可能・worktree 分離）
+# 任务委托（可写入·worktree 分离）
 BASE_REF="$(git rev-parse HEAD)"
 WT_ID="codex-$(date +%Y%m%d-%H%M%S)-$$"
 WORKTREE_PATH=".claude/worktrees/${WT_ID}"
 git worktree add -b "codex-work/${WT_ID}" "$WORKTREE_PATH" "$BASE_REF"
 HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
   bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH" \
-  "タスク内容。完了前にこの worktree で exactly one git commit を作成してください。"
+  "任务内容。请在此 worktree 中创建 exactly one git commit 后再完成。"
 
-# stdin 経由（大きなプロンプト向け）
+# 通过 stdin（面向较大的 prompt）
 CODEX_PROMPT=$(mktemp /tmp/codex-prompt-XXXXXX.md)
-# タスク内容を書き出し
+# 写出任务内容
 cat "$CODEX_PROMPT" | HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
   bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH"
 rm -f "$CODEX_PROMPT"
 
-# Lead review 後に承認されたら range を取り込む
+# Lead review 后批准后取入 range
 git -C "$WORKTREE_PATH" diff "$BASE_REF..HEAD"
 WORKTREE_HEAD="$(git -C "$WORKTREE_PATH" rev-parse HEAD)"
 git cherry-pick --no-commit "$BASE_REF..$WORKTREE_HEAD"
 ```
 
-companion は App Server Protocol 経由で Codex と通信し、
-Job 管理・thread resume・構造化出力を提供する。
-結果を検証し、品質基準を満たさない場合は自力で修正。
+companion 通过 App Server Protocol 与 Codex 通信，
+提供 Job 管理·thread resume·结构化输出。
+验证结果，不满足质量标准时自己修正。
 
-### Breezing モード（4 件以上で自動選択 / `--breezing` で強制）
+### Cursor 模式（adapter candidate，不自动选择）
 
-Lead / Worker / Advisor / Reviewer の役割分離でチーム実行する。
-Codex host の Breezing は resolver result に従う。配布 plugin のフラグなし fallback は `claude` なので、
-`spawn_agent`, `wait_agent`, `send_input`, `close_agent` を使った Codex native subagent orchestration が互換既定。
-`--backend cursor` / `--cursor`、または user/project config の `HARNESS_IMPL_BACKEND=cursor` がある時だけ
-`cursor-companion.sh` で Cursor worker に委託する。
-古い TeamCreate / TaskCreate ベースの説明は採らない。
+Cursor host 中 `.cursor/AGENTS.md` 和 `.cursor-plugin/plugin.json` 是
+bootstrap route。Cursor 保持 `candidate` — 禁止 supported claim。
 
-**権限ポリシー**:
-- 現行の shipped default は `bypassPermissions`
-- `--auto-mode` は互換な親セッション向けの opt-in rollout フラグとして扱う
-- `permissions.defaultMode` や agent frontmatter の `permissionMode` には未文書化の `autoMode` 値を書かない
+- **Solo / Parallel**: Task tool 或 `.cursor/agents/worker.md` subagent
+- **Breezing**: Worker 并行仅限 non-overlapping file groups;
+  Reviewer / cherry-pick / Advisor 按 core 规则串行
+- **Multitask / background agents**: 仅限 smoke target。不主张 Claude Agent Teams parity
 
-> **CC v2.1.69+**: nested teammates はプラットフォーム側で禁止されるため、
-> Worker/Reviewer プロンプトには冗長な nested 防止文言を追加しない。
+```bash
+bash scripts/model-routing.sh --host cursor --role worker --format json
+bash tests/test-cursor-adapter-candidate.sh
+```
+
+Explicit Task/subagent `model` 优先于 routed default。
+
+### Breezing 模式（4 件以上时自动选择 / `--breezing` 强制）
+
+通过 Lead / Worker / Advisor / Reviewer 的角色分离进行团队执行。
+Codex 假定使用 `spawn_agent`, `wait`, `send_input`, `resume_agent`, `close_agent`
+的 native subagent orchestration。
+Cursor 向 Task/subagent/background agents mapping，但
+review/cherry-pick 的串行责任留在 core 侧（adapter smoke target）。
+
+**权限策略**: 当前 shipped default 为 `bypassPermissions`。`--auto-mode` 是兼容亲会话的 opt-in rollout 标志。
+不要在 `permissions.defaultMode` 或 agent frontmatter 的 `permissionMode` 中写入未文档化的 `autoMode` 值。
 
 ```
 Lead (this agent)
-├── Worker (resolver result: Codex native spawn_agent / codex-companion / cursor-companion) — 実装担当
-├── Advisor (claude-code-harness:advisor) — 方針助言
-└── Reviewer (code-reviewer agent) — レビュー担当
+├── Worker (task-worker agent) — 实现担当
+├── Advisor (claude-code-harness:advisor) — 方针建议
+└── Reviewer (code-reviewer agent) — 审查担当
 ```
 
-**Phase A: Pre-delegate（準備）**:
-1. Plans.md を読み込み、対象タスクを特定
-2. 依存グラフを解析し、実行順序を決定（Depends カラム）
-3. 各タスクの仕様正本 preflight を行い、必要なら `docs/spec/00-project-spec.md` または既存 spec を実装前に更新
-4. 各タスクの effort スコアリング（effort tier 判定 — high/xhigh）
-5. `node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js"` で `sprint-contract.json` を生成
-6. `bash "${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh"` で Reviewer 観点を加え、`bash "${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh"` で未承認なら停止
+Phase A（准备: Plans.md 读入·依赖解决·plan-preapproval 应用·effort 得分·sprint-contract 生成）→
+Phase B（各任务: Worker spawn → 必要时 Advisor → self_review 门控 → 审查循环 → APPROVE 时向 trunk cherry-pick）→
+Phase C（整合: commit log 集计·丰富完成报告·Plans.md 最终确认）的 3 段构成。
+完整版 pseudocode（包含 B-1-B-7 的逐次顺序）参见
+[references/execution-modes.md#breezing-phase-detail](${CLAUDE_SKILL_DIR}/references/execution-modes.md)。
 
-**Phase B: Delegate（Worker spawn → 必要時 Advisor → レビュー → cherry-pick）**:
+### Active task scope
 
-各タスクについて以下を**逐次**実行する（依存順）:
+在各任务的 preapproval preflight 之前，向目标 worktree 的
+`.claude/state/active-task.json` 原子性写入 `{"phase":"<phase>","task":"<task>"}`。
+Go guardrail 将此文件作为当前 scope 的权威版本读取。
+任务结束时，无论成功、失败、停止的哪条路径都删除。环境变量
+`HARNESS_ACTIVE_PHASE` / `HARNESS_ACTIVE_TASK` 仅用于
+state 文件不存在的 host 的 fallback。
 
-> **API 注記**: 以下は Codex native の subagent API 構文で記述する。
-> backend=`claude` の時だけ `spawn_agent(...)`, `send_input(...)`, `wait_agent(...)`, `close_agent(...)` をそのまま使う。
-> backend=`cursor` / `codex` の時は Worker agent を spawn せず、Lead が companion を直接呼ぶ。
-> Claude Code 向けのサブエージェント構文やメッセージ送信構文は混ぜない。
+Parallel / Breezing 在每个任务的 worktree 中写入。不在多个任务间共享
+同一 worktree 的 `active-task.json`。
 
-```
-for task in execution_order:
-    # B-0. backend 解決（配布 fallback は claude、user/project default で cursor 可）
-    resolver_backend_arg = ""
-    if explicit_backend_value in ["claude", "codex", "cursor"]:
-        resolver_backend_arg = "--backend {explicit_backend_value}"
-    backend = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh\" {resolver_backend_arg}")
-    if explicit_flag == "--cursor":
-        backend = "cursor"
-    if explicit_flag == "--codex":
-        backend = "codex"
+### Advisor Protocol（所有模式通用）
 
-    # B-1. sprint-contract を生成
-    contract_path = bash("node \"${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js\" {task.number}")
-    contract_path = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh\" {contract_path} --check \"DoD を reviewer 観点で確認\" --approve")
-    bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh\" {contract_path}")
+Advisor 既不是"实现者"也不是"审查担当"。仅在迷惘时，作为执行者决定下一步的协商对象介入。
 
-    # B-2. Worker 委託（worktree 分離）
-    Plans.md: task.status = "cc:WIP"  # 着手時に更新（未着手タスクは cc:TODO のまま）
+1. Worker 不增加 generic subagent，仅在必要时返回 `advisor-request.v1`
+2. Lead 仅调用 advisor 一次
+3. Advisor 返回 `PLAN` / `CORRECTION` / `STOP` 之一
+4. Lead 将其 advice（`advisor-response.v1`）返回给同一 Worker 继续执行
+5. Reviewer 只看最后的成果物。不对 advisor 的返答输出 APPROVE / REQUEST_CHANGES
 
-    if backend == "cursor":
-        BASE_REF = git("rev-parse", "HEAD")
-        WT_ID = "{task.number}-$(date +%Y%m%d-%H%M%S)-$$"
-        worktree_path = ".claude/worktrees/cursor-{WT_ID}"
-        worktree_branch = "cursor-work/{WT_ID}"
-        bash("mkdir -p .claude/worktrees && git worktree add -b {worktree_branch} {worktree_path} {BASE_REF}")
-        print("🚀 cursor / $(bash \"${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh\" --host cursor --role worker --field model) / {branch} / {task.number}")
-        companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
-        companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"{companion_prompt}\"")
-        latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
-        if git("-C", worktree_path, "status", "--porcelain") != "":
-            git("-C", worktree_path, "add", "-A")
-            git("-C", worktree_path, "-c", "user.name=cursor-composer", "-c", "user.email=cursor-composer@local", "commit", "--no-verify", "-m", "cursor: delegated change")
-            latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
-        if latest_commit == BASE_REF:
-            raise EscalationError("cursor companion produced no commit")
-        worker_result = {type: "companion-result.v1", baseCommit: BASE_REF, commit: latest_commit, worktreePath: worktree_path, branch: worktree_branch, files_changed: git("-C", worktree_path, "diff", "--name-only", "{BASE_REF}..HEAD"), summary: companion_output}
-        worker_id = null
-    elif backend == "codex":
-        BASE_REF = git("rev-parse", "HEAD")
-        WT_ID = "{task.number}-$(date +%Y%m%d-%H%M%S)-$$"
-        worktree_path = ".claude/worktrees/codex-{WT_ID}"
-        worktree_branch = "codex-work/{WT_ID}"
-        bash("mkdir -p .claude/worktrees && git worktree add -b {worktree_branch} {worktree_path} {BASE_REF}")
-        companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
-        companion_state_file = "{worktree_path}/.claude/state/codex-primary-environment.json"
-        companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"{companion_prompt}\"")
-        latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
-        if latest_commit == BASE_REF:
-            raise EscalationError("codex companion produced no commit")
-        worker_result = {type: "companion-result.v1", baseCommit: BASE_REF, commit: latest_commit, worktreePath: worktree_path, branch: worktree_branch, files_changed: git("-C", worktree_path, "diff", "--name-only", "{BASE_REF}..HEAD"), summary: companion_output}
-        worker_id = null
-    else:
-        print("🚀 claude / native-subagent / {branch} / {task.number}")
-        worker_id = spawn_agent({
-            message: "タスク: {task.内容}\nDoD: {task.DoD}\ncontract_path: {contract_path}\nspec_path: {spec_path}\nspec_skip_reason: {spec_skip_reason}\nmode: breezing\n\n作業は分離 worktree で行い、完了後に git commit してください。\n完了時は {commit, worktreePath, branch, files_changed, summary} を返してください。",
-            fork_context: true
-        })
-        worker_result = wait_agent({ targets: [worker_id] })
-    # worker_result には {commit, worktreePath, branch, files_changed, summary} が含まれる
-    # backend=cursor/codex では Lead が companion stdout を companion-result.v1 に正規化する。
+solo 执行时亲会话自身兼任 Lead（自己实现，自己向 advisor 协商，最后交给独立审查）。
+协商条件·budget 与 breezing 相同，每个任务的协商次数最多 3 次。`STOP` 在该处停止，上升到用户判断。review artifact 的门控不跳过。
 
-    # B-3. Worker が advice request を返した時だけ、Lead が Advisor を呼ぶ
-    if backend == "claude" and worker_result.type == "advisor-request.v1":
-        advisor_id = spawn_agent({
-            message: worker_result.request_json,
-            agent_type: "default",
-            fork_context: true
-        })
-        advisor_result = wait_agent({ targets: [advisor_id] })
-        close_agent({ target: advisor_id })
-        send_input({
-            target: worker_id,
-            message: "advisor-response.v1: {advisor_result}"
-        })
-        worker_result = wait_agent({ targets: [worker_id] })
+### Sprint Contract 与 PR Closeout
 
-    # B-4. Lead がレビュー実行（Codex exec 優先）
-    if backend == "claude":
-        diff_text = git("-C", worker_result.worktreePath, "show", worker_result.commit)
-    else:
-        diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
-    verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
-    profile = jq(contract_path, ".review.reviewer_profile")
-    review_input = "review-output.json"
-    if profile == "runtime":
-        review_input = bash("cd {worker_result.worktreePath} && bash \"${HARNESS_PLUGIN_ROOT}/scripts/run-contract-review-checks.sh\" {contract_path}")
-        runtime_verdict = jq(review_input, ".verdict")
-        if runtime_verdict == "REQUEST_CHANGES":
-            verdict = "REQUEST_CHANGES"
-        elif runtime_verdict == "DOWNGRADE_TO_STATIC":
-            pass  # runtime 検証コマンドなし → static verdict をそのまま使う
-    browser_result = ""
-    if profile == "browser":
-        # browser artifact から route / browser_mode / execution_instructions を再利用して browser runner を起動する。
-        browser_artifact = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/generate-browser-review-artifact.sh\" {contract_path}")
-        browser_result = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/browser-review-runner.sh\" {browser_artifact}")
-        browser_verdict = jq(browser_result, ".browser_verdict")
-        if browser_verdict == "REQUEST_CHANGES":
-            verdict = "REQUEST_CHANGES"
-        elif browser_verdict == "APPROVE" and verdict != "REQUEST_CHANGES":
-            verdict = "APPROVE"
-        # browser_verdict == PENDING_BROWSER のときは static verdict を維持する
-    # review_input が DOWNGRADE_TO_STATIC の場合は static review 結果を使う
-    if review_input != "review-output.json" and jq(review_input, ".verdict") == "DOWNGRADE_TO_STATIC":
-        review_input = "review-output.json"  # static review の結果にフォールバック
-    bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/write-review-result.sh\" {review_input} {latest_commit} --browser-result {browser_result}")
+`sprint-contract` 是将"此任务用什么来合格"机械可读化的契约文件（默认: `.claude/state/contracts/<task-id>.sprint-contract.json`，由 `generate-sprint-contract.js` 生成）。
+`runtime_validation` 的 LSP/AST 工作流方针:
 
-    # B-5. 修正ループ（REQUEST_CHANGES 時、contract の max_iterations まで）
-    review_count = 0
-    # sprint-contract が存在するときのみ max_iterations を読む。存在しない場合は 3（後方互換）
-    MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
-    latest_commit = worker_result.commit
-    while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
-        if backend == "claude":
-            send_input({
-                target: worker_id,
-                message: "指摘内容: {issues}\n修正して amend してください"
-            })
-            # Worker が修正 → amend → 更新された commit hash を返す
-            updated_result = wait_agent({ targets: [worker_id] })
-            latest_commit = updated_result.commit
-        elif backend == "cursor":
-            previous_commit = latest_commit
-            companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
-            latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
-            if git("-C", worker_result.worktreePath, "status", "--porcelain") != "":
-                git("-C", worker_result.worktreePath, "add", "-A")
-                git("-C", worker_result.worktreePath, "-c", "user.name=cursor-composer", "-c", "user.email=cursor-composer@local", "commit", "--no-verify", "-m", "cursor: review fix")
-                latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
-            if latest_commit == previous_commit:
-                raise EscalationError("cursor companion retry produced no new commit")
-            worker_result.commit = latest_commit
-            worker_result.summary = companion_output
-        else:
-            previous_commit = latest_commit
-            companion_state_file = "{worker_result.worktreePath}/.claude/state/codex-primary-environment.json"
-            companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
-            latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
-            if latest_commit == previous_commit:
-                raise EscalationError("codex companion retry produced no new commit")
-            worker_result.commit = latest_commit
-            worker_result.summary = companion_output
-        if backend == "claude":
-            diff_text = git("-C", worker_result.worktreePath, "show", latest_commit)
-        else:
-            diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
-        verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
-        review_count++
+- If you grep the same symbol twice in the same session, switch to harness_ast_search.
+- For a bugfix where homologous implementations appear across multiple modules, run harness_ast_search to find all implementations before editing.
+- Only when changed files include .ts or .tsx, the DoD requires zero new harness_lsp_diagnostics errors; if the harness MCP is not connected or the changed file types are not eligible, treat diagnostics as not-configured and non-blocking.
 
-    # B-6. Worker 終了
-    if backend == "claude":
-        close_agent({ target: worker_id })
+`spec_path` / `lane` / `stage` / `research_evidence` / `tdd_red_log` / `review_artifact` / `pr_closeout` 的字段规格，
+以及 review APPROVE 后的 PR title/body 组装（`harness-pr-closeout.sh`，默认 `dry-run`）详情参见
+[references/sprint-contract.md](${CLAUDE_SKILL_DIR}/references/sprint-contract.md)。
 
-    # B-7. APPROVE → trunk に cherry-pick（feature ブランチ経由）
-    # Worker の Branch Guard により trunk HEAD は動かず、commit は feature ブランチ上にある想定
-    if verdict == "APPROVE":
-        TRUNK=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main")
-        git checkout "$TRUNK"  # safety: 既に trunk なら no-op
-        # feature ブランチの commit が既に trunk にある（Branch Guard 失敗時のフォールバック）か確認
-        if git("merge-base", "--is-ancestor", latest_commit, "HEAD"):
-            pass  # 既に trunk 上 — cherry-pick 不要（再入防止）
-        else:
-            if backend == "claude":
-                git cherry-pick --no-commit {latest_commit}  # feature branch → trunk
-            else:
-                git cherry-pick --no-commit {worker_result.baseCommit}..{latest_commit}  # companion range → trunk
-            git commit -m "{task.内容}"
-        # Worker の worktree を remove してから feature ブランチを削除
-        if worker_result.worktreePath:
-            git worktree remove {worker_result.worktreePath} --force
-        if worker_result.branch and worker_result.branch not in ["main", "master"] and worker_result.branch != TRUNK:
-            git branch -D {worker_result.branch}
-        Plans.md: task.status = "cc:完了 [{hash}]"
-        # auto-checkpoint 記録（冪等性ガード (c)）
-        # Plans.md 書き換え直後に呼ぶ。失敗しても fail-open（|| true）でループを止めない
-        HASH=$(git rev-parse --short HEAD)
-        REVIEW_RESULT_PATH=".claude/state/review-results/${task.number}.review-result.json"
-        bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" \
-            "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" \
-            || true  # fail-open: harness-mem 未起動環境でも継続
-    else:
-        → ユーザーにエスカレーション
+## CI 失败时的对应
 
-    # B-8. Progress feed
-    print("📊 Progress: Task {completed}/{total} 完了 — {task.内容}")
-```
+CI 失败时:
 
-### Advisor Protocol（全モード共通）
+1. 确认日志并特定错误
+2. 实施修正
+3. 同一原因失败 3 次后停止自动修正循环
+4. 汇总失败日志·尝试的修正·残留论点并升级
 
-Advisor は「実装者」でも「レビュー担当」でもない。
-迷った時だけ、実行役が次の一歩を決めるための相談役として入る。
+## 失败任务的自动重新票决
 
-1. Worker は generic な subagent を増やさず、必要時だけ `advisor-request.v1` を返す
-2. Lead が advisor を 1 回だけ呼ぶ
-3. Advisor は `PLAN` / `CORRECTION` / `STOP` のどれかを返す
-4. Lead はその advice を同じ Worker に返して続行させる
-5. Reviewer は最後の成果物だけを見る。advisor の返答に APPROVE / REQUEST_CHANGES を出さない
+任务完成后测试/CI 失败时，自动生成修正任务案，批准后反映到 Plans.md。
+触发条件·生成格式·批准命令（`approve fix <task_id>` / `reject fix <task_id>`）详情参见
+[references/failure-reticketing.md](${CLAUDE_SKILL_DIR}/references/failure-reticketing.md)。
 
-### Solo モードでの Advisor
+## 审查循环
 
-solo 実行では親セッション自身が Lead を兼ねる。
-つまり「自分で実装し、自分で advisor に相談し、最後は独立レビューに回す」形になる。
-
-- 相談条件は loop / breezing と同じ
-- 相談 budget も task ごとに最大 3 回で同じ
-- `STOP` はその場で止まり、ユーザー判断へ上げる
-- review artifact の gate は飛ばさない
-
-### Sprint Contract
-
-`sprint-contract` は「このタスクを何で合格にするか」を機械でも人でも同じ意味で読める形にする小さな契約ファイルです。
-既定の保存先は `.claude/state/contracts/<task-id>.sprint-contract.json` です。
-
-```bash
-node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" 32.1.1
-```
-
-生成物には次を含めます。
-
-- `checks`: DoD を分解した確認項目
-- `non_goals`: 今回やらないこと
-- `runtime_validation`: test, lint, typecheck などの検証コマンド
-  - If you grep the same symbol twice in the same session, switch to harness_ast_search.
-  - For a bugfix where homologous implementations appear across multiple modules, run harness_ast_search to find all implementations before editing.
-  - Only when changed files include .ts or .tsx, the DoD requires zero new harness_lsp_diagnostics errors; if the harness MCP is not connected or the changed file types are not eligible, treat diagnostics as not-configured and non-blocking.
-- `browser_validation`: browser reviewer が残すべき UI フロー検証項目
-- `browser_mode`: `scripted` または `exploratory`
-- `route`: browser reviewer が `playwright` / `agent-browser` / `chrome-devtools` のどれを使うか
-- `risk_flags`: `needs-spike`, `security-sensitive`, `ux-regression` など
-- `reviewer_profile`: `static`, `runtime`, `browser`
-
-**Phase C: Post-delegate（統合・報告）**:
-1. 全タスクの commit log を集計
-2. **リッチ完了報告**（`Completion Report Output Contract` と `references/completion-report.md` の Breezing テンプレート）を出力
-3. Plans.md の最終確認（全タスク cc:完了 になっているか）
-
-## CI 失敗時の対応
-
-CI が失敗した場合:
-
-1. ログを確認してエラーを特定
-2. 修正を実施
-3. 同一原因で 3 回失敗したら自動修正ループを停止
-4. 失敗ログ・試みた修正・残る論点をまとめてエスカレーション
-
-## 失敗タスクの自動再チケット化
-
-タスク完了後にテスト/CI が失敗した場合、修正タスク案を自動生成し、承認後に Plans.md へ反映する:
-
-### トリガー条件
-
-| 条件 | アクション |
-|------|----------|
-| `cc:完了` 後にテスト失敗 | 修正タスク案を state に保存し、承認を待つ |
-| CI 失敗（3回未満） | 修正を実施し、失敗カウントをインクリメント |
-| CI 失敗（3回目） | 修正タスク案を提示 + エスカレーション |
-
-### 修正タスクの自動生成
-
-1. 失敗原因を分類（syntax_error / import_error / type_error / assertion_error / timeout / runtime_error）
-2. `.claude/state/pending-fix-proposals.jsonl` に修正タスク案を保存:
-   - 番号: 元タスク番号 + `.fix` サフィックス（例: `26.1.fix`）
-   - 内容: `fix: [元タスク名] - [失敗原因カテゴリ]`
-   - DoD: テスト/CI が通ること
-   - Depends: 元タスク番号
-3. ユーザーが `approve fix <task_id>` を送ると Plans.md に `cc:TODO` で追加
-4. `reject fix <task_id>` で提案を破棄。pending が1件だけのときは `yes` / `no` でも応答可能
-
-## レビューループ
-
-実装完了後（ステップ 5 の後）に自動実行される品質検証ステージ。
-**全モード共通**（Solo / Parallel / Breezing）で統一的に適用される。
-Parallel モードでは各 Worker が step 10（外部レビュー受付）として同じループを実行する。
-
-### レビュー実行の優先順位
-
-```
-1. Codex exec（優先）
-   ↓ codex コマンドが存在しない or タイムアウト（120s）
-2. 内部 Reviewer agent（フォールバック）
-```
-
-### APPROVE / REQUEST_CHANGES の判定基準
-
-レビュアーには以下の閾値基準を渡し、**この基準のみ**で verdict を判定させる。
-基準外の改善提案は `recommendations` として返すが、verdict には影響しない。
-
-| 重要度 | 定義 | verdict への影響 |
-|--------|------|-----------------|
-| **critical** | セキュリティ脆弱性、データ損失リスク、本番障害の可能性 | 1 件でも → REQUEST_CHANGES |
-| **major** | 既存機能の破壊、仕様との明確な矛盾、テスト不通過 | 1 件でも → REQUEST_CHANGES |
-| **minor** | 命名改善、コメント不足、スタイル不統一 | verdict に影響しない |
-| **recommendation** | ベストプラクティス提案、将来の改善案 | verdict に影響しない |
-
-> **重要**: minor / recommendation のみの場合は **必ず APPROVE** を返すこと。
-> 「あったほうが良い改善」は REQUEST_CHANGES の理由にならない。
-
-### Codex exec レビュー（公式プラグイン経由）
-
-タスク開始時の HEAD を `BASE_REF` として保持し、その ref との差分をレビュー対象にする。
-公式プラグイン `codex-plugin-cc` の companion review を使用する。
-
-```bash
-# タスク開始時に base ref を記録（Step 2 の cc:WIP 更新前に実行）
-BASE_REF=$(git rev-parse HEAD)
-
-# ... 実装完了後 ...
-
-# 公式プラグインの構造化レビューを実行
-bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}"
-REVIEW_EXIT=$?
-```
-
-**verdict マッピング**（公式プラグイン → Harness 形式）:
-
-公式プラグインは `review-output.schema.json` 準拠の構造化出力を返す。
-Harness の verdict 形式への変換ルール:
-
-| 公式 plugin | Harness | verdict 影響 |
-|---|---|---|
-| `approve` | `APPROVE` | - |
-| `needs-attention` | `REQUEST_CHANGES` | - |
-| `findings[].severity: critical` | `critical_issues[]` | 1件でも → REQUEST_CHANGES |
-| `findings[].severity: high` | `major_issues[]` | 1件でも → REQUEST_CHANGES |
-| `findings[].severity: medium/low` | `recommendations[]` | verdict に影響しない |
-
-AI Residuals スキャンは引き続き `bash "${HARNESS_PLUGIN_ROOT}/scripts/review-ai-residuals.sh"` で実行し、
-companion review の結果と合わせて最終 verdict を判定する。
-
-```bash
-# AI Residuals スキャン（companion review と並行実行可能）
-AI_RESIDUALS_JSON="$(bash "${HARNESS_PLUGIN_ROOT}/scripts/review-ai-residuals.sh" --base-ref "${BASE_REF}" 2>/dev/null || echo '{"tool":"review-ai-residuals","scan_mode":"diff","base_ref":null,"files_scanned":[],"summary":{"verdict":"APPROVE","major":0,"minor":0,"recommendation":0,"total":0},"observations":[]}')"
-```
-
-### 内部 Reviewer agent フォールバック
-
-Codex exec が使えない場合（`command -v codex` が失敗、または exit code ≠ 0）:
-
-```
-Agent tool: subagent_type="reviewer"
-prompt: "以下の変更をレビューしてください。判定基準: critical/major → REQUEST_CHANGES、minor/recommendation のみ → APPROVE。diff: {git diff ${BASE_REF}}"
-```
-
-Reviewer agent は Read-only（Write/Edit/Bash 無効）で安全にレビューを実行する。
-
-### 修正ループ（REQUEST_CHANGES 時）
-
-```
-review_count = 0
-# sprint-contract が存在するときのみ max_iterations を読む。存在しない場合は 3（後方互換）
-contract_path = get_sprint_contract_path()  # 例: .claude/state/contracts/<task-id>.sprint-contract.json
-MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
-
-while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
-    1. レビュー指摘を解析（critical / major のみ対象）
-    2. 各指摘に対して修正を実装
-    3. 再度レビューを実行（同じ判定基準・同じ優先順位）
-    review_count++
-
-if review_count >= MAX_REVIEWS and verdict != "APPROVE":
-    → ユーザーにエスカレーション
-    → 「MAX_REVIEWS 回修正しましたが以下の critical/major 指摘が残っています」+ 指摘一覧を表示
-    → ユーザー判断を待つ（続行 / 中断）
-```
-
-### Breezing モードでの適用
-
-Breezing モードでは **Lead** がレビューループを実行する（上記 Phase B 参照）:
-
-1. Worker が worktree 内で実装・commit → Lead に結果返却
-2. Lead が Codex exec でレビュー（優先）/ Reviewer agent（フォールバック）
-3. REQUEST_CHANGES → Lead が `send_input` で Worker に修正指示し、`wait_agent` で再応答を待つ → Worker が amend
-4. 修正後、再レビュー（`MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3` 回まで）
-5. APPROVE → Lead が trunk（デフォルトブランチ）に cherry-pick → Plans.md を `cc:完了 [{hash}]` に更新
+实现完成后自动执行的质量验证阶段。**全模式通用**（Solo / Parallel / Breezing）统一应用。
+优先级（Codex exec → 内部 Reviewer agent fallback）、APPROVE / REQUEST_CHANGES 判定基准（仅 critical/major 影响 verdict）、
+verdict 映射、修正循环（`MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3`）的完整版参见
+[references/review-loop.md](${CLAUDE_SKILL_DIR}/references/review-loop.md)。
 
 ## Completion Report Output Contract
 
@@ -812,9 +436,16 @@ report:
    English and Japanese labels in one report.
 <!-- harness-work-completion-output-contract:end -->
 
-## 関連スキル
+## 进度的可视化（面向非工程师）
 
-- `harness-plan` — 実行するタスクを計画する
-- `harness-sync` — 実装と Plans.md を同期する
-- `harness-review` — 実装のレビュー
-- `harness-release` — バージョンバンプ・リリース
+任务执行中 `harness-progress` 将进度的件数与 drift alert 汇总到一张 HTML。
+由 PostToolUse hook 自动再生成，订货人无需记住调用方式就能看到最新的进度板
+（`posttool-progress-regen.sh` 最多每 1 分钟再生成 1 次）。
+
+## 相关技能
+
+- `harness-plan` — 计划要执行的任务
+- `harness-sync` — 同步实现与 Plans.md
+- `harness-review` — 审查实现
+- `harness-release` — 版本 bump·发布
+- `harness-progress` — 进度板 HTML（面向非工程师，执行中自动再生成）

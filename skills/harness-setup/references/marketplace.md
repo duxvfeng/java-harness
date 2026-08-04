@@ -18,38 +18,38 @@ claude plugin install owner/repo@v4.0.0
 claude plugin install owner/repo
 ```
 
-`owner/repo@vX.X.X` 形式を推奨。`@ref` パーサー修正により、タグ・ブランチ・コミットハッシュいずれも正確に解決される。
+推荐使用 `owner/repo@vX.X.X` 形式。通过 `@ref` 解析器修正，无论是标签、分支、提交哈希都能准确解析。
 
-### アップデート
+### 更新
 
 ```bash
 claude plugin update owner/repo
 ```
 
-v2.1.71 で update 時の merge conflict が修正され、安定したアップデートが可能になった。
+在 v2.1.71 修复了 update 时的 merge conflict，可以进行稳定的更新。
 
-### その他の改善点
+### 其他改善点
 
-- MCP server 重複排除: 同一 MCP サーバーの多重登録を自動防止
-- `/plugin uninstall` が `settings.local.json` を使用: ユーザーローカル設定に正確に反映
+- MCP server 重复排除：自动防止同一 MCP 服务器的多重注册
+- `/plugin uninstall` 使用 `settings.local.json`：准确反映到用户本地设置
 
 ### Managed marketplace / dependency policy (v2.1.117+)
 
 企業利用で plugin marketplace を制御する場合は、Claude Code 本体の managed settings を使う。
 Harness は独自の marketplace resolver や dependency resolver を重ねない。
 
-| 項目 | 用途 | Harness の扱い |
+| 項目 | 用途 | Harness 的处理 |
 |------|------|----------------|
-| `extraKnownMarketplaces` | チームに推奨 marketplace を案内・登録する | 通常の onboarding ではこちらを優先 |
-| `blockedMarketplaces` | 特定 marketplace source をブロックする | managed settings 専用。通常ユーザー向け default には入れない |
-| `strictKnownMarketplaces` | 許可した marketplace source だけ追加できるようにする | managed settings 専用。通常ユーザー向け default には入れない |
-| plugin dependency auto-resolve | `dependencies` の自動 install / missing dependency hints | Claude Code 本体に任せる。Harness 独自 resolver は追加しない |
-| plugin `themes/` directory | plugin が theme を配布する | 今回は P: 将来タスク。Harness は theme を同梱しない |
+| `extraKnownMarketplaces` | 向团队推荐 marketplace 并引导、注册 | 在通常的 onboarding 中优先使用这个 |
+| `blockedMarketplaces` | 阻止特定的 marketplace source | 专用於 managed settings。不放入面向通常用户的 default |
+| `strictKnownMarketplaces` | 只能添加允许的 marketplace source | 专用於 managed settings。不放入面向通常用户的 default |
+| plugin dependency auto-resolve | `dependencies` 的自动 install / missing dependency hints | 交给 Claude Code 本体。不添加 Harness 独自的 resolver |
+| plugin `themes/` directory | plugin 分发 theme | 本次是 P: 将来任务。Harness 不附带 theme |
 
-`DISABLE_AUTOUPDATER` は自動更新を止める。
-`DISABLE_UPDATES` は手動 `claude update` まで止めるため、企業の固定バージョン運用向け。
-Harness の project default にはどちらも入れず、必要な組織が managed settings または端末管理で設定する。
+`DISABLE_AUTOUPDATER` 停止自动更新。
+`DISABLE_UPDATES` 连手动的 `claude update` 也停止，面向企业的固定版本运营。
+Harness 的 project default 都不放入两者，需要的组织通过 managed settings 或端点管理设置。
 
-依存関係が欠けた場合は、まず Claude Code の `/plugin` Errors、`/doctor`、`claude plugin list --json` を確認する。
-marketplace 未登録が原因なら `/plugin marketplace add` または `claude plugin marketplace add` で登録し、本体の auto-resolve に任せる。
+缺少依赖关系时，首先确认 Claude Code 的 `/plugin` Errors、`/doctor`、`claude plugin list --json`。
+如果是因未注册 marketplace，通过 `/plugin marketplace add` 或 `claude plugin marketplace add` 注册，交给本体的 auto-resolve。
 

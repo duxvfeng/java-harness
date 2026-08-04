@@ -2,7 +2,7 @@
 name: harness-work
 description: "HAR: Execute Plans.md tasks from single task to full parallel team run. Trigger: implement, execute, do everything, breezing, team run, parallel, composer, composer 2.5. Do NOT load for: planning, review, release, setup."
 description-en: "HAR: Execute Plans.md tasks from single task to full parallel team run. Trigger: implement, execute, do everything, breezing, team run, parallel, composer, composer 2.5. Do NOT load for: planning, review, release, setup."
-description-ja: "HAR:Plans.md タスクを1件から全並列チーム実行まで担当。実装して、実行して、全部やって、breezing、チーム実行、parallel、composer、コンポーザー、composer 2.5 で起動。プランニング・レビュー・リリース・セットアップには使わない。"
+description-ja: "HAR：负责从单个任务到全并行团队执行的Plans.md任务。实现、执行、全部完成、breezing、团队执行、并行、composer、作曲器、composer 2.5时启动。不用于：计划、审查、发布、设置。"
 description-zh: "HAR：负责从单个任务到全并行团队执行的 Plans.md 任务。当用户提到实现、执行、全部完成、breezing、团队执行、并行、composer、作曲器、composer 2.5 时启动。不适用于：计划、审查、发布、设置。"
 kind: workflow
 purpose: "Execute Plans.md tasks end to end through Codex-native tools"
@@ -19,213 +19,213 @@ effort: high
 
 # Harness Work
 
-Harness の統合実行スキル。
-以下の旧スキルを統合:
+Harness 的综合执行技能。
+统合以下旧技能:
 
-- `work` — Plans.md タスクの実装（スコープ自動判断）
-- `impl` — 機能実装（タスクベース）
-- `breezing` — チームフル自動実行
-- `parallel-workflows` — 並列ワークフロー最適化
-- `ci` — CI 失敗時の復旧
+- `work` — Plans.md 任务实现（范围自动判断）
+- `impl` — 功能实现（任务基础）
+- `breezing` — 团队全自动执行
+- `parallel-workflows` — 并行工作流优化
+- `ci` — CI 失败时恢复
 
 ## Quick Reference
 
-| ユーザー入力 | モード | 動作 |
+| 用户输入 | 模式 | 动作 |
 |------------|--------|------|
-| `harness-work` | **auto** | タスク数で自動判定（下記参照） |
-| `harness-work all` | **auto** | 全未完了タスクを自動モードで実行 |
-| `harness-work 3` | solo | タスク3だけ即実行 |
-| `harness-work --parallel 5` | parallel | 5ワーカーで並列実行（強制） |
-| `harness-work --codex` | codex | Codex CLI に委託（明示時のみ） |
-| `harness-work --breezing all` | breezing | resolved backend でチーム実行（配布既定は claude、user/project default で cursor 可） |
-| `harness-work --breezing --backend cursor all` | breezing | Cursor worker backend を明示してチーム実行 |
-| `harness-work --breezing --backend claude all` | breezing | Codex native subagent worker を明示してチーム実行 |
-| `harness-work --breezing` | breezing | チーム実行を強制 |
-| `harness-work 3 --plan roadmap` | solo | named Plans の `roadmap` からタスク3を実行 |
+| `harness-work` | **auto** | 按任务数自动判定（参考下述） |
+| `harness-work all` | **auto** | 以自动模式执行所有未完成任务 |
+| `harness-work 3` | solo | 仅执行任务 3 |
+| `harness-work --parallel 5` | parallel | 以 5 worker 并行执行（强制） |
+| `harness-work --codex` | codex | 委托给 Codex CLI（仅明确时） |
+| `harness-work --breezing all` | breezing | 以 resolved backend 团队执行（分发默认是 claude，user/project default 可是 cursor） |
+| `harness-work --breezing --backend cursor all` | breezing | 明确指定 Cursor worker backend 团队执行 |
+| `harness-work --breezing --backend claude all` | breezing | 明确指定 Codex native subagent worker 团队执行 |
+| `harness-work --breezing` | breezing | 强制团队执行 |
+| `harness-work 3 --plan roadmap` | solo | 从 named Plans 的 `roadmap` 执行任务 3 |
 
-## Execution Mode Auto Selection（フラグなし時の自動判定）
+## Execution Mode Auto Selection（无标志时的自动判定）
 
-明示的なモードフラグ（`--parallel`, `--breezing`, `--codex`）がない場合、
-対象タスク数に応じて最適なモードを自動選択する:
+没有明确模式标志（`--parallel`, `--breezing`, `--codex`）时，
+根据目标任务数自动选择最佳模式:
 
-| 対象タスク数 | 自動選択モード | 理由 |
+| 目标任务数 | 自动选择模式 | 理由 |
 |-------------|---------------|------|
-| **1 件** | Solo | オーバーヘッド最小。直接実装が最速 |
-| **2〜3 件** | Parallel（Task tool） | Worker 分離のメリットが出始める閾値 |
-| **4 件以上** | Breezing | Lead 調整 + Worker 並列 + Reviewer 独立の三者分離が効果的 |
+| **1 件** | Solo | overhead 最小。直接实现最快 |
+| **2〜3 件** | Parallel（Task tool） | Worker 分离的好处开始出现的阈值 |
+| **4 件以上** | Breezing | Lead 协调 + Worker 并行 + Reviewer 独立的三者分离有效 |
 
-### ルール
+### 规则
 
-1. **明示フラグは常にオートモードを上書き**する
-   - `--parallel N` → Parallel モード（タスク数に関係なく）
-   - `--breezing` → Breezing モード（タスク数に関係なく）
-   - `--codex` → Codex モード（タスク数に関係なく）
-2. **`--codex` は明示時のみ発動**。Codex CLI が未インストールの環境があるため、自動選択しない
-3. `--codex` は他モードと組み合わせ可能: `--codex --breezing` → Codex + Breezing
+1. **明确标志总是覆盖自动模式**
+   - `--parallel N` → Parallel 模式（与任务数无关）
+   - `--breezing` → Breezing 模式（与任务数无关）
+   - `--codex` → Codex 模式（与任务数无关）
+2. **`--codex` 仅在明确时启动**。因为有 Codex CLI 未安装的环境，不自动选择
+3. `--codex` 可与其他模式组合: `--codex --breezing` → Codex + Breezing
 
-## Execution Backend Selection（実装バックエンド選択）
+## Execution Backend Selection（实现后端选择）
 
-バックエンド（どのランタイムが**実装するか**）は、トポロジー（実行モード: solo / parallel / breezing）と直交する。
-トポロジーが「何ワーカーで・どう分割して回すか」を決めるのに対し、バックエンドは「実装の手を誰が動かすか」を決める。
-この契約は host-neutral であり（spec.md「Execution Backend Contract」）、Codex host から harness を駆動しても Claude Code から駆動しても同じに振る舞う。
+后端（哪个运行时**来实现**）与拓扑（执行模式: solo / parallel / breezing）正交。
+拓扑决定"用几个 worker・如何分割运行"，后端决定"谁来动实现的手"。
+此契约是 host-neutral（spec.md "Execution Backend Contract"），从 Codex host 驱动 harness 还是从 Claude Code 驱动都表现相同。
 
-| backend | 実装の担い手 | 委託コマンド |
+| backend | 实现承担者 | 委托命令 |
 |---------|------------|------------|
-| `claude`（global fallback） | Codex native subagent（`spawn_agent({message, fork_context})`） | spawn_agent で worker を spawn |
+| `claude`（global fallback） | Codex native subagent（`spawn_agent({message, fork_context})`） | 用 spawn_agent spawn worker |
 | `codex` | Codex CLI | `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "<prompt>"` |
 | `cursor` | cursor-agent（model `composer-2.5-fast`） | `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task --write --workspace <worktree> "<prompt>"` |
 
-### 解決手順
+### 解决步骤
 
-run 開始時に 1 回だけ解決する。backend 判定は **必ず resolver 経由**にし、`HARNESS_IMPL_BACKEND` env だけを直読みして判定しない:
+run 开始时只解决 1 次。后端判定**必须**通过 resolver，不要仅通过直接读取 `HARNESS_IMPL_BACKEND` env 判定:
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"
 ```
 
-precedence（高い順）: `--backend <v>` / `--cursor` / `--codex` フラグ > `HARNESS_IMPL_BACKEND` 環境変数 > プロジェクト `env.local` の同名行 > ユーザー `~/.config/claude-harness/impl-backend.env` の同名行 > call-site default。
-明示フラグ（`--backend` / `--cursor` / `--codex`）は env / file / default を常に上書きする。プロジェクト設定はユーザースコープを上書きする。
+precedence（从高到低）: `--backend <v>` / `--cursor` / `--codex` 标志 > `HARNESS_IMPL_BACKEND` 环境变量 > 项目 `env.local` 的同名行 > 用户 `~/.config/claude-harness/impl-backend.env` 的同名行 > call-site default。
+明确标志（`--backend` / `--cursor` / `--codex`）总是覆盖 env / file / default。项目设置覆盖用户范围。
 
-Codex host の `--breezing` / `breezing` も配布 plugin では call-site default を変えない。
-フラグなしは `resolve-impl-backend.sh` の結果に従い、未設定時の fallback は `claude`。
-Cursor を既定にしたい環境は `HARNESS_IMPL_BACKEND=cursor` を env / project `env.local` / user-scope config に設定する。
-明示的に Cursor を使う場合は `--backend cursor` / `--cursor`、Codex native subagent worker へ戻す場合は `--backend claude` を渡す。
+Codex host 的 `--breezing` / `breezing` 在分发插件中也不改变 call-site default。
+无标志时遵循 `resolve-impl-backend.sh` 的结果，未设置时的 fallback 是 `claude`。
+想将 Cursor 作为默认的环境，在 env / project `env.local` / user-scope config 设置 `HARNESS_IMPL_BACKEND=cursor`。
+明确使用 Cursor 时传递 `--backend cursor` / `--cursor`，要回到 Codex native subagent worker 时传递 `--backend claude`。
 
-> モデル名の正本は `model-routing.sh`。本ドキュメント中の `composer-2.5-fast` は参照値であり、実解決は `bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model` に従う（drift 防止）。
+> 模型名的正本是 `model-routing.sh`。本文档中的 `composer-2.5-fast` 是参照值，实际解决遵循 `bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model`（防止 drift）。
 
-### 自然言語 backend trigger
+### 自然语言后端 trigger
 
-ユーザーが `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` と言った場合は、`cursor backend` 指定として扱う。
-これは `--cursor` と同じ intent だが、backend の確定値は必ず `resolve-impl-backend.sh` で解決する。
-解決時は明示 override として `--backend cursor` を渡し、env / project / user file / default より優先させる。
-Lead は `composer` を Codex native Worker 内の追加 agent と解釈せず、非 `claude` backend の規約どおり Worker agent を挟まずに `cursor-companion.sh` を直接呼ぶ。
+用户说 `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 时，作为 `cursor backend` 指定处理。
+这与 `--cursor` 是相同的 intent，但后端的确定值一定通过 `resolve-impl-backend.sh` 解决。
+解决时作为明确 override 传递 `--backend cursor`，优先于 env / project / user file / default。
+Lead 不将 `composer` 解释为 Codex native Worker 内的附加 agent，而是按照非 `claude` 后端的规约不挟 Worker agent 直接调用 `cursor-companion.sh`。
 
-### role-scoped 制約
+### role-scoped 约束
 
-バックエンドは **role-scoped**。解決済みバックエンドを使うのは実装（worker）ロールだけ。
-Reviewer と Advisor の両ロールは常に brain（`--host claude`、Opus）に固定する。
-Reviewer を cursor / codex バックエンドに routing しない（実装したバックエンドが自分の出力をレビューしてはならない）。
+后端是 **role-scoped**。使用已解决后端的只是实现（worker）角色。
+Reviewer 和 Advisor 两角色总是固定为 brain（`--host claude`，Opus）。
+不将 Reviewer 路由到 cursor / codex 后端（实现后的后端不得审查自己的输出）。
 
-### 非 `claude` バックエンドの self_review ゲート
+### 非 `claude` 后端的 self_review 门
 
-backend が `codex` または `cursor` の場合、`worker-report.v1` も `self_review` 配列も生成されない。
-そのため Lead は self_review ゲートを**スキップ**し、Lead の diff レビューを唯一の品質ゲートとする（既存の codex path と同じ扱い）。
+后端为 `codex` 或 `cursor` 时，`worker-report.v1` 和 `self_review` 数组都不生成。
+因此 Lead **跳过** self_review 门，将 Lead 的 diff 审查作为唯一质量门（与现有 codex path 相同处理）。
 
-### cursor バックエンドの banner（委託前に必須）
+### cursor 后端的 banner（委托前必需）
 
-backend が `cursor` のとき、Lead は委託前に次の 1 行 banner を必ず出力する:
+后端为 `cursor` 时，Lead 在委托前必须输出以下 1 行 banner:
 
 ```
-⚠️ cursor backend: model=composer-2.5-fast / R01-R13 ガードレールは cursor-agent 内部に適用されない / 出力は Lead レビューまで untrusted
+⚠️ cursor backend: model=composer-2.5-fast / R01-R13 护栏不在 cursor-agent 内部适用 / 输出到 Lead 审查为止 untrusted
 ```
 
-cursor の write 委託は専用 `.git` を持つ worktree 内で実行し、Lead が main へ cherry-pick する（cherry-pick 経路で R01-R13 が適用される）。
-ガバナンス詳細は `.claude/rules/cursor-cli-only.md` を参照。
+cursor 的 write 委托在持有专用 `.git` 的 worktree 内执行，Lead 将其 cherry-pick 到 main（在 cherry-pick 路径适用 R01-R13）。
+治理细节参考 `.claude/rules/cursor-cli-only.md`。
 
-## オプション
+## 选项
 
-| オプション | 説明 | デフォルト |
+| 选项 | 说明 | 默认 |
 |----------|------|----------|
-| `all` | 全未完了タスクを対象 | - |
-| `N` or `N-M` | タスク番号/範囲指定 | - |
-| `--parallel N` | 並列ワーカー数 | auto |
-| `--sequential` | 直列実行強制 | - |
-| `--codex` | Codex CLI で実装委託（明示時のみ、自動選択しない） | false |
-| `--backend <claude\|codex\|cursor>` | 明示バックエンド選択（worker ロールのみ適用、precedence 最上位） | resolver result（未設定時は claude） |
-| `--cursor` | cursor backend（`--backend cursor` の別名） | false |
-| `--plan NAME` | `plans/manifest.json` の named plan を使う | active/default |
-| `--no-commit` | 自動コミット抑制 | false |
-| `--resume <id\|latest>` | 前回セッション再開 | - |
-| `--breezing` | Lead/Worker/Reviewer のチーム実行 | false |
-| `--no-tdd` | TDD フェーズスキップ | false |
-| `--tdd-bypass` | 緊急時だけ TDD 強制を bypass。`HARNESS_TDD_BYPASS_REASON` または明示理由を audit に残す | false |
-| `--no-simplify` | Auto-Refinement スキップ | false |
-| `--auto-mode` | Auto Mode rollout を明示。親セッションの permission mode が互換な場合のみ採用を検討 | false |
+| `all` | 所有未完成任务为目标 | - |
+| `N` or `N-M` | 任务编号/范围指定 | - |
+| `--parallel N` | 并行 worker 数 | auto |
+| `--sequential` | 强制串行执行 | - |
+| `--codex` | 实现委托给 Codex CLI（仅明确时，不自动选择） | false |
+| `--backend <claude\|codex\|cursor>` | 明确后端选择（仅适用于 worker 角色，precedence 最高） | resolver result（未设置时是 claude） |
+| `--cursor` | cursor 后端（`--backend cursor` 的别名） | false |
+| `--plan NAME` | 使用 `plans/manifest.json` 的 named plan | active/default |
+| `--no-commit` | 抑制自动 commit | false |
+| `--resume <id\|latest>` | 重新开始上次会话 | - |
+| `--breezing` | Lead/Worker/Reviewer 的团队执行 | false |
+| `--no-tdd` | 跳过 TDD 阶段 | false |
+| `--tdd-bypass` | 仅紧急时 bypass TDD 强制。在 audit 中留下 `HARNESS_TDD_BYPASS_REASON` 或明确理由 | false |
+| `--no-simplify` | 跳过 Auto-Refinement | false |
+| `--auto-mode` | 明确 Auto Mode rollout。仅在亲会话的 permission mode 兼容时考虑采用 | false |
 
 ## Progressive Disclosure
 
-まずこの本文で入口、自動選択、停止条件だけを確認する。
-詳細は必要になった時だけ読む。
+首先确认本文的入口、自动选择、停止条件。
+详细内容只在必要时阅读。
 
-| 詳細 | 参照 |
+| 详细 | 参考 |
 |---|---|
-| Codex native Solo / Parallel / Breezing の具体手順 | `references/execution-modes.md` |
-| companion review、Reviewer fallback、AI Residuals、修正ループ | `references/review-loop.md` |
-| 完了報告の生成 | `references/completion-report.md` |
-| テスト/CI 失敗時の再チケット化 | `references/failure-reticketing.md` |
-| 仕様正本チェックの基準 | `docs/plans/spec-ssot.md` |
+| Codex native Solo / Parallel / Breezing 的具体步骤 | `references/execution-modes.md` |
+| companion review、Reviewer fallback、AI Residuals、修正循环 | `references/review-loop.md` |
+| 完成报告的生成 | `references/completion-report.md` |
+| 测试/CI 失败时的再票决化 | `references/failure-reticketing.md` |
+| 规格正本检查的标准 | `docs/plans/spec-ssot.md` |
 
 ### 重要停止条件
 
-- `Plans.md` が旧フォーマットで DoD / Depends / Status を読めない時は停止する。
-- 仕様が実装判断に影響するのに project spec SSOT が見つからない時は、先に仕様正本を作成/更新してから実装する。
-- sprint-contract が required なのに ready でない時は実装に進まない。
-- critical / major review finding が残っている時は完了にしない。
-- テストを弱める、skip する、期待値を実装に合わせて緩める形では解決しない。
-- helper script は host project の `scripts/` ではなく `${HARNESS_PLUGIN_ROOT}/scripts/` から呼ぶ。
-- 複数 Plans.md がある場合は、1 run の中で plan を切り替えない。必要なら `--plan NAME` を明示して新しい run を開始する。
+- `Plans.md` 是旧格式无法读取 DoD / Depends / Status 时停止。
+- 规格影响实现判断但找不到 project spec SSOT 时，先制作/更新规格正本后再实现。
+- sprint-contract 是 required 但不是 ready 时不进入实现。
+- 剩余 critical / major review findings 时不完结。
+- 不以减弱测试、skip 测试、将期待值配合实现放宽的形式解决。
+- helper script 从 `${HARNESS_PLUGIN_ROOT}/scripts/` 调用，而不是 host project 的 `scripts/`。
+- 有多个 Plans.md 时，在 1 run 中不切换 plan。必要时明确 `--plan NAME` 开始新 run。
 
-> **Token Optimization (v2.1.69+)**: git 操作を伴わない軽量タスクでは
-> plugin settings の `includeGitInstructions: false` を有効にして
-> プロンプトトークンを削減できる。
+> **Token Optimization (v2.1.69+)**: 在不伴随 git 操作的轻量任务中
+> 启用 plugin settings 的 `includeGitInstructions: false` 可以
+> 削减提示 token。
 
-## スコープダイアログ（引数なし時）
+## 范围对话（无参数时）
 
 ```
 harness-work
-どこまでやりますか?
-1) 次のタスク: Plans.md の次の未完了タスク → Solo で実行
-2) 全部（推奨）: 残りのタスクをすべて完了 → タスク数で自動モード選択
-3) 番号指定: タスク番号を入力（例: 3, 5-7）→ 件数で自動モード選択
+做到哪里?
+1) 下一个任务: Plans.md 的下一个未完成任务 → Solo 执行
+2) 全部（推荐）: 完成所有剩余任务 → 按任务数自动模式选择
+3) 编号指定: 输入任务编号（例: 3, 5-7）→ 按件数自动模式选择
 ```
 
-引数ありなら即実行（対話スキップ）:
-- `harness-work all` → 全タスク、自動モード選択
-- `harness-work 3-6` → 4件なので Breezing 自動選択
+有参数则立即执行（跳过对话）:
+- `harness-work all` → 全任务、自动模式选择
+- `harness-work 3-6` → 4 件所以 Breezing 自动选择
 
-## Effort レベル制御（Opus 4.8 / v2.1.111+）
+## Effort 级别控制（Opus 4.8 / v2.1.111+）
 
-effort はモデルの推論強度を選ぶ正式なノブ。`low(○)/medium(◐)/high(●)/xhigh` の 4 段階で、
-`/effort auto` でデフォルトにリセットできる（`max` は v2.1.72 で廃止、`xhigh` が後継）。
+effort 是选择模型推理强度的正式旋钮。`low(○)/medium(◐)/high(●)/xhigh` 的 4 阶段，
+用 `/effort auto` 可以重置为默认（`max` 在 v2.1.72 废除，`xhigh` 是后继）。
 
-Opus 4.8 では thinking は既定 off で、effort が推論深度の主レバー（過去のどの Opus より effort の影響が大きい）。
-「浅い推論」を観測したら prompt で回避せず effort を上げる。
-そのため複雑タスクの強化は **free-text marker（旧 `ultrathink`）を spawn prompt に注入する方式を廃止**し、
-複雑度スコアから **Worker spawn の effort tier を選ぶ**方式に統一する。
+Opus 4.8 thinking 默认 off，effort 是推理深度的主要 lever（比过去任何 Opus effort 影响都大）。
+观测到"浅推理"不在 prompt 中回避，而是提高 effort。
+因此复杂任务的强化**废除向 spawn prompt 注入 free-text marker（旧 `ultrathink`）方式**，
+统一为从复杂度分数**选择 Worker spawn 的 effort tier**方式。
 
-### 多要素スコアリング
+### 多要素评分
 
-タスク着手時に以下のスコアを合算する。
+着手任务时合计以下分数。
 
-| 要素 | 条件 | スコア |
+| 要素 | 条件 | 分数 |
 |------|------|--------|
-| ファイル数 | 変更対象 4 ファイル以上 | +1 |
-| ディレクトリ | core/, guardrails/, security/ を含む | +1 |
-| キーワード | architecture, security, design, migration を含む | +1 |
-| 失敗履歴 | agent memory に同タスクの失敗記録あり | +2 |
-| 明示指定 | PM テンプレートに `effort: high` / `effort: xhigh`（旧 `ultrathink` も互換受理）記載あり | +3（自動採用） |
+| 文件数 | 变更对象 4 文件以上 | +1 |
+| 目录 | 包含 core/, guardrails/, security/ | +1 |
+| 关键词 | 包含 architecture, security, design, migration | +1 |
+| 失败履历 | agent memory 中有同任务的失败记录 | +2 |
+| 明确指定 | PM 模板中有 `effort: high` / `effort: xhigh`（旧 `ultrathink` 也兼容受理）记载 | +3（自动采用） |
 
-### effort tier の決め方（注入しない）
+### effort tier 的决定方式（不注入）
 
-スコアから effort tier を **escalation signal** として決める（`ultrathink` 等の marker 文字列を spawn prompt に **書かない**）。
-適用 lever は次の 2 つだけ:
+从分数将 effort tier 作为 **escalation signal** 决定（不在 spawn prompt 中**写入** `ultrathink` 等标记字符串）。
+适用的 lever 只有以下 2 个:
 
-- **session `/effort`**: 複雑タスクのバッチに入る前に host が `/effort high` / `/effort xhigh` を設定する（session 単位で効く確実な lever）。
-- **worker frontmatter**: `agents/worker.md` の `effort`（既定 `medium`）が floor。CC の Agent / Task spawn API は per-spawn の effort 指定を公開しないため、worker 1 体ごとに effort を上げる機構はない。スコアは `worker-report.v1` の `task_complexity_note` に記録し、Lead が session effort 引き上げの判断材料にする。
+- **session `/effort`**: host 在进入复杂任务批次前设置 `/effort high` / `/effort xhigh`（在 session 单位有效的可靠 lever）。
+- **worker frontmatter**: `agents/worker.md` 的 `effort`（默认 `medium`）是 floor。CC 的 Agent / Task spawn API 不公开 per-spawn 的 effort 指定，没有逐个提高 worker effort 的机制。分数记录在 `worker-report.v1` 的 `task_complexity_note` 中，Lead 作为提高 session effort 的判断材料。
 
-| スコア | code-risk（core/guardrails/security/architecture/migration を含む） | effort tier |
+| 分数 | code-risk（包含 core/guardrails/security/architecture/migration） | effort tier |
 |--------|-----------------------------------|-------------|
-| 0-2 | 不問 | `medium`（Worker frontmatter 既定のまま） |
-| ≥ 3 | なし | `high` |
-| ≥ 3 | あり | `xhigh` |
+| 0-2 | 不问 | `medium`（Worker frontmatter 默认） |
+| ≥ 3 | 无 | `high` |
+| ≥ 3 | 有 | `xhigh` |
 
-breezing モードでも同じロジックを適用する（harness-work が一本化して管理）。
+breezing 模式也应用相同逻辑（harness-work 统一管理）。
 
-## 実行モード詳細
+## 执行模式详细
 
 ### Harness helper script root
 
-Harness が同梱する helper script は、作業対象プロジェクトの `scripts/` ではなく、必ず plugin bundle root から呼ぶ。
+Harness 附带的 helper script 必须从 plugin bundle root 调用，而不是作业对象项目的 `scripts/`。
 
 ```bash
 HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
@@ -238,12 +238,12 @@ if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then
 fi
 ```
 
-以降の `node "${HARNESS_PLUGIN_ROOT}/scripts/..."` / `bash "${HARNESS_PLUGIN_ROOT}/scripts/..."` は、この解決済み root を前提にする。
+以后的 `node "${HARNESS_PLUGIN_ROOT}/scripts/..."` / `bash "${HARNESS_PLUGIN_ROOT}/scripts/..."` 以此解决后的 root 为前提。
 
 ### Backend-resolved executor path (Solo / Parallel / Breezing)
 
-Solo / Parallel / Breezing は同じ resolver result から実装 executor を選ぶ。
-`harness-work 3 --cursor` と user/project `HARNESS_IMPL_BACKEND=cursor` は、1 件タスクでも local Read/Write/Edit/Bash に fall through してはいけない。
+Solo / Parallel / Breezing 从同一个 resolver result 选择实现 executor。
+`harness-work 3 --cursor` 和 user/project `HARNESS_IMPL_BACKEND=cursor` 即使在 1 件任务时也不能 fall through 到 local Read/Write/Edit/Bash。
 
 ```
 resolver_backend_arg = ""
@@ -261,7 +261,7 @@ if topology in ["solo", "parallel"] and backend in ["cursor", "codex"]:
     worktree_path = ".claude/worktrees/{backend}-{WT_ID}"
     worktree_branch = "{backend}-work/{WT_ID}"
     bash("mkdir -p .claude/worktrees && git worktree add -b {worktree_branch} {worktree_path} {BASE_REF}")
-    companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
+    companion_prompt = "{task prompt}\n\n完成更改后，在此 worktree 中创建恰好一个 git commit 然后返回。"
     if backend == "cursor":
         companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"{companion_prompt}\"")
     else:
@@ -280,29 +280,29 @@ else:
     run_native_solo_or_parallel()
 ```
 
-Parallel は task ごとにこの resolver path を適用する。
-backend=`cursor` / `codex` の場合は native Worker spawn を使わず、task ごとに isolated companion worktree を作成して `companion-result.v1` に正規化してから共通 review / cherry-pick loop に入る。
+Parallel 对每个 task 应用此 resolver path。
+backend=`cursor` / `codex` 时不用 native Worker spawn，为每个 task 创建 isolated companion worktree 并正规化到 `companion-result.v1` 后进入共同 review / cherry-pick loop。
 
-### Solo モード（1 件時の自動選択）
+### Solo 模式（1 件时自动选择）
 
-1. Plans.md を読み込み、対象タスクを特定
-   - **Plans.md が存在しない場合**: `harness-plan create --ci` を自動呼び出し → Plans.md を生成して続行
-   - ヘッダーに DoD / Depends カラムがない場合: `Plans.md が旧フォーマットです。harness-plan create で再生成してください。` → **停止**
-   - **会話に未記載タスクがある場合**: 直前の会話コンテキストから要件を抽出し、Plans.md に `cc:TODO` で自動追記
-     - 抽出ロジック: ユーザー発言からアクション動詞（「〜を追加」「〜を修正」「〜を実装」）を検出
-     - 追記時は v2 フォーマット（Task / 内容 / DoD / Depends / Status）に準拠
-     - 追記後、ユーザーに「Plans.md に以下を追記しました」と表示（5 秒タイムアウト付きプロンプト、デフォルト: 続行）
-1.5. **タスク背景確認**（30 秒）:
-   - タスクの「内容」と「DoD」から **目的**（このタスクが解く課題）を 1 行で推論表示
-   - `git grep` / `Glob` で **影響範囲**（変更が及ぶファイル/モジュール）を推論表示
-   - 推論に自信がある場合: そのまま実装に進む（フロー遅延なし）
-   - 推論に自信がない場合: ユーザーに 1 問だけ確認（「この理解で合っていますか？」）
-1.6. **仕様正本 preflight**:
-   - 既存の project spec SSOT を探す（例: `docs/spec/00-project-spec.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/oem/PROJECT_COMPASS.md`, `docs/specs/`）
-   - task が product behavior / API / data model / permission / billing / integration / tenant boundary を変える場合、spec がなければ `docs/spec/00-project-spec.md` を作る
-   - spec が古い、または task と矛盾する場合は、実装前に spec を更新する
-   - typo / format / dependency bump / docs-only / 動作変更なし refactor は skip 理由を残して続行する
-   - Worker / Reviewer へ渡す context には `spec_path` または `spec_skip_reason` を含める
+1. 读取 Plans.md，确定目标任务
+   - **Plans.md 不存在时**: 自动调用 `harness-plan create --ci` → 生成 Plans.md 后继续
+   - 标题没有 DoD / Depends 栏时: `Plans.md 是旧格式。请用 harness-plan create 重新生成。` → **停止**
+   - **会话中有未记载任务时**: 从最近会话上下文提取要求，作为 `cc:TODO` 自动追加到 Plans.md
+     - 提取逻辑: 从用户发言检测动作动词（"添加〜"、"修正〜"、"实现〜"）
+     - 追加时遵循 v2 格式（Task / 内容 / DoD / Depends / Status）
+     - 追加后向用户显示"已向 Plans.md 追加以下内容"（附带 5 秒超时提示，默认: 继续）
+1.5. **任务背景确认**（30 秒）:
+   - 从任务的"内容"和"DoD" 推论显示 **目的**（此任务解决的课题）为 1 行
+   - 用 `git grep` / `Glob` 推论显示 **影响范围**（变更涉及的文件/模块）
+   - 对推论有自信时: 直接进入实现（不延迟流程）
+   - 对推论没有自信时: 向用户确认仅 1 问（"这个理解正确吗？"）
+1.6. **规格正本 preflight**:
+   - 寻找现有的 project spec SSOT（例: `docs/spec/00-project-spec.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`, `docs/oem/PROJECT_COMPASS.md`, `docs/specs/`）
+   - task 变更 product behavior / API / data model / permission / billing / integration / tenant boundary 时，如果没有 spec 则创建 `docs/spec/00-project-spec.md`
+   - spec 过旧，或与 task 矛盾时，实现前更新 spec
+   - typo / format / dependency bump / docs-only / 无行为变更 refactor 时记录 skip 理由后继续
+   - 向 Worker / Reviewer 传递的 context 包含 `spec_path` 或 `spec_skip_reason`
 2. タスクを `cc:WIP` に更新
 3. **TDD フェーズ**（`[skip:tdd]` なし & テストFW存在時）:
    a. テストファイルを先に作成（Red）

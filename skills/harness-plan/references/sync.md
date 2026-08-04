@@ -57,15 +57,15 @@ PROJECT=$(tail -1 .claude/state/agent-trace.jsonl 2>/dev/null | \
 |------------|----------|
 | 已完成却 `cc:WIP` | 提交履历 vs 标记 |
 | 已着手却 `cc:TODO` | 更改文件 vs 标记 |
-| `cc:完了` 却未提交 | git status vs 标记 |
+| `cc:完成` 却未提交 | git status vs 标记 |
 
-### Artifact Hash 后方互兼容
+### Artifact Hash 后方兼容
 
-同时识别 `cc:完了 [a1b2c3d]` 格式（带 commit hash）和 `cc:完了`（无 hash）。
+同时识别 `cc:完成 [a1b2c3d]` 格式（带 commit hash）和 `cc:完成`（无 hash）。
 
 **匹配规则**:
-- `cc:完了` → 作为无 hash 完成处理
-- `cc:完了 [xxxxxxx]` → 作为带 hash 完成处理。保持 7 字短缩 hash
+- `cc:完成` → 作为无 hash 完成处理
+- `cc:完成 [xxxxxxx]` → 作为带 hash 完成处理。保持 7 字短缩 hash
 - 带 hash 时，可与 `git log --oneline` 对照确认提交存在
 
 > **后方兼容**: 无 hash 格式继续有效。不破坏既有 Plans.md。
@@ -79,7 +79,7 @@ PROJECT=$(tail -1 .claude/state/agent-trace.jsonl 2>/dev/null | \
 
 | Task | 当前 | 更新后 | 理由 |
 |------|------|--------|------|
-| XX   | cc:WIP | cc:完了 | 已提交 |
+| XX   | cc:WIP | cc:完成 | 已提交 |
 | YY   | cc:TODO | cc:WIP | 文件已编辑 |
 
 更新吗？ (yes / no)
@@ -96,8 +96,8 @@ PROJECT=$(tail -1 .claude/state/agent-trace.jsonl 2>/dev/null | \
 |----------|------|
 | 未着手 (cc:TODO) | {{count}} |
 | 作业中 (cc:WIP) | {{count}} |
-| 完成 (cc:完了) | {{count}} |
-| PM已确认 (pm:確認済) | {{count}} |
+| 完成 (cc:完成) | {{count}} |
+| PM已确认 (pm:已确认) | {{count}} |
 
 **进度率**: {{percent}}%
 
@@ -122,20 +122,20 @@ PROJECT=$(tail -1 .claude/state/agent-trace.jsonl 2>/dev/null | \
 | 状况 | 警告 |
 |------|------|
 | 多个 `cc:WIP` | 多任务同时进行中 |
-| `pm:依頼中` 未处理 | 先处理 PM 请求 |
+| `pm:委托中` 未处理 | 先处理 PM 请求 |
 | 大偏差 | 任务管理追赶不上 |
 | WIP 超过 3 天无更新 | 确认是否被阻塞 |
 
 ## Step 6: 回顾（默认 ON）
 
-`sync` 执行时，`cc:完了` 任务 1 件以上自动执行回顾。
+`sync` 执行时，`cc:完成` 任务 1 件以上自动执行回顾。
 `--no-retro` 可明确跳过。
 
 ### Step R1: 完成任务收集
 
 ```bash
-# 从 Plans.md 抽取 cc:完了 / pm:確認済 任务
-grep -E 'cc:完了|pm:確認済' Plans.md
+# 从 Plans.md 抽取 cc:完成 / pm:已确认 任务
+grep -E 'cc:完成|pm:已确认' Plans.md
 
 # 最近完成提交履历
 git log --oneline --since="7 days ago"

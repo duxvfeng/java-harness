@@ -3,11 +3,11 @@
   "version": "5.0.0-java",
   "description": "Java implementation of Claude Code Harness - 完整对齐Go项目的所有21个技能，支持Plan→Work→Review→Release完整工作流闭环",
   "author": {
-    "name": "Chachamaru",
-    "url": "https://github.com/Chachamaru127/java-harness"
+    "name": "dxf",
+    "url": "https://gitee.com/duxvfeng/java-harness/"
   },
-  "homepage": "https://github.com/Chachamaru127/java-harness",
-  "repository": "https://github.com/Chachamaru127/java-harness.git",
+  "homepage": "https://gitee.com/duxvfeng/java-harness/",
+  "repository": "https://gitee.com/duxvfeng/java-harness.git",
   "license": "MIT",
   "keywords": [
     "claude-code",
@@ -70,27 +70,7 @@
     }
   },
   "skills": [
-    "./skills/harness-plan/",
-    "./skills/harness-work/",
-    "./skills/harness-review/",
-    "./skills/harness-sync/",
-    "./skills/harness-release/",
-    "./skills/harness-setup/",
-    "./skills/harness-accept/",
-    "./skills/harness-loop/",
-    "./skills/harness-progress/",
-    "./skills/harness-plan-brief/",
-    "./skills/breezing/",
-    "./skills/agent-browser/",
-    "./skills/ci/",
-    "./skills/cursor-ask/",
-    "./skills/cursor-do/",
-    "./skills/cursor-review/",
-    "./skills/cursor-setup/",
-    "./skills/failure-codifier/",
-    "./skills/maintenance/",
-    "./skills/memory/",
-    "./skills/cc-update-review/"
+    "./skills/"
   ],
   "workflows": [
     "./workflows/"

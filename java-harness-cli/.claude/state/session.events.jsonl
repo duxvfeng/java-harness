@@ -5,3 +5,6 @@
 {"id":"event-000001","type":"session.stop","ts":"2026-08-01T08:46:51Z","state":"stopped"}
 {"id":"event-000001","type":"session.stop","ts":"2026-08-01T09:27:08Z","state":"stopped"}
 {"id":"event-000001","type":"session.stop","ts":"2026-08-01T09:36:05Z","state":"stopped"}
+{"id":"event-000001","type":"session.stop","ts":"2026-08-03T09:58:04Z","state":"stopped"}
+{"id":"event-000001","type":"session.stop","ts":"2026-08-03T10:06:39Z","state":"stopped"}
+{"id":"event-000001","type":"session.stop","ts":"2026-08-03T10:12:37Z","state":"stopped"}

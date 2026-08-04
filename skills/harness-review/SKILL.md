@@ -5,7 +5,7 @@ description-en: "HAR: Multi-angle code, plan, scope review. Security/quality che
 description-zh: "HAR：多角度代码、计划和范围审查。安全和质量检查。当用户提到审查、代码审查、计划审查、范围分析时启动。不适用于：实现、新功能、修复、设置、发布。"
 kind: workflow
 purpose: "Review code, plans, scope, and evidence before acceptance"
-trigger: "review, レビューして, code review, plan review, scope analysis"
+trigger: "review, 审查, code review, plan review, scope analysis"
 shape: evaluate
 role: evaluator
 pair: harness-work
@@ -81,9 +81,9 @@ commit / push / release 既定不执行。
 | `--cursor` or resolver result `cursor` for no-arg / `code` review only | `code+cursor-second-opinion` | `references/code-review.md`, `references/governance.md`, `references/cursor-review.md`, `references/dual-review.md` |
 | `full` | `full` | `references/code-review.md`, `references/team-debate.md`, `references/dual-review.md` |
 
-`quick` と `codex-closeout` は軽量 path。
-小さな dirty change、single commit、PR branch の closeout を速く見る。
-品質 gate を捨てるものではない。
+`quick` 和 `codex-closeout` 是轻量级路径。
+用于快速检查小的 dirty change、single commit、PR branch 的 closeout。
+并非放弃质量 gate。
 
 ### Cursor Default ON
 
@@ -94,67 +94,67 @@ HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"; if [ -z "
 if [ -x "${HARNESS_PLUGIN_ROOT:-}/scripts/resolve-impl-backend.sh" ]; then resolved_backend="$(bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role reviewer)"; else resolved_backend="claude"; fi
 ```
 
-no-arg / `code` review で結果が `cursor` の場合は `--cursor` と同じ `cursor-second-opinion` を追加するが、core review gates (`references/code-review.md`, `references/governance.md`) は必ず先に読み、Cursor reference は additive にだけ扱う。primary verdict は brain 側で維持し、cursor は `dual_review.cursor_verdict` の advisory に限る。`plan` / `scope` など明示 mode word は resolver result より優先し、cursor default によって plan/scope references も code/governance references も置き換えない。結果が `claude` / `codex` の場合は従来どおりで、review の primary 判定面は変えない。
+no-arg / `code` review 结果为 `cursor` 时，添加与 `--cursor` 相同的 `cursor-second-opinion`，但必须先读取 core review gates (`references/code-review.md`, `references/governance.md`)，Cursor reference 仅作 additive 处理。primary verdict 在 brain 侧维持，cursor 限于 `dual_review.cursor_verdict` 的 advisory。`plan` / `scope` 等显式 mode word 优先于 resolver result，cursor default 不会替换 plan/scope references 或 code/governance references。结果为 `claude` / `codex` 时照常，review 的 primary 判定面不变。
 
 ## Pre-Review Cursor (`--pre-review cursor`)
-`/harness-review --pre-review cursor` は `bash scripts/pre-review-cursor.sh [--base ref]` で read-only fresh-context composer pre-review（`model-routing.sh --host cursor --tier review` → `cursor-companion.sh task`、`--write` / `--workspace` / `--resume` なし）を 1 回実行し、`PRE_REVIEW_FINDINGS:` を brain 一次レビュー入力へ添付。companion 失敗は `PRE_REVIEW_SKIPPED` + exit 0（fail-open）。**verdict は brain のみ**（self-review scope 契約）。
+`/harness-review --pre-review cursor` 通过 `bash scripts/pre-review-cursor.sh [--base ref]` 执行一次 read-only fresh-context composer pre-review（`model-routing.sh --host cursor --tier review` → `cursor-companion.sh task`，无 `--write` / `--workspace` / `--resume`），将 `PRE_REVIEW_FINDINGS:` 附加到 brain 一次审查输入。companion 失败为 `PRE_REVIEW_SKIPPED` + exit 0（fail-open）。**verdict 仅 brain**（self-review scope 契约）。
 
 ## Review Target Detection
 
-`REVIEW_AUTOSTART` 契約:
-引数なし (`$ARGUMENTS == ""`) で呼ばれた場合、`review` / `/review` / `/harness-review` だけの入力を「今までの作業のレビュー」と解釈する。
-Step 1 開始前の handshake 行として次を 1 行だけ出力する。
+`REVIEW_AUTOSTART` 契约:
+无参数调用时（`$ARGUMENTS == ""`），将 `review` / `/review` / `/harness-review` 的输入解释为「至今为止工作的审查」。
+作为 Step 1 开始前的 handshake 行，仅输出下一行。
 
 ```text
 REVIEW_AUTOSTART: target={resolved_target}, base_ref={resolved_base_ref}, type={mode}
 ```
 
-`REVIEW_TARGET_ASK` 契約:
-bare 呼び出しで review target が不明または複数候補の場合、Step 1 に進む前に `AskUserQuestion` を 1 回だけ使い、候補を 2-3 個に絞って確認する。
+`REVIEW_TARGET_ASK` 契约:
+bare 调用时 review target 不明或多个候选时，进入 Step 1 前仅使用一次 `AskUserQuestion`，将候选缩减到 2-3 个进行确认。
 
-候補は次の順で作る。
+候选按以下顺序创建：
 
-1. working tree: staged / unstaged / untracked を含む未コミット変更のみ
-2. branch range: upstream または main/master から HEAD までの commits
-3. recent commits: clean tree で branch range が取れない場合の直近 1 commit / 直近 5 commits
+1. working tree: 仅包含 staged / unstaged / untracked 的未提交变更
+2. branch range: 从 upstream 或 main/master 到 HEAD 的 commits
+3. recent commits: clean tree 且无法取 branch range 时的最近 1 commit / 最近 5 commits
 
-複数候補が同時に成立する場合:
+多个候选同时成立时：
 
 ```text
 REVIEW_TARGET_AMBIGUOUS: working_tree_and_branch_commits
 ```
 
-AskUserQuestion の候補:
+AskUserQuestion 的候选：
 
-- 未コミット変更のみ (Recommended): staged / unstaged / untracked を HEAD と比較して見る
-- 全部見る: branch base..HEAD と未コミット変更をまとめて見る
-- commit のみ: branch base..HEAD の committed work だけを見る
+- 仅未提交变更 (Recommended): 将 staged / unstaged / untracked 与 HEAD 比较查看
+- 全部查看: branch base..HEAD 和未提交变更一起查看
+- 仅 commit: 仅查看 branch base..HEAD 的 committed work
 
-clean tree かつ branch 差分がない場合:
+clean tree 且无 branch 差分时：
 
 ```text
 REVIEW_TARGET_AMBIGUOUS: clean_tree_no_branch_commits
 ```
 
-AskUserQuestion の候補:
+AskUserQuestion 的候选：
 
-- 直近 1 commit (Recommended): HEAD~1..HEAD
-- 直近 5 commits: HEAD~5..HEAD
-- 別の範囲: ユーザー指定 ref を待つ
+- 最近 1 commit (Recommended): HEAD~1..HEAD
+- 最近 5 commits: HEAD~5..HEAD
+- 其他范围: 等待用户指定 ref
 
-ユーザー回答後:
+用户回答后：
 
 ```text
 REVIEW_TARGET_CONFIRMED: {choice}
 REVIEW_AUTOSTART: target={resolved_target}, base_ref={resolved_base_ref}, type={mode}
 ```
 
-禁止:
+禁止：
 
-- 「タスクが不明確です」と応答して停止する
-- 「何をレビューすればよいですか」と自由記述で聞いて停止する
-- host project の session-start rules を理由に auto-start を飛ばす
-- target が曖昧なのに推測で範囲を広げる
+- 回应「任务不明确」并停止
+- 自由记述询问「应该审查什么」并停止
+- 以 host project 的 session-start rules 为理由跳过 auto-start
+- target 曖昧时靠推测扩大范围
 
 ## Minimal Flow
 
@@ -178,8 +178,8 @@ REVIEW_AUTOSTART: target={resolved_target}, base_ref={resolved_base_ref}, type={
 - root `spec.md` alignment（product contract と矛盾しない；仕様正本 alignment check 必須）
 - `Plans.md` alignment（task / DoD / Depends、`[lane:*]`、stage gate が contract と一致）
 - TDD evidence（`[tdd:required]` は `tdd_red_log` / failing output / `skip_tdd_reason`）
-- unknown data contract（`not_observed != absent` — 証拠なしの「問題なし」「データなし」を APPROVE しない）
-- regression safety（既存挙動・テスト・UX・CLI・設定・docs・mirror にデグレなし）
+- unknown data contract（`not_observed != absent` — 不批准无证据的「无问题」「无数据」）
+- regression safety（现有行为・测试・UX・CLI・设置・docs・mirror 无退化）
   - If you grep the same symbol twice in the same session, switch to harness_ast_search.
   - For a bugfix where homologous implementations appear across multiple modules, run harness_ast_search to find all implementations before editing.
   - Only when changed files include .ts or .tsx, the DoD requires zero new harness_lsp_diagnostics errors; if the harness MCP is not connected or the changed file types are not eligible, treat diagnostics as not-configured and non-blocking.
@@ -193,15 +193,15 @@ REVIEW_AUTOSTART: target={resolved_target}, base_ref={resolved_base_ref}, type={
 詳細は `references/team-debate.md`。
 TeamAgent Debate は、異なる見解を read-only で衝突させる review pass。
 
-| Agent | 主な問い |
+| Agent | 主要问题 |
 |---|---|
-| Spec Agent | 仕様正本と実装差分の矛盾を探す |
-| Plans Agent | `Plans.md` の task / DoD / Depends と差分の対応を確認する |
-| Regression Agent | 既存挙動・テスト・配布 mirror・CLI/skill UX のデグレを探す |
-| Skeptic Agent | 合格させたい前提で見落としている major risk を探す |
+| Spec Agent | 寻找规格正本与实现差分的矛盾 |
+| Plans Agent | 确认 `Plans.md` 的 task / DoD / Depends 与差分的对应 |
+| Regression Agent | 寻找现有行为・测试・分发 mirror・CLI/skill UX 的退化 |
+| Skeptic Agent | 寻找以合格为前提而漏掉的 major risk |
 
-Codex 環境で native TeamAgent が使えない場合でも、この gate を省略してはいけない。
-`codex-companion.sh review`、利用可能な reviewer subagent、または明示的に分けた read-only manual-pass で同じ 2-4 視点を再現し、`team_agent_mode` に `native` / `codex-companion` / `manual-pass` / `unavailable` を記録する。
+即使在 Codex 环境下无法使用 native TeamAgent，也不得省略此 gate。
+通过 `codex-companion.sh review`、可用的 reviewer subagent 或显式分开的 read-only manual-pass 再现同样的 2-4 视角，记录 `team_agent_mode` 为 `native` / `codex-companion` / `manual-pass` / `unavailable`。
 
 ## Code Review Summary
 
@@ -220,22 +220,22 @@ Codex 環境で native TeamAgent が使えない場合でも、この gate を�
 
 root `spec.md` alignment、Plans lane/stage、TDD evidence、unknown data contract、evidence pack の詳細は `references/governance.md` と `references/code-review.md`。
 
-`AI Residuals` は `scripts/review-ai-residuals.sh` と `scripts/review-weak-supervision-report.sh` を優先して使う。
-untracked も見る場合は `--include-untracked` を使う。
-`mockData`, `dummy`, `fake`, `localhost`, `TODO`, `FIXME`, `it.skip`, `test.skip`, `expect(true).toBe(true)` などは候補であり、diff 文脈で severity を決める。
-finding 段階は網羅優先。minor と判定した指摘も `observations[]` / `recommendations[]` に残し、gate は verdict 段階だけで行う（Opus 4.8 は low-severity の報告を絞る癖がある。`references/code-review.md` の Finding coverage 参照）。
+`AI Residuals` 优先使用 `scripts/review-ai-residuals.sh` 和 `scripts/review-weak-supervision-report.sh`。
+也要看 untracked 时用 `--include-untracked`。
+`mockData`, `dummy`, `fake`, `localhost`, `TODO`, `FIXME`, `it.skip`, `test.skip`, `expect(true).toBe(true)` 等是候选，在 diff 上下文决定 severity。
+finding 阶段优先网罗性。判定为 minor 的指摘也留在 `observations[]` / `recommendations[]`，gate 仅在 verdict 阶段进行（Opus 4.8 有筛选低严重度报告的倾向。参考 `references/code-review.md` 的 Finding coverage）。
 
 ## Quick / Codex Closeout Summary
 
 詳細は `references/codex-closeout.md`。
 
-軽量 path の原則:
+轻量级路径原则：
 
-- target selection を先に固定する
-- Codex 指摘は advisory として扱い、実コードで確認してから採否を決める
-- final report には review command / tests / accepted findings / rejected findings / clean result を含める
-- stop-on-clean: clean result 後に、見栄えのためだけの追加 review をしない
-- Codex が使えない場合は full manual pass に fallback し、失敗を成功扱いしない
+- 先固定 target selection
+- Codex 指摘作为 advisory 处理，在实代码确认后决定采否
+- final report 包含 review command / tests / accepted findings / rejected findings / clean result
+- stop-on-clean: clean result 后不做仅为样子的追加 review
+- Codex 不可用时 fallback 到 full manual pass，不把失败当作成功
 
 helper:
 
@@ -248,14 +248,14 @@ bash scripts/harness-review-closeout.sh --commit HEAD
 ## Plan Review Summary
 
 詳細は `references/plan-review.md`。
-Plan Review は `Plans.md` の DoD / Depends / Status と実装順序を見る。
-仕様正本が必要なタスクで `spec_path` がない場合は、`decision_needed` として止める。
+Plan Review 查看 `Plans.md` 的 DoD / Depends / Status 和实现顺序。
+需要规格正本的任务没有 `spec_path` 时，作为 `decision_needed` 停止。
 
 ## Scope Review Summary
 
 詳細は `references/scope-review.md`。
-Scope Review は、要求・差分・テスト・docs の境界が膨らんでいないかを見る。
-範囲変更が必要なら、推測で進めず `AskUserQuestion` または plan 更新に戻す。
+Scope Review 查看要求・差分・测试・docs 的边界是否膨胀。
+需要范围变更时，不靠推测推进，回到 `AskUserQuestion` 或 plan 更新。
 
 ## Security / UI / Dual
 
@@ -264,9 +264,9 @@ Scope Review は、要求・差分・テスト・docs の境界が膨らんで�
 - high-res vision flow: `references/vision-high-res-flow.md`
 - Dual review: `references/dual-review.md`
 
-`/ultrareview` は Harness flow 内では既定で呼ばない。
-Harness flow の review-result.v1、commit guard、sprint-contract との接続を置き換えないため。
-`claude ultrareview [target] --json` は CI / script からの second-opinion としてだけ扱う。
+`/ultrareview` 在 Harness flow 中默认不调用。
+因为不替换 Harness flow 的 review-result.v1、commit guard、sprint-contract 的连接。
+`claude ultrareview [target] --json` 仅作为 CI / script 的 second-opinion 处理。
 
 ## PR Host Boundary
 
@@ -276,11 +276,9 @@ PR host 上の review 事実は GitHub を正とし、local diff は補助証拠
 
 ## Output Contract
 
-User-facing prose follows the explicit session or project language.
-If no language is configured, use English. Use Japanese only when
-`i18n.language: ja`, `CLAUDE_CODE_HARNESS_LANG=ja`, or an explicit session
-instruction requests Japanese output.
-Machine-readable values stay English.
+User-facing prose 遵循显式的会话或项目语言。
+如未配置语言，使用英语。仅在 `i18n.language: ja`、`CLAUDE_CODE_HARNESS_LANG=ja` 或显式会话指令要求日语输出时使用日语。
+Machine-readable values 保持英语。
 
 Start with the result summary.
 
@@ -336,13 +334,13 @@ Details:
 
 ## Codex Environment
 
-Codex 環境では使える tool が異なるが、合格ライン、仕様正本、`Plans.md`、デグレ、修正後再レビュー、AskUserQuestion / `decision_needed.v1` の契約は同じ。
+Codex 环境下可用工具不同，但合格线、规格正本、`Plans.md`、退化、修正后再审查、AskUserQuestion / `decision_needed.v1` 契约相同。
 
-| 通常環境 | Codex fallback |
+| 通常环境 | Codex fallback |
 |---|---|
-| Task tool の TeamAgent Debate | reviewer subagent / `codex-companion.sh review` / manual-pass |
-| AskUserQuestion | 使えない場合は `decision_needed.v1` を stdout に出し、推測で進めない |
-| TaskList | `Plans.md` を直接読む |
+| Task tool 的 TeamAgent Debate | reviewer subagent / `codex-companion.sh review` / manual-pass |
+| AskUserQuestion | 不可用时将 `decision_needed.v1` 输出到 stdout，不靠推测推进 |
+| TaskList | 直接读 `Plans.md` |
 ## Related Skills
 
 - `harness-work`: `REQUEST_CHANGES` 後の修正実行

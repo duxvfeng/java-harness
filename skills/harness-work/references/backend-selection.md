@@ -4,12 +4,12 @@ Role-scoped constraints, non-`claude` topology, self_review gate exception, curs
 cherry-pick gate, natural-language trigger, and the two Mode 1 opt-in configurations for
 `harness-work` / `breezing`.
 
-## Role-scoped 制約
+## Role-scoped 约束
 
-バックエンドは **role-scoped**。解決済みバックエンドを使うのは実装（worker）ロールだけ。
-Reviewer と Advisor の両ロールは常に brain（`--host claude`）に固定する。
-Primary reviewer を cursor / codex バックエンドに routing しない（diff を生成した同一コンテキストが自分の出力をレビューしてはならない — spec.md Execution Backend Contract の self-review scope 契約）。
-例外は **fresh-context advisory pre-review** のみ: diff を生成した session と会話状態を共有しない cursor `review` tier（composer-2.5-fast、read-only）が brain 一次レビューの前段で advisory findings を出すことは許可。primary verdict（`APPROVE | REQUEST_CHANGES`）は brain のみが出す。
+后端是 **role-scoped**。只有实现（worker）角色使用已解析的后端。
+Reviewer 和 Advisor 两个角色始终固定为 brain（`--host claude`）。
+不要将 primary reviewer 路由到 cursor / codex 后端（生成 diff 的同一上下文不得评审自己的输出 — spec.md Execution Backend Contract 的 self-review scope 约定）。
+例外仅限 **fresh-context advisory pre-review**：不与生成 diff 的会话共享对话状态的 cursor `review` 层（composer-2.5-fast、read-only）允许在 brain 主评审之前输出 advisory findings。只有 brain 才能输出 primary verdict（`APPROVE | REQUEST_CHANGES`）。
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model
@@ -17,88 +17,88 @@ bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role revi
 bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role advisor --field model
 ```
 
-> モデル名の正本は `model-routing.sh` 側。`composer-2.5-fast` は参照値であり、実際の解決は上記コマンドに従う（drift 防止）。
+> 模型名称的正本在 `model-routing.sh`。`composer-2.5-fast` 是参考值，实际解析遵循上述命令（防止 drift）。
 
-## 非 `claude` バックエンドのトポロジー（Worker 介在なし）
+## 非 `claude` 后端的拓扑结构（不经过 Worker）
 
-backend が `codex` または `cursor` の場合、**Lead は Worker agent (`claude-code-harness:worker`) を spawn しない**。
-代わりに Lead 自身が `cursor-companion.sh` / `codex-companion.sh` を直接呼ぶ。Worker 層の介在は backend=`claude` のときだけ。
+当 backend 为 `codex` 或 `cursor` 时，**Lead 不会 spawn Worker agent (`claude-code-harness:worker`)**。
+而是 Lead 自身直接调用 `cursor-companion.sh` / `codex-companion.sh`。Worker 层的介入仅在 backend=`claude` 时。
 
-| backend | 経路 |
+| backend | 路径 |
 |---------|------|
-| `claude`（既定） | Lead → Worker (`claude-code-harness:worker` agent) → … → Lead review → cherry-pick |
+| `claude`（默认） | Lead → Worker (`claude-code-harness:worker` agent) → … → Lead review → cherry-pick |
 | `codex` | Lead → `codex-companion.sh task --write` → Lead review → cherry-pick |
 | `cursor` | Lead → `cursor-companion.sh task --write --workspace <isolated-wt>` → Lead review → cherry-pick |
 
-非 claude backend で Worker を間に挟むと、Lead → Worker → companion → composer/codex と二段委譲になり、Worker の存在意義（agent 契約による self_review 5 件のゲート）が空回りする（非 claude では `worker-report.v1` も `self_review` も生成されないため）。Lead は Worker をスキップして companion を直接呼ぶ。
+非 claude 后端在中间夹 Worker 会导致 Lead → Worker → companion → composer/codex 的二段委托，使 Worker 的存在意义（通过 agent 约定的 self_review 5 个关卡）落空（非 claude 不生成 `worker-report.v1` 也不生成 `self_review`）。Lead 跳过 Worker 直接调用 companion。
 
-非 claude backend の companion 呼び出しでも、Lead は先に専用 worktree を作り、companion stdout を `companion-result.v1` 相当の `{baseCommit, commit, worktreePath, branch, files_changed, summary}` に正規化してから既存の Lead review / cherry-pick 経路へ渡す。`REQUEST_CHANGES` 時は `SendMessage` を使わず、同じ worktree で `cursor-companion.sh` / `codex-companion.sh` を再実行し、`baseCommit..HEAD` を再レビューして range cherry-pick する。
+非 claude 后端的 companion 调用中，Lead 也先创建专用 worktree，将 companion stdout 正规化为 `companion-result.v1` 等价的 `{baseCommit, commit, worktreePath, branch, files_changed, summary}`，然后传递到现有的 Lead review / cherry-pick 路径。`REQUEST_CHANGES` 时不使用 `SendMessage`，在同一 worktree 重新执行 `cursor-companion.sh` / `codex-companion.sh`，重新评审 `baseCommit..HEAD` 并进行 range cherry-pick。
 
-## 非 `claude` バックエンドの self_review ゲート
+## 非 `claude` 后端的 self_review 关卡
 
-backend が `codex` または `cursor` の場合、`worker-report.v1` も `self_review` 配列も生成されない。
-そのため Lead は self_review ゲートを**スキップ**し、Lead の diff レビューを唯一の品質ゲートとする（既存の codex path と同じ扱い）。
+当 backend 为 `codex` 或 `cursor` 时，不会生成 `worker-report.v1` 也不生成 `self_review` 数组。
+因此 Lead **跳过** self_review 关卡，将 Lead 的 diff 评审作为唯一的质量关卡（与现有的 codex path 相同处理）。
 
-## cursor バックエンドの banner（委託前に必須）
+## cursor 后端的 banner（委托前必须）
 
-backend が `cursor` のとき、Lead は委託前に次の 1 行 banner を必ず出力する:
+当 backend 为 `cursor` 时，Lead 在委托前必须输出以下 1 行 banner:
 
 ```
-⚠️ cursor backend: model=composer-2.5-fast / R01-R13 ガードレールは cursor-agent 内部に適用されない / 出力は Lead レビューまで untrusted
+⚠️ cursor backend: model=composer-2.5-fast / R01-R13 防护规则不在 cursor-agent 内部应用 / 输出在 Lead 评审之前为 untrusted
 ```
 
-cursor の write 委託は専用 `.git` を持つ worktree 内で実行し、Lead が main へ cherry-pick する（cherry-pick 経路で R01-R13 が適用される）。
-ガバナンス詳細は `.claude/rules/cursor-cli-only.md` を参照。
+cursor 的 write 委托在拥有专用 `.git` 的 worktree 内执行，Lead 将其 cherry-pick 到 main（在 cherry-pick 路径中应用 R01-R13）。
+治理详情请参考 `.claude/rules/cursor-cli-only.md`。
 
-## Lead の cherry-pick 前ゲート（contract grep を必須）
+## Lead 的 cherry-pick 前关卡（必须执行 contract grep）
 
-非 claude backend (cursor / codex) の出力を main にとり込む前に、Lead は **目視 diff + contract grep の二段ゲート**を必ず通す。目視 diff だけで APPROVE しない。
+将非 claude 后端 (cursor / codex) 的输出合并到 main 之前，Lead 必须通过**目视 diff + contract grep 的二段关卡**。不要仅通过目视 diff 就 APPROVE。
 
-| ゲート | コマンド | 検知できるもの |
+| 关卡 | 指令 | 可检测内容 |
 |--------|----------|----------------|
-| diff 目視 | `git show <sha>` | 変更が意図どおりか・他ファイル touch なしか・support tier 表記不変か |
-| contract grep | `bash tests/test-support-claim-wording.sh` | 公開 support 表記の破壊 |
-| contract grep | `bash scripts/ci/check-consistency.sh` | i18n / locale / mirror / capability matrix の固定文字列契約破壊 |
-| contract grep | `bash tests/validate-plugin.sh` | plugin 配布契約・hook 配線 |
+| diff 目视 | `git show <sha>` | 变更是否符合预期·是否 touch 了其他文件·support tier 标注是否不变 |
+| contract grep | `bash tests/test-support-claim-wording.sh` | 公开 support 标注的破坏 |
+| contract grep | `bash scripts/ci/check-consistency.sh` | i18n / locale / mirror / capability matrix 的固定字符串约定破坏 |
+| contract grep | `bash tests/validate-plugin.sh` | plugin 分发约定·hook 配线 |
 
-**全 PASS のときだけ cherry-pick**。1 件でも fail なら revert または composer に再委託（同一文字列契約を保つよう明示）。
+**仅在全部 PASS 时才 cherry-pick**。如果有 1 个失败则 revert 或重新委托给 composer（明确要求保持同一字符串约定）。
 
-理由: docs / README / locale / capability-matrix / spec.md には grep で監視される **固定文字列契約**がある（例: `README_ja.md` の `5動詞ワークフロー`）。composer は表面的な言語的重複を機械的に削減する傾向があり、目視 diff では「綺麗な dedup」に見えても固定句を破壊しうる。
+理由: docs / README / locale / capability-matrix / spec.md 有 grep 监控的**固定字符串约定**（例: `README_ja.md` 的 `5动词工作流`）。composer 倾向于机械地减少表面的语言重复，即使目视 diff 看起来是"干净的 dedup"，也可能破坏固定句。
 
-## 自然言語 backend trigger
+## 自然语言 backend trigger
 
-ユーザーが `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` と言った場合は、`cursor backend` 指定として扱う。
-これは `--cursor` と同じ intent だが、backend の確定値は必ず `resolve-impl-backend.sh` で解決する。
-解決時は明示 override として `--backend cursor` を渡し、env / project / user file / default より優先させる。
-Lead は `composer` を Claude Worker 内の追加 agent と解釈せず、非 `claude` backend の規約どおり Worker agent を挟まずに `cursor-companion.sh` を直接呼ぶ。
+当用户说 `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 时，作为 `cursor backend` 指定处理。
+这与 `--cursor` 是相同的 intent，但 backend 的确定值必须在 `resolve-impl-backend.sh` 中解析。
+解析时作为显式 override 传递 `--backend cursor`，优先于 env / project / user file / default。
+Lead 不将 `composer` 解释为 Claude Worker 内的额外 agent，而是按照非 `claude` 后端的约定不夹 Worker agent 直接调用 `cursor-companion.sh`。
 
-## Mode 1 — Producer → Sub-Lead → Composer 階層
+## Mode 1 — Producer → Sub-Lead → Composer 层级
 
-`harness work --team`（Breezing の Go orchestrator 経路）で **Mode 1 producer hierarchy** を有効にする opt-in 配線。正本は `spec.md`「Mode 1 — orchestrated Producer hierarchy」節。実装: `go/internal/sublead/sublead.go`、`go/cmd/harness/work_team.go`。
+通过 `harness work --team`（Breezing 的 Go orchestrator 路径）启用 **Mode 1 producer hierarchy** 的 opt-in 配线。正本在 `spec.md`「Mode 1 — orchestrated Producer hierarchy」节。实现: `go/internal/sublead/sublead.go`、`go/cmd/harness/work_team.go`。
 
-| 層 | 役割 | 備考 |
+| 层 | 角色 | 备注 |
 |----|------|------|
-| **Producer（Lead）** | Claude Code 固定。lane 単位で Sub-Lead に委譲し、`companion-result.v1` を集約 | 人間が話す CLI = Lead |
-| **Sub-Lead** | lane 1 件を mini-plan に分解し、subtask を並列 fan-out | orchestrator-spawned **headless CLI**（Lead と同一 CLI backend） |
-| **Composer 2.5** | subtask の実装担当（cursor backend） | `productionCompanionWorker` → `cursor-companion.sh`；lane ごとに `companion-result.v1` で集約 |
+| **Producer（Lead）** | 固定为 Claude Code。按 lane 委托给 Sub-Lead，并集约 `companion-result.v1` | 人类对话的 CLI = Lead |
+| **Sub-Lead** | 将 1 个 lane 分解为 mini-plan，并并行 fan-out subtask | orchestrator-spawned **headless CLI**（与 Lead 同一 CLI backend） |
+| **Composer 2.5** | 负责实现 subtask（cursor backend） | `productionCompanionWorker` → `cursor-companion.sh`；每个 lane 按 `companion-result.v1` 集约 |
 
-**hub-spoke のみ**: subWorker 同士は peer results や channel を受け取らない。Sub-Lead が inner `breezing.Orchestrator` で fan-out し、lane 結果を 1 つの `companion-result.v1` に畳む。
+**仅 hub-spoke**：subWorker 之间不接受 peer results 或 channel。Sub-Lead 通过 inner `breezing.Orchestrator` fan-out，并将 lane 结果折叠为 1 个 `companion-result.v1`。
 
-**有効化**: `HARNESS_TEAM_HIERARCHY=sublead`（**default OFF**）。未設定時は flat companion worker（Lead が task ごとに companion を直接呼ぶ従来経路）。
+**启用**: `HARNESS_TEAM_HIERARCHY=sublead`（**默认 OFF**）。未设置时为 flat companion worker（Lead 对每个任务直接调用 companion 的传统路径）。
 
-## review→iterate ループ
+## review→iterate 循环
 
-cross-CLI の品質ゲートを worker 出力に wrap する opt-in 配線。実装: `go/internal/reviewiterate/run.go`、`go/cmd/harness/work_team_reviewiterate.go`。
+将 cross-CLI 的质量关卡包装到 worker 输出的 opt-in 配线。实现: `go/internal/reviewiterate/run.go`、`go/cmd/harness/work_team_reviewiterate.go`。
 
-**有効化**: `HARNESS_REVIEW_ITERATE=on`（**default OFF**）。`teamWorkerFactory` が inner worker（flat companion または Sub-Lead 配下 subWorker）を `wrapWorkerWithReviewIterate` で包む。
+**启用**: `HARNESS_REVIEW_ITERATE=on`（**默认 OFF**）。`teamWorkerFactory` 用 `wrapWorkerWithReviewIterate` 包装 inner worker（flat companion 或 Sub-Lead 下的 subWorker）。
 
-| 段階 | 動作 |
+| 阶段 | 行为 |
 |------|------|
-| 1. advisory fan-out | 複数 lens（例: correctness / security / scope）で **fresh-context** headless reviewer CLI を並列起動（producing session と会話状態を共有しない） |
-| 2. brain primary verdict | **primary verdict（`APPROVE` / `REQUEST_CHANGES`）は brain（claude host / Lead）のみ**が出す。advisory reviewer は findings のみ |
-| 3. refinement re-dispatch | brain が `REQUEST_CHANGES` なら、findings を精緻化プロンプトに畳み、**同 worktree** に inner `WorkerFunc` で再投入 |
-| 4. 反復上限 | `MaxIters` 到達で未収束 → `Outcome.Escalated=true` + `EscalationNote` を付けて human escalation |
+| 1. advisory fan-out | 用多个 lens（例: correctness / security / scope）并行启动 **fresh-context** headless reviewer CLI（与 producing session 不共享对话状态） |
+| 2. brain primary verdict | **primary verdict（`APPROVE` / `REQUEST_CHANGES`）仅由 brain（claude host / Lead）** 输出。advisory reviewer 仅输出 findings |
+| 3. refinement re-dispatch | brain 如果 `REQUEST_CHANGES`，将 findings 折叠为精炼提示，用 inner `WorkerFunc` 重新投入**同一 worktree** |
+| 4. 迭代上限 | 到达 `MaxIters` 未收敛 → `Outcome.Escalated=true` + `EscalationNote` 进行 human escalation |
 
-**反復上限 env**: `HARNESS_REVIEW_ITERATE_MAX`（未設定時 default `3`）。`reviewiterate.Config.MaxIters` に渡される。
+**迭代上限 env**: `HARNESS_REVIEW_ITERATE_MAX`（未设置时 default `3`）。传递到 `reviewiterate.Config.MaxIters`。
 
-cross-CLI review は **OK まで反復**する（DoD 未達なら精緻化タスクを同 worktree に再投入、N 回未収束で human escalation）。
+cross-CLI review **迭代直到 OK**（DoD 未达标则将精炼任务重新投入同一 worktree，N 次未收敛则 human escalation）。

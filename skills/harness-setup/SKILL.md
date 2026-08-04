@@ -78,9 +78,9 @@ Harness 的集成设置技能。
 
 ## Cursor 实现后端引入
 
-詳細手順は `${CLAUDE_SKILL_DIR}/references/cursor.md` を読む。
-契約アンカー: `set-impl-backend.sh` は AI 実行可。`permissions.json`、`.cursorignore`、`*.cursor.sh` allowlist はユーザー手動で、AI が編集できない protected path として扱う。
-根拠ルールは `.claude/rules/cursor-cli-only.md` と `docs/sandbox-allowlist-recipe.md`。
+详细步骤请阅读 `${CLAUDE_SKILL_DIR}/references/cursor.md`。
+契约锚点：`set-impl-backend.sh` 允许 AI 执行。`permissions.json`、`.cursorignore`、`*.cursor.sh` allowlist 由用户手动操作，作为 AI 无法编辑的受保护路径处理。
+依据规则是 `.claude/rules/cursor-cli-only.md` 和 `docs/sandbox-allowlist-recipe.md`。
 
 ## Reference Index
 
@@ -93,9 +93,9 @@ Harness 的集成设置技能。
 - `${CLAUDE_SKILL_DIR}/references/marketplace.md` — plugin marketplace install/update and managed dependency policy.
 - `${CLAUDE_SKILL_DIR}/references/maintenance.md` — cleanup commands and related skills.
 
-## 関連スキル
+## 相关技能
 
-- `harness-sync` — 設定/Plans/git 状態の同期確認
-- `harness-work` — 実装タスク実行
-- `harness-review` — 品質レビュー
-- `maintenance` — ファイル整理（統合済み）
+- `harness-sync` — 配置/Plans/git 状态的同步确认
+- `harness-work` — 实现任务执行
+- `harness-review` — 质量审查
+- `maintenance` — 文件整理（已整合）

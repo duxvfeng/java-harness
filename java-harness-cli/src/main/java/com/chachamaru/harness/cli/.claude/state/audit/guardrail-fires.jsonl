@@ -1,2 +1,0 @@
-{"schema_version":"guardrail-fire.v1","ts":"2026-08-01T04:58:24Z","host":"claude","tool":"Bash","rule_id":"R05:confirm-rm-rf","decision":"ask","command_sha256":"8a60d2c2423f81d7ae294bab2dc72fed375087b92dbecf9794a074ef3d15e723","command_len":85}
-{"schema_version":"guardrail-fire.v1","ts":"2026-08-01T04:59:43Z","host":"claude","tool":"Edit","rule_id":"R04:confirm-write-outside-project","decision":"ask","command_sha256":"cd90223dade595c773bf1592c56db90acd8bfe8c5a38243f99fd3d74186f676a","command_len":48}

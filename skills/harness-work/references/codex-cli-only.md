@@ -1,24 +1,24 @@
-# Codex Plugin Policy
+# Codex 插件策略
 
-Codex の呼び出しには **公式プラグイン `openai/codex-plugin-cc`** を使用すること。
+调用 Codex 时必须使用 **官方插件 `openai/codex-plugin-cc`**。
 
-## 基本方針
+## 基本方针
 
-raw `codex exec` の直接呼び出しは禁止。以下の 2 つの方法で Codex を呼び出す:
+禁止直接调用 raw `codex exec`。只能通过以下 2 种方式调用 Codex:
 
-1. **`scripts/codex-companion.sh`** — Harness スキル・エージェント内からの呼び出し
-2. **`/codex:*` コマンド** — ユーザー対話での ad-hoc 利用
+1. **`scripts/codex-companion.sh`** — 从 Harness 技能/代理中调用
+2. **`/codex:*` 命令** — 用户交互中的临时使用
 
-## 禁止事項
+## 禁止事项
 
-- `codex exec` の直接呼び出し（`skills-codex/` 内を除く。後述の例外参照）
-- `mcp__codex__codex` の使用（MCP サーバーは廃止済み）
-- ToolSearch で Codex MCP を検索する行為
-- `claude mcp add codex` による MCP サーバー再登録
+- 直接调用 `codex exec`（`skills-codex/` 内除外，参见下文例外）
+- 使用 `mcp__codex__codex`（MCP 服务器已废弃）
+- 通过 ToolSearch 搜索 Codex MCP
+- 通过 `claude mcp add codex` 重新注册 MCP 服务器
 
-## MCP ブロック（v2.1.78+）
+## MCP 阻止（v2.1.78+）
 
-settings.json の `deny` ルールで旧 MCP ツールをブロック（既設定済み）:
+settings.json 的 `deny` 规则阻止旧 MCP 工具（已预设）:
 
 ```json
 {
@@ -28,87 +28,86 @@ settings.json の `deny` ルールで旧 MCP ツールをブロック（既設�
 }
 ```
 
-## 正しい呼び出し方
+## 正确调用方式
 
-### タスク委託（実装・デバッグ・調査）
+### 任务委托（实现·调试·调查）
 
 ```bash
-# 書き込み可能なタスク委託
-bash scripts/codex-companion.sh task --write "バグを修正して"
+# 可写的任务委托
+bash scripts/codex-companion.sh task --write "修复 bug"
 
-# stdin 経由（大きなプロンプト向け）
+# stdin 方式（用于大型提示）
 cat "$PROMPT_FILE" | bash scripts/codex-companion.sh task --write
 
-# 前回のスレッドを再開
-bash scripts/codex-companion.sh task --resume-last --write "続きをやって"
+# 恢复上一次的线程
+bash scripts/codex-companion.sh task --resume-last --write "继续完成"
 ```
 
-### レビュー
+### 评审
 
 ```bash
-# 作業ツリーのレビュー
+# 工作树的评审
 bash scripts/codex-companion.sh review
 
-# 特定の base ref からのレビュー
+# 从特定 base ref 的评审
 bash scripts/codex-companion.sh review --base "${TASK_BASE_REF}"
 
-# 敵対的レビュー（設計判断への挑戦）
+# 对抗性评审（挑战设计判断）
 bash scripts/codex-companion.sh adversarial-review
 ```
 
-### セットアップ・ジョブ管理
+### 设置·作业管理
 
 ```bash
-# Codex の利用可否を確認
+# 确认 Codex 可用性
 bash scripts/codex-companion.sh setup --json
 
-# 実行中ジョブの確認
+# 确认运行中的作业
 bash scripts/codex-companion.sh status
 
-# ジョブ結果の取得
+# 获取作业结果
 bash scripts/codex-companion.sh result <job-id>
 
-# ジョブのキャンセル
+# 取消作业
 bash scripts/codex-companion.sh cancel <job-id>
 ```
 
-### /codex:* コマンド（ユーザー対話）
+### /codex:* 指令（用户交互）
 
 ```
-/codex:setup              — Codex CLI のセットアップ確認
-/codex:rescue             — タスク委託（調査・実装・デバッグ）
-/codex:review             — コードレビュー
-/codex:adversarial-review — 敵対的レビュー
-/codex:status             — ジョブ状態確認
-/codex:result             — ジョブ結果取得
-/codex:cancel             — ジョブキャンセル
+/codex:setup              — Codex CLI 设置确认
+/codex:rescue             — 任务委托（调查·实现·调试）
+/codex:review             — 代码评审
+/codex:adversarial-review — 对抗性评审
+/codex:status             — 作业状态确认
+/codex:result             — 获取作业结果
+/codex:cancel             — 取消作业
 ```
 
-## verdict マッピング（公式プラグイン ↔ Harness）
+## verdict 映射（官方插件 ↔ Harness）
 
-公式プラグインの review 出力は Harness と異なるスキーマを使用する。変換ルール:
+官方插件的评审输出使用与 Harness 不同的架构。转换规则:
 
-| 公式 plugin | Harness | 備考 |
+| 官方 plugin | Harness | 备注 |
 |---|---|---|
 | `approve` | `APPROVE` | |
 | `needs-attention` | `REQUEST_CHANGES` | |
-| `findings[].severity: critical` | `critical_issues[]` | verdict に影響 |
-| `findings[].severity: high` | `major_issues[]` | verdict に影響 |
-| `findings[].severity: medium/low` | `recommendations[]` | verdict に影響しない |
+| `findings[].severity: critical` | `critical_issues[]` | 影响 verdict |
+| `findings[].severity: high` | `major_issues[]` | 影响 verdict |
+| `findings[].severity: medium/low` | `recommendations[]` | 不影响 verdict |
 
-## 例外: Codex ネイティブスキル
+## 例外: Codex 原生技能
 
-`skills-codex/` 内のスキルは **Codex CLI 内部で動作する**ため、
-`spawn_agent` / `wait_agent` / `send_input` / `close_agent` 等の
-Codex ネイティブ API は引き続き使用可。ただしレビュー呼び出しは
-companion 経由を推奨。
+`skills-codex/` 内的技能**在 Codex CLI 内部运行**，
+因此 `spawn_agent` / `wait_agent` / `send_input` / `close_agent` 等
+Codex 原生 API 可继续使用。但建议评审调用通过 companion。
 
-## 公式プラグインの提供機能
+## 官方插件提供的功能
 
-| 機能 | 説明 |
+| 功能 | 说明 |
 |------|------|
-| Job 管理 | スレッドの開始・再開・キャンセル・結果取得 |
-| App Server Protocol | JSON-RPC over TCP による高信頼な Codex 通信 |
-| 構造化出力 | `review-output.schema.json` 準拠の構造化レビュー |
-| Stop Review Gate | セッション終了時の自動レビューゲート |
-| GPT-5.4 Prompting | Codex 向け最適化プロンプトガイダンス |
+| 作业管理 | 线程的启动·恢复·取消·结果获取 |
+| App Server Protocol | 通过 JSON-RPC over TCP 实现高可靠 Codex 通信 |
+| 结构化输出 | 符合 `review-output.schema.json` 的结构化评审 |
+| Stop Review Gate | 会话结束时的自动评审关卡 |
+| GPT-5.4 Prompting | Codex 优化的提示指引 |

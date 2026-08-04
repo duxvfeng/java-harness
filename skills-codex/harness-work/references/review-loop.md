@@ -1,25 +1,24 @@
 # Codex Review Loop
 
-Codex review follows the same verdict contract as Claude-side `harness-work`.
+Codex 审查遵循与 Claude 侧 `harness-work` 相同的 verdict 契约。
 
-## Order
+## 顺序
 
-1. Run companion structured review when available.
-2. Run AI Residuals JSON scan:
+1. 在可用时运行 companion 结构化审查。
+2. 运行 AI Residuals JSON 扫描:
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/review-ai-residuals.sh" --base-ref "${BASE_REF}" --include-untracked
 ```
 
-3. Fall back to a read-only reviewer agent only when companion review is not
-   available.
+3. 仅在 companion 审查不可用时回退到只读审查者代理。
 
-## Verdict Threshold
+## Verdict 阈值
 
-`critical` or `major` means `REQUEST_CHANGES`. `minor` and `recommendation` do
-not affect approval.
+`critical` 或 `major` 意味着 `REQUEST_CHANGES`。`minor` 和 `recommendation` 不
+影响批准。
 
-## Worker Repair
+## Worker 修正
 
-When a spawned Worker needs changes, resume it and use `send_input` with the
-critical/major findings only. Then wait again and rerun review.
+当生成的 Worker 需要变更时，恢复它并使用 `send_input` 仅传递
+critical/major 发现。然后再次等待并重新运行审查。

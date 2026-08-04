@@ -2,7 +2,7 @@
 name: breezing
 description: "Team execution mode (Codex host) — backward-compatible alias for harness-work with backend selection, including opt-in Cursor worker delegation. Composer/composer 2.5 maps to the cursor backend."
 description-en: "Team execution mode (Codex host) — backward-compatible alias for harness-work with backend selection, including opt-in Cursor worker delegation. Composer/composer 2.5 maps to the cursor backend."
-description-ja: "チーム実行モード（Codex ホスト版）— harness-work のチーム協調エイリアス。Codex からも opt-in で Cursor worker backend に委譲できる。breezing, チーム実行, 全部やって, composer, コンポーザー, composer 2.5 でトリガー。"
+description-ja: "团队执行模式（Codex 宿主版）— harness-work 的团队协调别名。可从 Codex 选择性委托 Cursor worker 后端。当用户提到 breezing、团队执行、全部完成、composer、作曲器、composer 2.5 时触发。"
 description-zh: "团队执行模式（Codex 宿主版）— harness-work 的团队协调别名。可从 Codex 选择性委托 Cursor worker 后端。当用户提到 breezing、团队执行、全部完成、composer、作曲器、composer 2.5 时触发。"
 kind: workflow
 purpose: "Wrap harness-work with Codex-host team execution orchestration"
@@ -21,113 +21,113 @@ effort: high
 
 # Breezing — Team Execution Mode (Codex Host)
 
-> **この SKILL.md は Codex host 版です。**
-> Claude Code 版は `skills/breezing/SKILL.md` を参照してください。
-> backend は resolver で選びます。配布 plugin のフラグなし既定は `claude` 互換のままです。
-> `--cursor` / `--backend cursor`、または `HARNESS_IMPL_BACKEND=cursor` を設定した環境では Cursor worker backend を使います。
-> frontmatter の `allowed-tools` も、この4つの Codex native tool 名に合わせます。
+> **本 SKILL.md 是 Codex 宿主版。**
+> Claude Code 版请参考 `skills/breezing/SKILL.md`。
+> 后端通过 resolver 选择。分发插件的无标志默认保持 `claude` 兼容。
+> 在设置了 `--cursor` / `--backend cursor` 或 `HARNESS_IMPL_BACKEND=cursor` 的环境中使用 Cursor worker 后端。
+> frontmatter 中的 `allowed-tools` 也配合这 4 个 Codex 原生工具名称。
 
-**後方互換エイリアス**: `harness-work --breezing` をチーム実行モードで動かします。
+**向后兼容别名**: 以团队执行模式运行 `harness-work --breezing`。
 
-## Default Pipeline（plan → work → review → report を 1 コマンドで完走）
+## Default Pipeline（plan → work → review → report 一键完成）
 
-Claude Code 版と同一の契約（operator 裁定 2026-07-24。正本: `skills/breezing/SKILL.md` の同名節）:
+与 Claude Code 版相同的契约（operator 裁定 2026-07-24。正本: `skills/breezing/SKILL.md` 的同名节）:
 
-1. **Plan gate**: 依頼スコープの task が Plans.md に無い/不足なら、先に `harness-plan` を実行してから続行（スコープ既定は「今進められる全作業」）
-2. **Work**: 既存のチーム実行フロー（per-task review 含む）
-3. **Integrated Review Gate（既定 ON）**: 実装完了後・**最終化（完了報告・run 完了宣言）の前に**、run 全体 diff に `harness-review` を実行。review target は通常 `{base_ref}..HEAD`、`--no-commit` run は working tree（未 commit 変更 + untracked）。fresh-context 独立 reviewer + cross-CLI second opinion を併走させ、APPROVE まで修正 → 再レビューを反復（最大 3 回。未収束は影響 task を `cc:WIP` に戻して human escalation）
-4. **Finalize + Report**: gate APPROVE 後に Plans.md 更新・完了報告を確定。最終報告は easy 作法（host に `easy` skill があればその作法、なければ Completion Report テンプレート）
+1. **Plan gate**: 如果请求范围的 task 不在 Plans.md 中/不足，先执行 `harness-plan` 后继续（范围默认是"当前可进行的所有工作"）
+2. **Work**: 现有的团队执行流程（包括 per-task review）
+3. **Integrated Review Gate（默认开启）**: 实现完成后、**最终化（完成报告・run 完成声明）之前**，对 run 全体 diff 执行 `harness-review`。review target 通常是 `{base_ref}..HEAD`，`--no-commit` run 则是 working tree（未提交变更 + untracked）。让 fresh-context 独立 reviewer 与 cross-CLI second opinion 并行，直到 APPROVE 为止反复修正 → 再审查（最多 3 次。未收敛时将相关 task 回退到 `cc:WIP` 并人工升级）
+4. **Finalize + Report**: gate APPROVE 后确定 Plans.md 更新・完成报告。最终报告使用 easy 作法（宿主机有 `easy` skill 就用其作法，否则使用 Completion Report 模板）
 
-低リスクの高速 run で 3 を省きたい時は `--no-review-gate`（per-task review は維持、統合レビューのみスキップ）。
+若要在低风险的快速 run 中省略步骤 3，使用 `--no-review-gate`（保持 per-task review，仅跳过集成审查）。
 
 ## Quick Reference
 
 ```bash
-breezing                        # スコープを聞いてから実行
-breezing all                    # resolved backend で ready task を完走（配布既定は claude、現環境は user config で cursor 可）
-breezing 3-6                    # resolved backend でタスク3〜6を完走
-breezing composer 2.5 all       # 自然言語 trigger: cursor backend として扱う
-breezing --backend cursor all    # Cursor worker backend を明示
-breezing --backend claude all    # Codex native spawn_agent worker を明示
-breezing --codex all             # Codex CLI worker backend を明示
-breezing --cursor all            # Cursor worker backend を明示
-breezing --max-workers 2 all     # ready task の同時 spawn 上限を2に
-breezing --max-workers 1 all     # 旧来の直列挙動に戻す
-breezing --no-discuss all       # 計画議論スキップで全タスク完走
+breezing                        # 询问范围后执行
+breezing all                    # 使用 resolved backend 完成所有 ready task（分发默认是 claude，当前环境可通过用户配置设为 cursor）
+breezing 3-6                    # 使用 resolved backend 完成任务 3〜6
+breezing composer 2.5 all       # 自然语言触发: 作为 cursor backend 处理
+breezing --backend cursor all    # 明确指定 Cursor worker backend
+breezing --backend claude all    # 明确指定 Codex native spawn_agent worker
+breezing --codex all             # 明确指定 Codex CLI worker backend
+breezing --cursor all            # 明确指定 Cursor worker backend
+breezing --max-workers 2 all     # 将 ready task 的同时 spawn 上限设为 2
+breezing --max-workers 1 all     # 回到传统的串行行为
+breezing --no-discuss all       # 跳过计划讨论，完成所有任务
 ```
 
 ## Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `all` | 全未完了タスクを対象 | - |
-| `N` or `N-M` | タスク番号/範囲指定 | - |
-| `--backend <claude\|codex\|cursor>` | worker backend を明示選択 | resolver result（配布既定は claude） |
-| `--cursor` | `--backend cursor` の別名 | false |
-| `--codex` | `--backend codex` の別名 | false |
-| `--max-workers N` | ready task の同時 spawn 数上限（breezing 固有オプション）。`1` で旧来の直列挙動 | max |
-| `--no-commit` | 非対応（Breezing では Worker の一時 commit と Lead の cherry-pick が必須） | - |
-| `--no-discuss` | 計画議論スキップ | false |
+| `all` | 所有未完成任务为目标 | - |
+| `N` or `N-M` | 任务编号/范围指定 | - |
+| `--backend <claude\|codex\|cursor>` | 明确选择 worker backend | resolver result（分发默认是 claude） |
+| `--cursor` | `--backend cursor` 的别名 | false |
+| `--codex` | `--backend codex` 的别名 | false |
+| `--max-workers N` | ready task 的同时 spawn 数上限（breezing 固有选项）。`1` 时回到传统串行行为 | max |
+| `--no-commit` | 不支持（Breezing 中 Worker 的临时 commit 和 Lead 的 cherry-pick 是必需的） | - |
+| `--no-discuss` | 跳过计划讨论 | false |
 
 ## Execution
 
-**このスキルは `harness-work --breezing` に委譲します。** 以下の設定で実行してください:
+**此技能委托给 `harness-work --breezing`**。请使用以下配置执行：
 
-1. **引数を `harness-work --breezing` に渡す**（`--max-workers N` は breezing 固有オプションとして解釈し、`harness-work` の `--parallel` とは別概念）
-2. **チーム実行モードを強制** — Lead → Worker spawn → 必要時 Advisor → companion review Reviewer の四者分離
-3. **Lead は delegate 専念** — コードを直接書かない
+1. **将参数传递给 `harness-work --breezing`**（`--max-workers N` 作为 breezing 固有选项解释，与 `harness-work` 的 `--parallel` 是不同概念）
+2. **强制团队执行模式** — Lead → Worker spawn → 必要时 Advisor → companion review Reviewer 的四者分离
+3. **Lead 专注于 delegate** — 不直接编写代码
 
 ### Execution Backend (persistent)
 
-バックエンド選択（worker を `claude` / `codex` / `cursor` のどれで実装するか）の正本は
-`harness-work` の「Execution Backend Selection（実装バックエンド選択）」を参照する。
-そこに precedence、role-scope（review / advisor は Opus 固定）、self_review スキップ、cursor banner が定義されている。
-backend 判定は **必ず** resolver 経由にし、`HARNESS_IMPL_BACKEND` env だけを直読みしない。
+后端选择（worker 由 `claude` / `codex` / `cursor` 哪个来实现）的正本请参考
+`harness-work` 的"Execution Backend Selection（实现后端选择）"。
+那里定义了 precedence、role-scope（review / advisor 固定为 Opus）、self_review 跳过、cursor banner。
+后端判定**必须**通过 resolver，不要直接读取 `HARNESS_IMPL_BACKEND` env。
 
-Codex Breezing も配布 plugin では call-site default を変えない:
+Codex Breezing 在分发插件中也不改变 call-site default:
 
 ```bash
 bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"
 ```
 
-precedence は `--backend` / `--cursor` / `--codex` > `HARNESS_IMPL_BACKEND` env > project `env.local` >
+precedence 是 `--backend` / `--cursor` / `--codex` > `HARNESS_IMPL_BACKEND` env > project `env.local` >
 user `~/.config/claude-harness/impl-backend.env` > call-site default `claude`。
-つまり配布 plugin のフラグなし `breezing all` は互換性のため `claude` のまま。
-この環境のように user/project config で `HARNESS_IMPL_BACKEND=cursor` が設定されている場合だけ、
-フラグなしで Cursor worker backend になる。Codex native subagent worker を明示する時は `--backend claude` を指定する。
+也就是说分发插件的无标志 `breezing all` 为了兼容性保持 `claude`。
+只有在此环境那样 user/project config 设置了 `HARNESS_IMPL_BACKEND=cursor` 的情况下，
+无标志才会成为 Cursor worker backend。要明确使用 Codex native subagent worker 时指定 `--backend claude`。
 
-`composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` は、正式に `cursor backend` の trigger として扱う。
-これは `--cursor` 相当の intent であり、Lead は `resolve-impl-backend.sh` を経由して backend を確定する。
-解決時は明示 override として `--backend cursor` を渡し、env / project / user file / default より優先させる。
-`composer` は Codex native Worker の内側に spawn する追加 agent ではなく、非 `claude` backend の規約どおり Lead が `cursor-companion.sh` を直接呼ぶ。
+`composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 正式作为 `cursor backend` 的 trigger 处理。
+这是相当于 `--cursor` 的 intent，Lead 通过 `resolve-impl-backend.sh` 确定 backend。
+解决时作为明确 override 传递 `--backend cursor`，优先于 env / project / user file / default。
+`composer` 不是在 Codex native Worker 内部 spawn 的附加 agent，而是按照非 `claude` backend 的规约，Lead 直接调用 `cursor-companion.sh`。
 
-既定の worker 数は **max**。
-ここでの max は「対象スコープ内で Depends が満たされ、今すぐ実行できる ready task の最大数」を意味する。
-無制限に Worker を spawn する意味ではない。
-依存待ちのタスクは、前段タスクが完了して ready になるまで spawn しない。
-旧来の 1 件ずつ進める直列挙動に戻したい場合は `--max-workers 1` を指定する。
+默认 worker 数是 **max**。
+这里的 max 意味着"在目标范围内满足 Depends、当前可执行的 ready task 的最大数"。
+并非无限制地 spawn Worker。
+等待依赖的 task 在前段 task 完成变成 ready 之前不会 spawn。
+要回到传统的一个个进行的串行行为时指定 `--max-workers 1`。
 
-Worker の実装は並列化できるが、レビューと main への cherry-pick は直列で行う。
-これは同じ main worktree への書き込み競合を避けるため。
+Worker 的实现可以并行化，但 review 和对 main 的 cherry-pick 是串行进行的。
+这是为了避免对同一个 main worktree 的写入冲突。
 
-### `harness-work` との違い
+### 与 `harness-work` 的不同
 
-| 特徴 | `harness-work` | `breezing` (このスキル) |
+| 特征 | `harness-work` | `breezing` (此技能) |
 |------|-----------------|------------------------|
-| デフォルトモード | Solo / Sequential | **Breezing（チーム実行）** |
-| 並列手段 | companion `task` Bash 並列 | **`spawn_agent` によるサブエージェント委譲** |
-| Lead の役割 | 調整+実装 | **delegate (調整専念)** |
-| レビュー | Lead 自己レビュー | **companion review 独立レビュー** |
-| デフォルトスコープ | 次のタスク | **全部** |
+| 默认模式 | Solo / Sequential | **Breezing（团队执行）** |
+| 并行手段 | companion `task` Bash 并行 | **`spawn_agent` 的子代理委托** |
+| Lead 的角色 | 协调+实现 | **delegate (专注协调)** |
+| 审查 | Lead 自我审查 | **companion review 独立审查** |
+| 默认范围 | 下一个任务 | **全部** |
 
 ### Team Composition（Codex Native）
 
-| Role | 実行方式 | 権限 | 責務 |
+| Role | 执行方式 | 权限 | 职责 |
 |------|---------|------|------|
-| Lead | (self) | 現セッション継承 | 調整・指揮・タスク分配・cherry-pick |
-| Worker ×N | resolver result: `spawn_agent` / `codex-companion.sh` / `cursor-companion.sh task --write --workspace <worktree>` | セッション権限継承 | 実装（git worktree 分離） |
-| Advisor | `claude-code-harness:advisor` | 読み取り専用 | 方針助言 (`PLAN` / `CORRECTION` / `STOP`) |
-| Reviewer | companion `review --base` | read-only | 独立レビュー |
+| Lead | (self) | 继承当前会话 | 协调・指挥・任务分配・cherry-pick |
+| Worker ×N | resolver result: `spawn_agent` / `codex-companion.sh` / `cursor-companion.sh task --write --workspace <worktree>` | 继承会话权限 | 实现（git worktree 分离） |
+| Advisor | `claude-code-harness:advisor` | 只读 | 方针建议 (`PLAN` / `CORRECTION` / `STOP`) |
+| Reviewer | companion `review --base` | read-only | 独立审查 |
 
 ## Flow Summary
 
@@ -136,86 +136,86 @@ breezing [scope] [--backend claude|codex|cursor] [--max-workers N] [--no-discuss
     │
     ↓ Load harness-work --breezing
     │
-Phase 0: Planning Discussion (--no-discuss でスキップ)
-Phase A: Pre-delegate（チーム初期化 + worktree 準備）
-Phase B: Delegate（resolver-selected worker + 必要時 Advisor + companion review レビュー）
-Phase C: Post-delegate（統合検証 + Plans.md 更新 + commit）
+Phase 0: Planning Discussion (--no-discuss 时跳过)
+Phase A: Pre-delegate（团队初始化 + worktree 准备）
+Phase B: Delegate（resolver-selected worker + 必要时 Advisor + companion review 审查）
+Phase C: Post-delegate（集成验证 + Plans.md 更新 + commit）
 ```
 
 ## Advisor Protocol
 
-Worker は generic な subagent を増やさない。
-迷った時は構造化 JSON で相談要求だけ返し、Lead が advisor を呼ぶ。
+Worker 不增加通用的 subagent。
+迷路时只返回结构化 JSON 的咨询请求，Lead 调用 advisor。
 
 1. Worker → `advisor-request.v1`
 2. Lead → Advisor
 3. Advisor → `advisor-response.v1`
-4. Lead → 同じ Worker に advice を返して続行
-5. Reviewer は最後の成果物だけを見る
+4. Lead → 向同一个 Worker 返回 advice 继续
+5. Reviewer 只看最后的成果物
 
-相談条件は loop / solo とそろえる。
+咨询条件与 loop / solo 保持一致。
 
-- 高リスク task（`needs-spike` / `security-sensitive` / `state-migration`）の初回実行前
-- 同じ原因の失敗が 2 回続いた後
-- plateau により `PIVOT_REQUIRED` を返す直前
-- 同じ `trigger_hash` は 1 回だけ。task ごとの相談回数は最大 3 回
+- 高风险 task（`needs-spike` / `security-sensitive` / `state-migration`）的首次执行前
+- 同样原因失败连续 2 次后
+- 因 plateau 返回 `PIVOT_REQUIRED` 前
+- 同一个 `trigger_hash` 只 1 次。每个 task 的咨询次数最多 3 次
 
 ## Realtime Handoff / Silence Policy
 
-Codex `0.123.0` 以降では、background agent が realtime handoff の transcript delta を受け取れる。
-Breezing ではこの仕組みを「余計な通知を増やす入口」ではなく、「必要な時だけ判断を更新するための入力」として扱う。
+Codex `0.123.0` 以后，background agent 可以接收 realtime handoff 的 transcript delta。
+Breezing 将此机制作为"不是增加多余通知的入口，而是仅在必要时更新判断的输入"处理。
 
-ひとことで: Worker / Advisor / Reviewer は、状態が変わらない transcript delta には反応せず、Lead への報告は material state change に絞る。
+一句话来说：Worker / Advisor / Reviewer 对状态不变的 transcript delta 不反应，对 Lead 的报告仅限于 material state change。
 
-たとえると、複数人の作業部屋で全員が独り言を実況するのではなく、担当作業が終わった時、詰まった時、判断待ちの時だけ声をかける形。
+比喻来说，不是在多人的作业房间所有人都自言自语地实况转播，而是只在负责的作业完成时、卡住时、等待判断时才出声的形式。
 
-報告するもの:
+报告内容：
 
-- Worker の完了 JSON、blocked 理由、必要な `advisor-request.v1`
-- Advisor の `PLAN` / `CORRECTION` / `STOP`
-- Reviewer の `APPROVE` / `REQUEST_CHANGES`
-- validation failure、contract readiness failure、plateau、drift 検知
-- Lead が出す task 完了単位の progress feed
+- Worker 的完成 JSON、blocked 理由、必要的 `advisor-request.v1`
+- Advisor 的 `PLAN` / `CORRECTION` / `STOP`
+- Reviewer 的 `APPROVE` / `REQUEST_CHANGES`
+- validation failure、contract readiness failure、plateau、drift 检测
+- Lead 输出的 task 完成单位的 progress feed
 
-沈黙してよいもの:
+可以沉默的内容：
 
-- transcript delta を受け取っただけで、task status、review verdict、advisor decision が変わっていない場合
-- tool stdout の細かな増分で、job log に残っていれば十分なもの
-- parallel spawn 中の待機 heartbeat。待機は `wait_agent` / job status に任せる
+- 仅接收了 transcript delta、task status、review verdict、advisor decision 没有变化的情况
+- tool stdout 的细微增量，仅留在 job log 中就足够的内容
+- parallel spawn 中的等待 heartbeat。等待交给 `wait_agent` / job status
 
-途中報告の頻度:
+中途报告的频率：
 
-- Lead の progress feed は task 完了ごとに 1 回を基本にする。
-- Worker / Reviewer は「完了・差し戻し・ブロック」の結果だけを返し、delta ごとの小報告は避ける。
-- user が明示的に status を求めた場合だけ、Lead がまとめて現在地を返す。
+- Lead 的 progress feed 基本上每个 task 完成 1 次。
+- Worker / Reviewer 只返回"完成・回退・阻塞"的结果，避免每个 delta 的小报告。
+- 只在用户明确请求 status 时，Lead 总结返回当前位置。
 
-Advisor / Reviewer drift との関係:
+Advisor / Reviewer drift 的关系：
 
-- silence policy は Advisor / Reviewer を黙らせる免除ではない。
-- `advisor-request.v1` 送信後に response が返らない、reviewer profile に必要な result がない、review loop が plateau した場合は drift として扱う。
-- Advisor は方針助言、Reviewer は品質判定という役割分離を維持し、沈黙は「不要な通知を出さない」ためだけに使う。
+- silence policy 不是让 Advisor / Reviewer 沉默的免责。
+- 发送 `advisor-request.v1` 后没有返回 response、reviewer profile 中缺少必要的 result、review loop plateau 的情况作为 drift 处理。
+- Advisor 保持方针建议、Reviewer 保持质量判定的角色分离，沉默仅用于"不发出不必要通知"。
 
-### Phase 0: Planning Discussion（構造化 3 問チェック）
+### Phase 0: Planning Discussion（结构化 3 问检查）
 
-全タスク実行前に、以下の 3 問で計画の健全性を確認する。
-`--no-discuss` 指定時は全スキップ。
+在执行所有任务之前，用以下 3 问确认计划的健全性。
+指定 `--no-discuss` 时全部跳过。
 
-**Q1. スコープ確認**:
-> 「{{N}} 件のタスクを実行します。スコープは適切ですか？」
+**Q1. 范围确认**:
+> 「将执行 {{N}} 个任务。范围合适吗？」
 
-**Q2. 依存関係確認**（Plans.md に Depends カラムがある場合のみ）:
-> 「タスク {{X}} は {{Y}} に依存しています。実行順序は合っていますか？」
+**Q2. 依赖关系确认**（仅当 Plans.md 有 Depends 栏时）:
+> 「任务 {{X}} 依赖于 {{Y}}。执行顺序正确吗？」
 
-**Q3. リスクフラグ**（`[needs-spike]` タスクがある場合のみ）:
-> 「タスク {{Z}} は [needs-spike] です。先に spike しますか？」
+**Q3. 风险标志**（仅当有 `[needs-spike]` 任务时）:
+> 「任务 {{Z}} 是 [needs-spike]。要先做 spike 吗？」
 
 ### Phase A: Pre-delegate
 
-1. Plans.md を読み込み、対象タスクを特定
-2. 依存グラフを解析し、実行順序を決定
-3. 各タスク用に git worktree を作成
+1. 读取 Plans.md，确定目标任务
+2. 分析依赖图，决定执行顺序
+3. 为每个任务创建 git worktree
 
-### Phase B: Delegate（Codex Host Orchestration）
+### Phase B: Delegate（Codex Host 编排）
 
 - If you grep the same symbol twice in the same session, switch to harness_ast_search.
 - For a bugfix where homologous implementations appear across multiple modules, run harness_ast_search to find all implementations before editing.
@@ -223,18 +223,18 @@ Advisor / Reviewer drift との関係:
 
 ```
 for task in execution_order:
-    # B-0. 作業ディレクトリ分離
+    # B-0. 作业目录分离
     worktree_path = "/tmp/worker-{task.number}-$$"
     branch_name = "worker-{task.number}-$$"
     git worktree add -b {branch_name} {worktree_path}
     TASK_BASE_REF = git rev-parse HEAD
 
-    # B-1. sprint-contract を生成
+    # B-1. 生成 sprint-contract
     contract_path = bash("node \"${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js\" {task.number}")
-    contract_path = bash("scripts/enrich-sprint-contract.sh {contract_path} --check \"DoD を reviewer 観点で確認\" --approve")
+    contract_path = bash("scripts/enrich-sprint-contract.sh {contract_path} --check \"从 reviewer 角度确认 DoD\" --approve")
     bash("scripts/ensure-sprint-contract-ready.sh {contract_path}")
 
-    # B-2. Worker 委託
+    # B-2. Worker 委托
     Plans.md: task.status = "cc:WIP"
 
     resolver_backend_arg = ""
@@ -248,7 +248,7 @@ for task in execution_order:
 
     if backend == "cursor":
         print("🚀 cursor / $(bash \"${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh\" --host cursor --role worker --field model) / {branch_name} / {task.ID}")
-        companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
+        companion_prompt = "{task prompt}\n\n完成更改后，在此 worktree 中创建恰好一个 git commit 然后返回。"
         companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"{companion_prompt}\"")
         latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
         if git("-C", worktree_path, "status", "--porcelain") != "":
@@ -260,7 +260,7 @@ for task in execution_order:
         worker_result = {type: "companion-result.v1", baseCommit: TASK_BASE_REF, commit: latest_commit, worktreePath: worktree_path, branch: branch_name, files_changed: git("-C", worktree_path, "diff", "--name-only", "{TASK_BASE_REF}..HEAD"), summary: companion_output}
         worker_id = null
     elif backend == "codex":
-        companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
+        companion_prompt = "{task prompt}\n\n完成更改后，在此 worktree 中创建恰好一个 git commit 然后返回。"
         companion_state_file = "{worktree_path}/.claude/state/codex-primary-environment.json"
         companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"{companion_prompt}\"")
         latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
@@ -271,12 +271,12 @@ for task in execution_order:
     else:
         print("🚀 claude / native-subagent / {branch_name} / {task.ID}")
         worker_id = spawn_agent({
-            message: "作業ディレクトリ: {worktree_path} で作業してください。\n\nタスク: {task.内容}\nDoD: {task.DoD}\ncontract_path: {contract_path}\n\n実装してください。完了後 git commit してください。\n\n完了時、以下の JSON を返してください:\n{\"commit\": \"<hash>\", \"files_changed\": [...], \"summary\": \"...\"}",
+            message: "请在作业目录: {worktree_path} 工作。\n\n任务: {task.内容}\nDoD: {task.DoD}\ncontract_path: {contract_path}\n\n请实现。完成后请 git commit。\n\n完成时请返回以下 JSON:\n{\"commit\": \"<hash>\", \"files_changed\": [...], \"summary\": \"...\"}",
             fork_context: true
         })
         worker_result = wait_agent({ targets: [worker_id] })
 
-    # B-3. Worker が advice request を返した時だけ、Lead が Advisor を呼ぶ
+    # B-3. 仅当 Worker 返回 advice request 时，Lead 调用 Advisor
     if backend == "claude" and worker_result.type == "advisor-request.v1":
         advisor_id = spawn_agent({
             agent_type: "default",
@@ -291,44 +291,44 @@ for task in execution_order:
         })
         worker_result = wait_agent({ targets: [worker_id] })
 
-    # B-4. Lead がレビュー実行（TASK_BASE_REF 起点）
-    # 公式プラグイン companion review を使用（harness-work の「レビューループ」参照）:
+    # B-4. Lead 执行审查（以 TASK_BASE_REF 为起点）
+    # 使用官方插件 companion review（参考 harness-work 的"审查循环"）:
     #   bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base {TASK_BASE_REF}
-    #   → verdict マッピング: approve→APPROVE, needs-attention→REQUEST_CHANGES
-    VERDICT = review_task(worktree_path, TASK_BASE_REF)  # static review（harness-work 参照）
+    #   → verdict 映射: approve→APPROVE, needs-attention→REQUEST_CHANGES
+    VERDICT = review_task(worktree_path, TASK_BASE_REF)  # static review（参考 harness-work）
     PROFILE = jq(contract_path, ".review.reviewer_profile")
     BROWSER_MODE = jq(contract_path, ".review.browser_mode // \"scripted\"")
     REVIEW_INPUT = "review-output.json"
     if PROFILE == "runtime":
-        # worktree 内で runtime checks を実行
+        # 在 worktree 内执行 runtime checks
         REVIEW_INPUT = bash("cd {worktree_path} && scripts/run-contract-review-checks.sh {contract_path}")
         RUNTIME_VERDICT = jq(REVIEW_INPUT, ".verdict")
         if RUNTIME_VERDICT == "REQUEST_CHANGES":
             VERDICT = "REQUEST_CHANGES"
         elif RUNTIME_VERDICT == "DOWNGRADE_TO_STATIC":
-            REVIEW_INPUT = "review-output.json"  # static review にフォールバック
+            REVIEW_INPUT = "review-output.json"  # 回退到 static review
     if PROFILE == "browser":
-        # browser artifact は PENDING_BROWSER scaffold。reviewer agent が後続で実行。
+        # browser artifact 是 PENDING_BROWSER scaffold。reviewer agent 在后续执行。
         BROWSER_ARTIFACT = bash("scripts/generate-browser-review-artifact.sh {contract_path}")
-        # REVIEW_INPUT は static review のまま維持
+        # REVIEW_INPUT 保持 static review
     if REVIEW_INPUT != "review-output.json" and jq(REVIEW_INPUT, ".verdict") == "DOWNGRADE_TO_STATIC":
         REVIEW_INPUT = "review-output.json"
     bash("scripts/write-review-result.sh {REVIEW_INPUT} {commit_hash}")
 
-    # B-5. 修正ループ（REQUEST_CHANGES 時、contract の max_iterations まで）
+    # B-5. 修正循环（REQUEST_CHANGES 时，直到 contract 的 max_iterations）
     review_count = 0
-    # sprint-contract が存在するときのみ max_iterations を読む。存在しない場合は 3（後方互換）
+    # 只在 sprint-contract 存在时读取 max_iterations。不存在则为 3（向后兼容）
     MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
     while VERDICT == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
         if backend == "claude":
             send_input({
                 target: worker_id,
-                message: "指摘内容: {issues}\n修正して git commit --amend してください。修正後 JSON を再出力してください。"
+                message: "指出内容: {issues}\n请修正并 git commit --amend。修正后再次输出 JSON。"
             })
             wait_agent({ targets: [worker_id] })
         elif backend == "cursor":
             previous_commit = git("-C", worktree_path, "rev-parse", "HEAD")
-            bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"Review findings:\n{issues}\n\nFix the findings and create one new git commit before returning.\"")
+            bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"Review findings:\n{issues}\n\n修正 findings 并在返回前创建一个新的 git commit。\"")
             latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
             if git("-C", worktree_path, "status", "--porcelain") != "":
                 git("-C", worktree_path, "add", "-A")
@@ -339,110 +339,110 @@ for task in execution_order:
         else:
             previous_commit = git("-C", worktree_path, "rev-parse", "HEAD")
             companion_state_file = "{worktree_path}/.claude/state/codex-primary-environment.json"
-            bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"Review findings:\n{issues}\n\nFix the findings and create one new git commit before returning.\"")
+            bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"Review findings:\n{issues}\n\n修正 findings 并在返回前 commit 结果。\"")
             latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
             if latest_commit == previous_commit:
                 raise EscalationError("codex companion retry produced no new commit")
         VERDICT = review_task(worktree_path, TASK_BASE_REF)
         review_count++
 
-    # B-6. Worker 終了
+    # B-6. Worker 结束
     if backend == "claude":
         close_agent({ target: worker_id })
 
-    # B-7. 結果処理
+    # B-7. 结果处理
     if VERDICT == "APPROVE":
         commit_hash = git("-C", worktree_path, "rev-parse", "HEAD")
         git cherry-pick --no-commit {TASK_BASE_REF}..{commit_hash}
         git commit -m "{task.内容}"
-        Plans.md: task.status = "cc:完了 [{short_hash}]"
+        Plans.md: task.status = "cc:完结 [{short_hash}]"
     else:
-        → ユーザーにエスカレーション（Plans.md は cc:WIP のまま）
-        → 後続タスクも停止
+        → 向用户升级（Plans.md 保持 cc:WIP）
+        → 后续任务也停止
 
-    # B-8. Worktree クリーンアップ
+    # B-8. Worktree 清理
     git worktree remove {worktree_path}
     git branch -D {branch_name}
 
     # B-9. Progress feed
-    print("📊 Progress: Task {completed}/{total} 完了 — {task.内容}")
+    print("📊 Progress: Task {completed}/{total} 完成 — {task.内容}")
 ```
 
-### ready task の並列 spawn（既定 max / `--max-workers N` 指定時）
+### ready task 的并行 spawn（默认 max / `--max-workers N` 指定时）
 
-Depends が満たされた ready task が複数ある場合、既定では ready task の数まで同時 spawn する。
-`--max-workers N` を指定すると、同時 spawn 数を N 件までに制限する。
-`--max-workers 1` は旧来の直列挙動に戻す escape hatch。
+当有多个满足 Depends 的 ready task 时，默认同时 spawn 到 ready task 的数量。
+指定 `--max-workers N` 时，将同时 spawn 数限制到 N 件。
+`--max-workers 1` 是回到传统串行行为的 escape hatch。
 
-> **`wait_agent` のセマンティクス**: `wait_agent({targets: [a, b]})` は最初に完了した1つを返す（全完了待ちではない）。
-> したがって、全 Worker の完了を待つにはループで個別に `wait_agent` を呼ぶ。
+> **`wait_agent` 的语义**: `wait_agent({targets: [a, b]})` 返回第一个完成的（不是等待全部完成）。
+> 因此，要等待所有 Worker 的完成需要循环分别调用 `wait_agent`。
 
 ```
-# 独立タスク A, B を並列 spawn（各自 worktree 分離済み）
-worker_a = spawn_agent({ message: "作業ディレクトリ: /tmp/worker-a-$$ ...", fork_context: true })
-worker_b = spawn_agent({ message: "作業ディレクトリ: /tmp/worker-b-$$ ...", fork_context: true })
+# 并行 spawn 独立任务 A, B（各自已分离 worktree）
+worker_a = spawn_agent({ message: "作业目录: /tmp/worker-a-$$ ...", fork_context: true })
+worker_b = spawn_agent({ message: "作业目录: /tmp/worker-b-$$ ...", fork_context: true })
 
-# 各 Worker の完了を個別に待ち → レビュー → cherry-pick（直列）
-# wait_agent は最初の1つを返すので、残りの Worker はまだ動作中
+# 分别等待每个 Worker 的完成 → 审查 → cherry-pick（串行）
+# wait_agent 返回第一个，所以其余 Worker 还在运行中
 for worker_id in [worker_a, worker_b]:
-    wait_agent({ targets: [worker_id] })    # この Worker の完了を待つ
-    VERDICT = review_task(worktree_path, TASK_BASE_REF)  # harness-work 参照
-    # 修正ループ（必要なら）...
+    wait_agent({ targets: [worker_id] })    # 等待此 Worker 的完成
+    VERDICT = review_task(worktree_path, TASK_BASE_REF)  # 参考 harness-work
+    # 修正循环（如需要）...
     close_agent({ target: worker_id })
     if VERDICT == "APPROVE":
         cherry-pick → Plans.md 更新
 ```
 
-> **制約**: 並列化できるのは Depends が満たされた ready task のみ。
-> max は ready task 数の上限であり、無制限 spawn ではない。
-> レビュー → cherry-pick は直列実行（main への書き込みが競合するため）。
+> **约束**: 只能并行化满足 Depends 的 ready task。
+> max 是 ready task 数的上限，不是无限制 spawn。
+> 审查 → cherry-pick 串行执行（因为对 main 的写入会冲突）。
 
-### Worker の出力契約
+### Worker 的输出契约
 
-Worker プロンプトには、完了時に以下の JSON を返すことを明示する:
+在 Worker 提示中，明确完成时返回以下 JSON：
 
 ```json
 {
   "commit": "a1b2c3d",
   "files_changed": ["src/foo.ts", "tests/foo.test.ts"],
-  "summary": "foo モジュールに bar 機能を追加"
+  "summary": "向 foo 模块添加 bar 功能"
 }
 ```
 
-Lead はこの JSON を解析して commit hash とファイル一覧を取得する。
+Lead 解析此 JSON 获取 commit hash 和文件列表。
 
-### Progress Feed（Phase B 中の進捗通知）
+### Progress Feed（Phase B 中的进度通知）
 
 ```
-📊 Progress: Task 1/5 完了 — "harness-work に失敗再チケット化を追加"
-📊 Progress: Task 2/5 完了 — "harness-sync に --snapshot を追加"
+📊 Progress: Task 1/5 完成 — "向 harness-work 添加失败再票决化"
+📊 Progress: Task 2/5 完成 — "向 harness-sync 添加 --snapshot"
 ```
 
-### 完了報告（Phase C）
+### 完成报告（Phase C）
 
-全タスク完了後、Lead が以下の手順でリッチ完了報告を生成:
+全部任务完成后，Lead 通过以下步骤生成丰富的完成报告：
 
-1. `git log --oneline {session_base_ref}..HEAD` で全 cherry-pick コミットを収集
-2. `git diff --stat {session_base_ref}..HEAD` で全体の変更規模を取得
-3. Plans.md の残タスクを抽出
-4. Breezing テンプレートに従い出力
+1. `git log --oneline {session_base_ref}..HEAD` 收集所有 cherry-pick commit
+2. `git diff --stat {session_base_ref}..HEAD` 获取全体变更规模
+3. 从 Plans.md 提取剩余任务
+4. 按照 Breezing 模板输出
 
-## Claude Code 版との差分
+## 与 Claude Code 版的差异
 
-| 項目 | Claude Code 版 | Codex ネイティブ版（本ファイル） |
+| 项目 | Claude Code 版 | Codex 原生版（本文件） |
 |------|---------------|-------------------------------|
 | Worker spawn | Claude Code Agent tool + worktree isolation | resolver result: `spawn_agent`, `codex-companion.sh`, or `cursor-companion.sh` + `git worktree add` |
-| 完了待ち | `Agent` の戻り値 | `wait_agent({targets: [id]})` |
+| 完成等待 | `Agent` 的返回值 | `wait_agent({targets: [id]})` |
 | 修正指示 | Claude Code message tool | `send_input({target, message})` |
-| Worker 終了 | 自動 | `close_agent({target})` |
-| レビュー | Codex exec → Reviewer agent fallback | companion `review --base`（構造化出力） |
-| 権限 | `bypassPermissions` + hooks | companion `task --write` / `spawn_agent`: セッション権限継承 |
-| Agent Teams | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 環境変数 | Codex native（標準機能） |
-| Worktree | `isolation="worktree"` 自動管理 | `git worktree add/remove` 手動管理 |
-| モード昇格 | タスク4件以上で自動 | `--breezing` 明示時のみ |
+| Worker 结束 | 自动 | `close_agent({target})` |
+| 审查 | Codex exec → Reviewer agent fallback | companion `review --base`（结构化输出） |
+| 权限 | `bypassPermissions` + hooks | companion `task --write` / `spawn_agent`: 继承会话权限 |
+| Agent Teams | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 环境变量 | Codex native（标准功能） |
+| Worktree | `isolation="worktree"` 自动管理 | `git worktree add/remove` 手动管理 |
+| 模式升级 | 4 个任务以上自动 | 仅 `--breezing` 明确时 |
 
 ## Related Skills
 
-- `harness-work` — 単一タスクからチーム実行まで（本体）
-- `harness-sync` — 進捗同期
-- `harness-review` — コードレビュー
+- `harness-work` — 从单个任务到团队执行（本体）
+- `harness-sync` — 进度同步
+- `harness-review` — 代码审查

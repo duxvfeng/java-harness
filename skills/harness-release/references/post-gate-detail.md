@@ -20,13 +20,13 @@ git pull --ff-only origin "$default_branch"
 git merge-base --is-ancestor "<release-commit>" "origin/$default_branch"
 ```
 
-既存 PR がある場合は新規作成せず、既存 PR の body を更新して merge する。repository policy が squash merge を要求する場合は、release commit hash ではなく release bump の内容（version files + CHANGELOG + source commits）が default branch に含まれることを確認する。
+现有 PR 时不新建，更新现有 PR 的 body 后 merge。repository policy 要求 squash merge 时，确认不是 release commit hash，而是 release bump 的内容（version files + CHANGELOG + source commits）包含在 default branch 中。
 
-tag はこの Gate 完了後、default branch の HEAD もしくは release commit 到達可能な commit に対して作る。release branch 上だけに存在する commit を指す tag で GitHub Release を作ってはいけない。
+tag 在此 Gate 完成后，对 default branch 的 HEAD 或 release commit 可到达的 commit 创建。不要用仅在 release branch 上存在的 commit 指向的 tag 创建 GitHub Release。
 
-## Claude plugin project の tag 作成
+## Claude plugin project 的 tag 创建
 
-`.claude-plugin/plugin.json` がある project では、PR/main merge 後に default branch 上でもう一度 version sync を確認してから plugin tag を作る:
+有 `.claude-plugin/plugin.json` 的 project，在 PR/main merge 后在 default branch 上再次确认 version sync 后创建 plugin tag:
 
 ```bash
 HARNESS_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-.}"
@@ -36,21 +36,21 @@ claude plugin tag .claude-plugin --dry-run
 claude plugin tag .claude-plugin --push --remote origin
 ```
 
-`claude plugin tag` が作る tag は `{plugin-name}--v{version}` 形式。既存の GitHub Release workflow が `vX.Y.Z` tag を前提にしている project では、plugin tag とは別に `git tag -a v<new>` を作る。plugin 配布の tag は `claude plugin tag` に任せ、GitHub Release 用 semver tag は release automation の互換 surface として扱う。
+`claude plugin tag` 创建的 tag 是 `{plugin-name}--v{version}` 格式。现有 GitHub Release workflow 以 `vX.Y.Z` tag 为前提的 project，除了 plugin tag 外还要创建 `git tag -a v<new>`。插件配布的 tag 交给 `claude plugin tag`，GitHub Release 用 semver tag 作为 release automation 的兼容 surface 处理。
 
 ## Verify Workflow Publish
 
-Tag push 後、`.github/workflows/release.yml` が release を自動公開する。skill は以下で結果を verify する:
+Tag push 后，`.github/workflows/release.yml` 自动公开 release。skill 用以下 verify 结果:
 
 ```bash
 OWNER="$(git remote get-url origin | sed 's|.*github.com[:/]\([^/]*/[^/]*\)\.git|\1|')"
 bash scripts/release-verify-publish.sh "v${NEW_VERSION}" "${OWNER}"
 ```
 
-タイムアウト: 5 秒間隔 × 60 回 = 最大 5 分 polling。
+超时: 5 秒间隔 × 60 次 = 最大 5 分钟 polling。
 
-- exit 0: PASS — `draft=false` 且つ assets 4 platform 揃って公開済
-- exit 2: WARN — timeout (tag は push 済のため abort せず人間判断を促す)
-- exit 3: ERROR — API error (権限/認証問題、手動調査が必要)
+- exit 0: PASS — `draft=false` 且 assets 4 platform 齐全已公开
+- exit 2: WARN — timeout (tag 已 push 所以不 abort，促使人工判断)
+- exit 3: ERROR — API error (权限/认证问题，需要手动调查)
 
-Verify は `gh api` 経由で行う。GitHub CLI の release subcommand prefix は CC runtime hard floor で deny されるため使わない。
+Verify 通过 `gh api` 进行。GitHub CLI 的 release subcommand prefix 在 CC runtime hard floor 被 deny，所以不使用。

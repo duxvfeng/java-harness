@@ -1,0 +1,152 @@
+name: 'Java Harness'
+description: 'Claude Code Hook 协议处理器和安全引擎 - Java 实现版本，提供亚毫秒级响应和15个安全规则保护'
+author: 'duxvfeng'
+
+inputs:
+  hook-event:
+    description: 'Hook 事件类型（PreToolUse, PostToolUse, 等）'
+    required: false
+    default: 'PreToolUse'
+
+  tool-name:
+    description: '工具名称'
+    required: false
+
+  tool-input:
+    description: '工具输入（JSON格式）'
+    required: false
+
+  config-file:
+    description: '自定义配置文件路径'
+    required: false
+    default: '.claude/settings.json'
+
+  log-level:
+    description: '日志级别'
+    required: false
+    default: 'INFO'
+    type: choice
+    options:
+      - DEBUG
+      - INFO
+      - WARN
+      - ERROR
+
+outputs:
+  decision:
+    description: '安全决策结果（allow/deny）'
+
+  reason:
+    description: '决策原因'
+
+  execution-time:
+    description: '执行时间（毫秒）'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'maven'
+
+    - name: Build Harness
+      shell: bash
+      run: |
+        echo "🔧 Building Java Harness..."
+        mvn clean package -DskipTests -q
+        HARNESS_JAR=$(find . -name 'harness-cli-*.jar' -not -name '*sources.jar' -not -name '*javadoc.jar' | head -1)
+        echo "Found JAR: $HARNESS_JAR"
+        echo "HARNESS_JAR=$HARNESS_JAR" >> $GITHUB_ENV
+        echo "HARNESS_JAR=$HARNESS_JAR" >> $GITHUB_OUTPUT
+
+    - name: Run Harness
+      shell: bash
+      id: harness
+      run: |
+        echo "🚀 Running Java Harness with Hook: ${{ inputs.hook-event }}"
+
+        # 构建输入 JSON
+        INPUT_JSON=$(cat <<EOF
+        {
+          "session_id": "${{ github.run_id }}",
+          "transcript_path": "${{ github.workspace }}/.claude/transcript.jsonl",
+          "cwd": "${{ github.workspace }}",
+          "permission_mode": "default",
+          "hook_event_name": "${{ inputs.hook-event }}",
+          "tool_name": "${{ inputs.tool-name }}",
+          "tool_input": ${{ inputs.tool-input }},
+          "plugin_root": "$HOME/.claude/plugins"
+        }
+        EOF
+        )
+
+        echo "Input: $INPUT_JSON"
+
+        # 记录开始时间
+        START_TIME=$(date +%s%3N)
+
+        # 运行 Harness
+        echo "$INPUT_JSON" | java -jar "$HARNESS_JAR" 2>&1 | tee harness-raw-output.json
+
+        # 记录结束时间
+        END_TIME=$(date +%s%3N)
+        EXECUTION_TIME=$((END_TIME - START_TIME))
+
+        echo "⏱️ Execution time: ${EXECUTION_TIME}ms"
+
+        # 提取输出（假设输出格式为 JSON）
+        if [ -f harness-raw-output.json ]; then
+          DECISION=$(jq -r '.permissionDecision // "allow"' harness-raw-output.json 2>/dev/null || echo "allow")
+          REASON=$(jq -r '.permissionDecisionReason // null' harness-raw-output.json 2>/dev/null || echo "null")
+
+          echo "🔒 Decision: $DECISION"
+          echo "📝 Reason: $REASON"
+
+          # 设置输出
+          echo "decision=$DECISION" >> $GITHUB_OUTPUT
+          echo "reason=$REASON" >> $GITHUB_OUTPUT
+          echo "execution-time=$EXECUTION_TIME" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ No output file generated"
+          echo "decision=allow" >> $GITHUB_OUTPUT
+          echo "reason=No output" >> $GITHUB_OUTPUT
+          echo "execution-time=$EXECUTION_TIME" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Display Results
+      shell: bash
+      run: |
+        echo "## 🛡️ Java Harness Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| 🎯 Decision | ${{ steps.harness.outputs.decision }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📝 Reason | ${{ steps.harness.outputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| ⏱️ Execution Time | ${{ steps.harness.outputs.execution-time }}ms |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📦 Hook Event | ${{ inputs.hook-event }} |" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.harness.outputs.decision }}" = "deny" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **操作被阻止** - 此操作违反了安全策略" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        else
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **操作允许** - 此操作通过了所有安全检查" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload Output
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: harness-output-${{ github.run_id }}
+        path: |
+          harness-raw-output.json
+          harness-output.json
+        retention-days: 7

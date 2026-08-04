@@ -1,24 +1,24 @@
 # Cursor Review (--cursor) — second-opinion only
 
-cursor (composer-2.5-fast) を harness-review の **second-opinion** として並走させる lean モード。
-`--cursor` 明示時、または resolver が `cursor` を返す時（例: `HARNESS_IMPL_BACKEND=cursor` / user-scope default ON）に同等 trigger。
+让 cursor (composer-2.5-fast) 作为 harness-review 的 **second-opinion** 并行的 lean 模式。
+`--cursor` 显式时，或 resolver 返回 `cursor` 时（例: `HARNESS_IMPL_BACKEND=cursor` / user-scope default ON）同等触发。
 
-## 不変ルール
+## 不变规则
 
-- **cursor は primary reviewer に昇格しない**。Opus reviewer が必ず並走し、primary verdict は Opus から取る。cursor 出力は `dual_review.cursor_verdict` に advisory として格納する。
-- 根拠: `harness-work` の「実装したバックエンドが自分の出力をレビューしてはならない」不変ルール (cursor backend で書いたコードを cursor backend にレビューさせる構成を避ける)。
-- cursor は read-only delegate のため、worktree 隔離 / Lead diff review / cherry-pick / `worker-report.v1` は **不要**。
-- default ON 判定は `HARNESS_IMPL_BACKEND` env の直読みではなく、必ず `bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role reviewer` の結果で行う。project `env.local` / user-scope default / call-site default を取りこぼさないため。
+- **cursor 不升格为 primary reviewer**。Opus reviewer 始终并行，primary verdict 从 Opus 获取。cursor 输出作为 advisory 存储在 `dual_review.cursor_verdict` 中。
+- 理由: `harness-work` 的"实现的后端不得审查自己的输出"不变则（避免用 cursor backend 写的代码让 cursor backend 审查的配置）。
+- cursor 为 read-only delegate，因此 worktree 隔离 / Lead diff review / cherry-pick / `worker-report.v1` **不需要**。
+- default ON 判定不是直接读取 `HARNESS_IMPL_BACKEND` env，而是必定用 `bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role reviewer` 的结果进行。为不遗漏 project `env.local` / user-scope default / call-site default。
 
-## 委譲前 mandatory banner
+## 委托前 mandatory banner
 
-cursor delegate を起動する前に、必ず以下の literal 1 行を出力する:
+启动 cursor delegate 前，必须输出以下 literal 1 行：
 
 ```
-⚠️ cursor review (read-only): model=composer-2.5-fast / R01-R13 は cursor-agent 内部に適用されない / 出力は Lead 評定まで untrusted
+⚠️ cursor review (read-only): model=composer-2.5-fast / R01-R13 不适用于 cursor-agent 内部 / 输出到 Lead 评定前 untrusted
 ```
 
-## 委譲コマンド (read-only、workspace 不要)
+## 委托命令（read-only、无需 workspace）
 
 ```bash
 HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
@@ -32,40 +32,40 @@ fi
 bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task "<review prompt>"
 ```
 
-- `--write` を **絶対に付けない** (cursor-companion.sh は `--write` 未指定で default `--mode ask` = hard read-only stop)
-- `--workspace` も **付けない** (read mode では companion guard が発火せず optional 扱い、不要)
-- `--force` / `--yolo` も付けない (Cursor 公式 "Never use")
+- **绝对不要加** `--write`（cursor-companion.sh 未指定 `--write` 时 default `--mode ask` = 硬 read-only 停止）
+- 也**不要加** `--workspace`（read mode 时 companion guard 不触发为 optional，不需要）
+- 也不要加 `--force` / `--yolo`（Cursor 官方 "Never use"）
 
-review prompt の構成例:
+review prompt 的构成例：
 
 ```
-diff レビュー (base_ref={BASE_REF}, head=HEAD):
+diff 审查（base_ref={BASE_REF}, head=HEAD）：
 
-<git diff の要点 or branch range>
+<git diff 要点 or branch range>
 
-観点:
-- 仕様逸脱 / 範囲外変更
-- 既存テスト regression リスク
-- secret / 認証情報の混入
-- protected path (settings*, .eslintrc*, tsconfig*.json) への変更
+观点:
+- 规格逸脱 / 范围外变更
+- 现有测试 regression 风险
+- secret / 认证信息混入
+- 对 protected path（settings*, .eslintrc*, tsconfig*.json）的变更
 
-verdict は APPROVE / REQUEST_CHANGES / NEEDS_INFO のいずれかで返す。
+verdict 返回 APPROVE / REQUEST_CHANGES / NEEDS_INFO 之一。
 ```
 
-## Trust boundary (read mode でも保持必須)
+## Trust boundary（read mode 也必须保持）
 
-| 項目 | 内容 | 設定場所 |
+| 项目 | 内容 | 设置位置 |
 |---|---|---|
-| Secret 遮断 | `.cursorignore` で `.env` / `*.pem` / `*.key` / `.ssh` / `.aws` / `.git` を除外 | repo root |
-| Egress allowlist | `~/.claude/settings.json` の `sandbox.network.allowedDomains` に `*.cursor.sh` | user settings |
-| Filesystem allowlist | 同 `sandbox.filesystem.allowWrite` に `~/.cursor` | user settings |
-| permissions.json | `~/.cursor/permissions.json` の `terminalAllowlist` / `mcpAllowlist` (best-effort、security boundary ではない) | user config |
+| Secret 遮断 | `.cursorignore` 中排除 `.env` / `*.pem` / `*.key` / `.ssh` / `.aws` / `.git` | repo root |
+| Egress allowlist | `~/.claude/settings.json` 的 `sandbox.network.allowedDomains` 中添加 `*.cursor.sh` | user settings |
+| Filesystem allowlist | 同 `sandbox.filesystem.allowWrite` 中添加 `~/.cursor` | user settings |
+| permissions.json | `~/.cursor/permissions.json` 的 `terminalAllowlist` / `mcpAllowlist`（best-effort、非 security boundary） | user config |
 
-cursor 公式は "Allowlists are best-effort convenience. They are not a security guarantee." と明言。これら 4 点は **read mode でも保持必要**だが、依存しすぎないこと。実効的境界は Lead 判定。
+cursor 官方明言"Allowlists are best-effort convenience. They are not a security guarantee."。这 4 点即使在 **read mode 也必须保持**，但不要过度依赖。实效边界为 Lead 判定。
 
-## Verdict マッピング
+## Verdict 映射
 
-cursor 出力を以下の schema 拡張で `dual_review` に格納する (`references/dual-review.md` 参照):
+将 cursor 输出按以下 schema 扩展存储在 `dual_review` 中（参考 `references/dual-review.md`）：
 
 ```json
 {
@@ -76,28 +76,28 @@ cursor 出力を以下の schema 拡張で `dual_review` に格納する (`refer
 }
 ```
 
-- `cursor_verdict` は **optional field**。`--dual` / `--cursor` を指定したときだけ追加される
-- `cursor_divergence_notes`: Claude/Codex/Cursor の verdict が割れた場合に Lead が記入
-- 既存 consumer (HTML render / harness-accept 等) は optional 扱いで parser を壊さない
+- `cursor_verdict` 为 **optional field**。仅在指定 `--dual` / `--cursor` 时添加
+- `cursor_divergence_notes`: Claude/Codex/Cursor 的 verdict 分岐时由 Lead 填入
+- 现有 consumer（HTML render / harness-accept 等）作为 optional 处理以不破坏 parser
 
-## Verdict 統合ルール
+## Verdict 整合规则
 
-primary verdict (Opus reviewer) を最優先。cursor / codex は **advisory**:
+优先采用 primary verdict（Opus reviewer）。cursor / codex 为 **advisory**：
 
-| Opus | Codex | Cursor | 最終 verdict |
+| Opus | Codex | Cursor | 最终 verdict |
 |---|---|---|---|
-| APPROVE | approve | APPROVE | APPROVE (3 者一致、最高信頼) |
-| APPROVE | approve | REQUEST_CHANGES | APPROVE + cursor_divergence_notes (Opus 優先、cursor の指摘は次回 PR の改善点として記録) |
-| REQUEST_CHANGES | * | * | REQUEST_CHANGES (Opus が REQUEST なら即 REQUEST) |
-| APPROVE | needs-attention | * | TeamAgent Debate を実行 (`--team-debate`) |
+| APPROVE | approve | APPROVE | APPROVE（3 者一致、最高可信） |
+| APPROVE | approve | REQUEST_CHANGES | APPROVE + cursor_divergence_notes（Opus 优先、cursor 的指出作为下次 PR 的改善点记录） |
+| REQUEST_CHANGES | * | * | REQUEST_CHANGES（Opus 为 REQUEST 时立即 REQUEST） |
+| APPROVE | needs-attention | * | 执行 TeamAgent Debate (`--team-debate`) |
 
-## 不可逆ガード
+## 不可逆保证
 
-cursor からの suggested edit は **実コードで確認してから採否を決める** (`codex-closeout.md` の Advisory rule と同じ契約)。cursor が「この行を削除すべき」と言っても、Lead が diff の文脈と影響範囲を確認してから判断する。cursor 単独で commit / push を発火させない。
+对于来自 cursor 的 suggested edit，**在实代码中确认后决定采否**（与 `codex-closeout.md` 的 Advisory rule 相同契约）。即使 cursor 说"应删除此行"，Lead 也要确认 diff 的上下文和影响范围后再判断。不让 cursor 单独触发 commit / push。
 
 ## Related
 
 - `.claude/rules/cursor-cli-only.md` — Cursor backend governance + Read mode delegation
-- `references/dual-review.md` — dual / triple review の合格ライン統合
-- `references/governance.md` — review 全体の合格ライン
-- `skills/cursor-ask/SKILL.md` — read-only delegate の汎用版 (review 以外の質問・調査)
+- `references/dual-review.md` — dual / triple review 的合格线整合
+- `references/governance.md` — review 整体的合格线
+- `skills/cursor-ask/SKILL.md` — read-only delegate 的通用版（审查以外的提问・调查）

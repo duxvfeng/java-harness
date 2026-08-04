@@ -56,43 +56,43 @@ Generated with [Claude Code](https://claude.com/claude-code)
 
 ### Language
 
-- **GitHub Release**: English required（公開リポジトリのため）
-- **CHANGELOG.md**: **日本語**で詳細な Before/After 形式（後述）
+- **GitHub Release**: English required（公开仓库用）
+- **CHANGELOG.md**: **中文**采用详细的 Before/After 格式（后述）
 - Keep descriptions user-focused
 
-## CHANGELOG フォーマット（日本語・詳細 Before/After）
+## CHANGELOG 格式（中文・详细 Before/After）
 
-CHANGELOG は各機能を「今まで → 今後」形式で具体的に記述する:
+CHANGELOG 将各功能以"迄今为止 → 今后"格式具体记述:
 
 ```markdown
 ## [X.Y.Z] - YYYY-MM-DD
 
-### テーマ: [変更全体を一言で]
+### 主题: [用一句话概括整体变更]
 
-**[ユーザーにとっての価値を1〜2文で]**
+**[用1~2句话描述对用户的价值]**
 
 ---
 
-#### 1. [機能名]
+#### 1. [功能名称]
 
-**今まで**: [旧動作。ユーザーが体験していた不便を具体的に描写]
+**迄今为止**: [旧行为。具体描述用户经历的不便之处]
 
-**今後**: [新動作。何が解決するか + 具体例]
+**今后**: [新行为。解决了什么 + 具体示例]
 
-```出力例やコマンド例```
+```输出示例或命令示例```
 
-#### 2. [次の機能名]
+#### 2. [下一个功能名称]
 
-**今まで**: ...
-**今後**: ...
+**迄今为止**: ...
+**今后**: ...
 ```
 
-**書き方ルール**:
-- 各機能を `#### N. 機能名` で独立セクションにする
-- 「今まで」は**課題描写**（「〜する必要がありました」形式）
-- 「今後」は**解決の具体像**（コマンド例・出力例を含める）
-- 長くてOK。読みやすさが最優先
-- テクニカル詳細（ファイル名、ステップ番号）は「今後」の補足として最小限に
+**书写规则**:
+- 各功能用 `#### N. 功能名` 设为独立章节
+- "迄今为止"是**问题描述**（"〜需要〜"的形式）
+- "今后"是**解决的具体形象**（包含命令示例/输出示例）
+- 长也可以。可读性最优先
+- 技术细节（文件名、步骤编号）在"今后"的补充中保持最少
 
 ## Prohibited
 
@@ -119,13 +119,13 @@ CHANGELOG は各機能を「今まで → 今後」形式で具体的に記述�
 ## Good Example (CHANGELOG — Japanese)
 
 ```markdown
-#### 1. 失敗タスクの自動再チケット化
+#### 1. 失败任务的自动重新生成票据
 
-**今まで**: テスト/CI が失敗すると3回リトライして止まるだけでした。
-止まった後は「何が原因だったか」を自分で調べ、Plans.md に手動で修正タスクを追加する必要がありました。
+**迄今为止**: 测试/CI 失败时只会重试 3 次然后停止。
+停止后需要自己调查"原因是什么"，手动将修正任务添加到 Plans.md。
 
-**今後**: 3回失敗で止まるとき、Harness が失敗原因を分類し、修正タスク案を自動生成します。
-承認すると Plans.md に `.fix` タスクとして自動追加されます。
+**今后**: 3 次失败停止时，Harness 会分类失败原因，自动生成修正任务方案。
+批准后作为 `.fix` 任务自动添加到 Plans.md。
 ```
 
 ## Bad Example
@@ -140,27 +140,27 @@ CHANGELOG は各機能を「今まで → 今後」形式で具体的に記述�
 
 -> Doesn't communicate user value
 
-## マージ方式（merge commit 固定 / squash 不採用）
+## 合并方式（固定 merge commit / 不采用 squash）
 
-release PR および main へ取り込む PR は **merge commit** (`gh pr merge --merge` /
-`git merge --no-ff`) を使う。squash / rebase は不採用（Phase 114 preamble 裁定 2026-07-14）。
+release PR 以及合并到 main 的 PR 使用 **merge commit** (`gh pr merge --merge` /
+`git merge --no-ff`)。不采用 squash / rebase（Phase 114 preamble 裁定 2026-07-14）。
 
-**なぜ**: Plans.md は task の Status 列に commit hash を台帳として埋めている
-（例: 113.1 `cc:done [fa2b9c37]`）。squash はこれらの hash を main の ancestry から
-外し、台帳と履歴の突合（`scripts/ci/check-branch-alignment-ledger.sh`、AR-16）を
-破壊する。squash は技術的には可能（3 方式許可 + binary は `-buildvcs=false` で
-SHA 非依存）だが、hash 台帳が Plans.md に存在する限り採用しない。
+**原因**: Plans.md 在 task 的 Status 列中埋入 commit hash 作为台账
+（例: 113.1 `cc:done [fa2b9c37]`）。squash 会将这些 hash 从 main 的 ancestry 中
+移除，破坏台账与历史的核对（`scripts/ci/check-branch-alignment-ledger.sh`、AR-16）。
+squash 技术上可行（3 种方式允许 + binary 用 `-buildvcs=false` 实现
+SHA 非依赖），但只要 Plans.md 存在 hash 台账方式就不采用。
 
-- 機械 gate: merge 前に `bash scripts/ci/check-branch-alignment-ledger.sh` exit 0 を確認する
-- 先例: v5.0.0 の #235 / #236 も merge commit
-- 見直し条件: Plans.md が hash 台帳方式をやめた時のみ再検討する
+- 机器 gate: merge 前确认 `bash scripts/ci/check-branch-alignment-ledger.sh` exit 0
+- 先例: v5.0.0 的 #235 / #236 也是 merge commit
+- 重新审视条件: 只有 Plans.md 停止 hash 台账方式时再探讨
 
-## Release evidence の保存（v5.1.0 監査指摘の codify）
+## Release evidence 的保存（v5.1.0 审计指出的 codify）
 
-upgrade smoke（旧 version → 新 version の実測）や release gate の実行ログは、
-宣言だけでなく **artifact として `.claude/state/release-evidence/<version>/` に保存**する。
-Plans.md の cc:done マーカーが「実測した」と主張する項目には、対応するログファイルか
-コマンド出力の記録が存在しなければならない（SA-13 completeness 監査 2026-07-16 の指摘）。
+upgrade smoke（旧版本 → 新版本的实测）和 release gate 的执行日志，
+不仅是声明，还要作为 artifact **保存到 `.claude/state/release-evidence/<version>/`**。
+Plans.md 的 cc:done 标记声称"实测了"的项目，必须有对应的日志文件或
+命令输出的记录（SA-13 completeness 审计 2026-07-16 的指出）。
 
 ## Release Creation Command
 
@@ -183,73 +183,73 @@ EOF
 )"
 ```
 
-## CC バージョン統合時の CHANGELOG パターン
+## CC 版本集成时的 CHANGELOG 模式
 
-Claude Code の新バージョン統合を含むリリースでは、通常の「今まで / 今後」形式ではなく、
-**「CC のアプデ → Harness での活用」形式**を使用する。
-上流（CC）の変更理由から説明することで、読者が「なぜこの変更が自分に関係あるか」を文脈から理解できる。
+包含 Claude Code 新版本集成的 release，不使用通常的"迄今为止 / 今后"格式，
+而是使用**"CC 的更新 → Harness 中的应用"**格式。
+从上游（CC）的变更理由开始说明，让读者从语境中理解"为什么这个变更与自己有关"。
 
 ### 判定条件
 
-以下のいずれかに該当する場合、このパターンを適用する:
+符合以下任一情况时，应用此模式:
 
-- Feature Table のバージョン表記が更新されている
-- hooks.json に CC 由来の新イベントが追加されている
-- skills に CC 新機能の活用ガイドが追記されている
+- Feature Table 的版本表记已更新
+- hooks.json 中添加了 CC 来源的新事件
+- skills 中追记了 CC 新功能的应用指南
 
-### 構造
+### 结构
 
 ```markdown
-#### N. Claude Code X.Y.Z 統合
+#### N. Claude Code X.Y.Z 集成
 
-（1 行で全体概要）
+（1 行概括整体）
 
-##### N-1. 機能名
+##### N-1. 功能名称
 
-**CC のアプデ**: Claude Code で何が変わったか。ユーザー視点で、その機能が何をするものか分かるように説明。
+**CC 的更新**: Claude Code 中有什么变化。从用户视角说明，让用户理解该功能的用途。
 
-**Harness での活用**: その変更を Harness がどう活かしているか。具体的な仕組み（スクリプト名、フロー）を含める。
+**Harness 中的应用**: Harness 如何利用该变更。包含具体的机制（脚本名、流程）。
 
-##### N-2. 次の機能名
+##### N-2. 下一个功能名称
 
-**CC のアプデ**: ...
-**Harness での活用**: ...
+**CC 的更新**: ...
+**Harness 中的应用**: ...
 ```
 
-### 書き方ルール
+### 书写规则
 
-- 機能ごとに `##### N-X.` で独立セクションにする
-- 「CC のアプデ」はファイル変更ではなく**ユーザー体験の変化**を書く
-- 「Harness での活用」は**具体的な仕組み**（何が動くか、何が防がれるか）を書く
-- ファイル名の羅列は避ける。「hooks.json を更新」ではなく「Worker のフリーズを防止」のように書く
-- ドキュメントのみの変更（Feature Table 更新、詳細セクション追加）は個別エントリにせず、冒頭の概要 1 行に含める
+- 各功能用 `##### N-X.` 设为独立章节
+- "CC 的更新"不写文件变更，而是写**用户体验的变化**
+- "Harness 中的应用"写**具体机制**（什么会运行、什么会被防止）
+- 避免文件名罗列。不写"更新了 hooks.json"，而是写"防止 Worker 的冻结"
+- 仅文档的变更（Feature Table 更新、添加详细章节）不作为单独条目，包含在开头的概述 1 行中
 
 ### Good Example
 
 ```markdown
-##### 5-1. MCP Elicitation への自動対応
+##### 5-1. 对 MCP Elicitation 的自动应对
 
-**CC のアプデ**: MCP サーバーが、タスク実行中にユーザーへ「質問」できるようになった（Elicitation）。
-例えば「どのリポジトリに push しますか？」のようなフォーム入力を求められる。
+**CC 的更新**: MCP 服务器可以在任务执行期间向用户"提问"（Elicitation）。
+例如会被要求表单输入，比如"要 push 到哪个仓库？"。
 
-**Harness での活用**: Breezing の Worker はバックグラウンド実行のため質問フォームに応答できない。
-放置すると Worker がフリーズする。elicitation-handler.sh を新規作成し、
-Breezing セッション中は自動スキップ、通常セッションではそのまま通過してユーザーが回答する仕組みを実装。
+**Harness 中的应用**: Breezing 的 Worker 是后台执行，无法回答提问表单。
+放置不管会导致 Worker 冻结。新创建 elicitation-handler.sh，
+实现 Breezing 会话中自动跳过、通常会话中原样通过让用户回答的机制。
 ```
 
 ### Bad Example
 
 ```markdown
-#### CC 2.1.76 統合
+#### CC 2.1.76 集成
 
-- hooks.json に Elicitation を追加
-- elicitation-handler.sh を作成
-- CLAUDE.md を更新
+- 向 hooks.json 添加 Elicitation
+- 创建 elicitation-handler.sh
+- 更新 CLAUDE.md
 ```
 
-→ ファイル変更の羅列で、なぜその変更が必要だったか、ユーザーにとって何が変わるかが伝わらない
+→ 文件变更的罗列，没有传达为什么需要该变更，对用户来说有什么变化
 
 ## Reference
 
-- Good examples: v2.8.0, v2.8.2, v2.9.1, v3.10.3 (CC統合パターン)
+- Good examples: v2.8.0, v2.8.2, v2.9.1, v3.10.3 (CC集成模式)
 - Keep consistent with CHANGELOG
