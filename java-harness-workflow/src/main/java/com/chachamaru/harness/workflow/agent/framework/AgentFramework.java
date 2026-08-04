@@ -1,5 +1,8 @@
 package com.chachamaru.harness.workflow.agent.framework;
 
+import com.chachamaru.harness.workflow.agent.core.AdvisorAgent;
+import com.chachamaru.harness.workflow.agent.core.ReviewerAgent;
+import com.chachamaru.harness.workflow.agent.core.WorkerAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
@@ -21,15 +24,14 @@ public class AgentFramework implements AutoCloseable {
     }
 
     private void initializeCoreAgents() {
-        // 阶段1：暂时使用占位符，后续会替换为真实的 Agent 实现
         logger.info("Initializing core agents");
 
-        // 核心Agent将在后续任务中实现：
-        // - WorkerAgent
-        // - ReviewerAgent
-        // - AdvisorAgent
+        // 注册核心 Agent
+        registerAgent(new WorkerAgent());
+        registerAgent(new ReviewerAgent());
+        registerAgent(new AdvisorAgent());
 
-        logger.info("AgentFramework initialized (ready for agent registration)");
+        logger.info("AgentFramework initialized with {} core agents", getAgentCount());
     }
 
     public void registerAgent(Agent agent) {
