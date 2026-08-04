@@ -30,8 +30,8 @@ public class ExecutionContextVerification {
         context.setVariable("flag", true);
 
         assert "Alice".equals(context.getVariable("name")) : "String variable failed";
-        assert 42 == context.getVariable("count") : "Integer variable failed";
-        assert true == context.getVariable("flag") : "Boolean variable failed";
+        assert Integer.valueOf(42).equals(context.getVariable("count", Integer.class)) : "Integer variable failed";
+        assert Boolean.TRUE.equals(context.getVariable("flag", Boolean.class)) : "Boolean variable failed";
 
         assert context.hasVariable("name") : "hasVariable check failed";
         assert !context.hasVariable("nonexistent") : "hasVariable for non-existent failed";

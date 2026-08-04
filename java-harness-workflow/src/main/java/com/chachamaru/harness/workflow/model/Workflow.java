@@ -31,8 +31,18 @@ public class Workflow {
     public WorkflowOutput getOnSuccess() { return onSuccess; }
     public void setOnSuccess(WorkflowOutput onSuccess) { this.onSuccess = onSuccess; }
 
+    /**
+     * SnakeYAML 兼容 setter：YAML 中使用下划线命名 on_success。
+     */
+    public void setOn_success(WorkflowOutput on_success) { this.onSuccess = on_success; }
+
     public WorkflowOutput getOnError() { return onError; }
     public void setOnError(WorkflowOutput onError) { this.onError = onError; }
+
+    /**
+     * SnakeYAML 兼容 setter：YAML 中使用下划线命名 on_error。
+     */
+    public void setOn_error(WorkflowOutput on_error) { this.onError = on_error; }
 
     /**
      * 工作流步骤模型
@@ -45,6 +55,7 @@ public class Workflow {
         private StepOutput output;
         private String mode; // required | optional
         private boolean parallel; // 是否并行执行
+        private String loop; // 循环变量名
 
         // Getters and Setters
         public String getId() { return id; }
@@ -67,14 +78,17 @@ public class Workflow {
 
         public boolean isParallel() { return parallel; }
         public void setParallel(boolean parallel) { this.parallel = parallel; }
+
+        public String getLoop() { return loop; }
+        public void setLoop(String loop) { this.loop = loop; }
     }
 
     /**
      * 步骤输入模型
      */
     public static class StepInput {
-        private List<String> files;
-        private Map<String, Object> variables;
+        private Object files;                  // YAML 中可能是字符串模板或列表
+        private List<String> variables;        // YAML 中为变量名列表
         private List<String> contextFrom;
         private List<String> templates;
         private String action;
@@ -83,14 +97,49 @@ public class Workflow {
         private String target;
 
         // Getters and Setters
-        public List<String> getFiles() { return files; }
-        public void setFiles(List<String> files) { this.files = files; }
+        public Object getFiles() { return files; }
 
-        public Map<String, Object> getVariables() { return variables; }
-        public void setVariables(Map<String, Object> variables) { this.variables = variables; }
+        /**
+         * SnakeYAML 兼容 setter：files 在 YAML 中可能是字符串模板或列表。
+         */
+        @SuppressWarnings("unchecked")
+        public void setFiles(Object files) {
+            if (files instanceof String) {
+                this.files = java.util.List.of((String) files);
+            } else if (files instanceof java.util.List) {
+                this.files = (java.util.List<String>) files;
+            } else {
+                this.files = null;
+            }
+        }
+
+        /**
+         * 以列表形式获取 files，兼容 YAML 中的字符串模板或列表写法。
+         */
+        @SuppressWarnings("unchecked")
+        public java.util.List<String> getFilesAsList() {
+            if (files == null) {
+                return null;
+            }
+            if (files instanceof String) {
+                return java.util.List.of((String) files);
+            }
+            if (files instanceof java.util.List) {
+                return (java.util.List<String>) files;
+            }
+            return null;
+        }
+
+        public List<String> getVariables() { return variables; }
+        public void setVariables(List<String> variables) { this.variables = variables; }
 
         public List<String> getContextFrom() { return contextFrom; }
         public void setContextFrom(List<String> contextFrom) { this.contextFrom = contextFrom; }
+
+        /**
+         * SnakeYAML 兼容 setter：YAML 中使用下划线命名 context_from。
+         */
+        public void setContext_from(List<String> context_from) { this.contextFrom = context_from; }
 
         public List<String> getTemplates() { return templates; }
         public void setTemplates(List<String> templates) { this.templates = templates; }
@@ -112,23 +161,47 @@ public class Workflow {
      * 步骤输出模型
      */
     public static class StepOutput {
-        private Map<String, Object> variables;
+        private List<String> variables;        // YAML 中为输出变量名列表
         private List<String> updateFiles;
         private List<String> createFiles;
+        private boolean createdFiles;          // YAML 中 created_files 布尔标志
         private boolean userMessage;
 
         // Getters and Setters
-        public Map<String, Object> getVariables() { return variables; }
-        public void setVariables(Map<String, Object> variables) { this.variables = variables; }
+        public List<String> getVariables() { return variables; }
+        public void setVariables(List<String> variables) { this.variables = variables; }
 
         public List<String> getUpdateFiles() { return updateFiles; }
         public void setUpdateFiles(List<String> updateFiles) { this.updateFiles = updateFiles; }
 
+        /**
+         * SnakeYAML 兼容 setter：YAML 中使用下划线命名 update_files。
+         */
+        public void setUpdate_files(List<String> update_files) { this.updateFiles = update_files; }
+
         public List<String> getCreateFiles() { return createFiles; }
         public void setCreateFiles(List<String> createFiles) { this.createFiles = createFiles; }
 
+        /**
+         * SnakeYAML 兼容 setter：YAML 中使用下划线命名 create_files。
+         */
+        public void setCreate_files(List<String> create_files) { this.createFiles = create_files; }
+
+        public boolean isCreatedFiles() { return createdFiles; }
+        public void setCreatedFiles(boolean createdFiles) { this.createdFiles = createdFiles; }
+
+        /**
+         * SnakeYAML 兼容 setter：YAML 中使用下划线命名 created_files。
+         */
+        public void setCreated_files(boolean created_files) { this.createdFiles = created_files; }
+
         public boolean isUserMessage() { return userMessage; }
         public void setUserMessage(boolean userMessage) { this.userMessage = userMessage; }
+
+        /**
+         * SnakeYAML 兼容 setter：YAML 中使用下划线命名 user_message。
+         */
+        public void setUser_message(boolean user_message) { this.userMessage = user_message; }
     }
 
     /**
