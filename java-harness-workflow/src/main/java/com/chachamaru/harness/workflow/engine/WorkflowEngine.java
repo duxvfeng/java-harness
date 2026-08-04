@@ -234,9 +234,8 @@ public class WorkflowEngine {
         // 添加步骤输入变量
         if (step.getInput() != null && step.getInput().getVariables() != null) {
             // 渲染变量值（支持变量替换）
-            Map<String, Object> inputVars = step.getInput().getVariables();
-            for (Map.Entry<String, Object> entry : inputVars.entrySet()) {
-                String varName = entry.getKey();
+            List<String> inputVars = step.getInput().getVariables();
+            for (String varName : inputVars) {
                 if (executionContext.hasVariable(varName)) {
                     configuration.put(varName, executionContext.getVariable(varName));
                 }
@@ -262,8 +261,8 @@ public class WorkflowEngine {
             if (stepExecution.getStep().getOutput() != null &&
                 stepExecution.getStep().getOutput().getVariables() != null) {
 
-                Map<String, Object> outputVars = stepExecution.getStep().getOutput().getVariables();
-                for (String varName : outputVars.keySet()) {
+                List<String> outputVars = stepExecution.getStep().getOutput().getVariables();
+                for (String varName : outputVars) {
                     if (stepExecution.getOutput().containsKey(varName)) {
                         Object value = stepExecution.getOutput().get(varName);
                         executionContext.setVariable(varName, value);

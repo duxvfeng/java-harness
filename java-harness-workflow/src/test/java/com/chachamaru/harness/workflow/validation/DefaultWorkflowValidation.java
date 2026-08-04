@@ -2,7 +2,7 @@ package com.chachamaru.harness.workflow.validation;
 
 import com.chachamaru.harness.workflow.loader.WorkflowLoader;
 import com.chachamaru.harness.workflow.loader.WorkflowException;
-import com.chachamaru.harness.workflow.models.Workflow;
+import com.chachamaru.harness.workflow.model.Workflow;
 
 import java.io.File;
 import java.util.HashMap;
@@ -150,7 +150,7 @@ public class DefaultWorkflowValidation {
     /**
      * 验证单个工作流的结构
      */
-    private static void validateWorkflowStructure(Workflow workflow, String workflowName) {
+    private static void validateWorkflowStructure(Workflow workflow, String workflowName) throws WorkflowException {
         assert workflow != null : workflowName + " workflow 为 null";
         assert workflow.getPhase() != null : workflowName + " 缺少 phase";
         assert !workflow.getPhase().isEmpty() : workflowName + " phase 为空";
@@ -175,7 +175,7 @@ public class DefaultWorkflowValidation {
             // 验证条件语法（如果有）
             if (step.getCondition() != null && !step.getCondition().isBlank()) {
                 // 仅验证语法，不实际求值
-                loader.evaluateCondition(step.getCondition(), new HashMap<>());
+                new WorkflowLoader().evaluateCondition(step.getCondition(), new HashMap<>());
             }
         }
 

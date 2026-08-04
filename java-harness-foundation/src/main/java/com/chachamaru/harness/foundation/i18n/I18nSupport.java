@@ -1,8 +1,11 @@
 package com.chachamaru.harness.foundation.i18n;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.MissingResourceException;
+import java.util.Properties;
 
 /**
  * 国际化支持类 - 提供多语言消息和模板支持
@@ -21,9 +24,9 @@ public class I18nSupport {
     private static final String BUNDLE_BASE_NAME = "messages";
     private static final String TEMPLATE_BUNDLE_BASE_NAME = "templates";
 
-    private static Locale currentLocale = Locale.getDefault();
-    private static ResourceBundle messageBundle;
-    private static ResourceBundle templateBundle;
+    private static Locale currentLocale = Locale.ENGLISH;
+    private static Properties messageProperties = new Properties();
+    private static Properties templateProperties = new Properties();
 
     static {
         loadBundles();
@@ -35,7 +38,7 @@ public class I18nSupport {
      * @param locale 语言环境
      */
     public static void setLocale(Locale locale) {
-        currentLocale = locale;
+        currentLocale = locale != null ? locale : Locale.ENGLISH;
         loadBundles();
     }
 
@@ -75,15 +78,10 @@ public class I18nSupport {
      * @return 本地化消息
      */
     public static String getMessage(String key) {
-        if (messageBundle == null) {
-            return key; // 回退到键名
+        if (key == null) {
+            return null;
         }
-        try {
-            return messageBundle.getString(key);
-        } catch (MissingResourceException e) {
-            // 返回键名作为默认值
-            return key;
-        }
+        return messageProperties.getProperty(key, key);
     }
 
     /**
@@ -95,6 +93,9 @@ public class I18nSupport {
      */
     public static String getMessage(String key, Object... args) {
         String message = getMessage(key);
+        if (args == null || args.length == 0) {
+            return message;
+        }
         return String.format(message, args);
     }
 
@@ -105,12 +106,7 @@ public class I18nSupport {
      * @return 本地化模板内容
      */
     public static String getTemplate(String templateKey) {
-        try {
-            return templateBundle.getString(templateKey);
-        } catch (MissingResourceException e) {
-            // 返回键名作为默认值
-            return templateKey;
-        }
+        return templateProperties.getProperty(templateKey, templateKey);
     }
 
     /**
@@ -143,19 +139,38 @@ public class I18nSupport {
      * 加载资源包
      */
     private static void loadBundles() {
-        try {
-            messageBundle = ResourceBundle.getBundle(BUNDLE_BASE_NAME, currentLocale);
-            templateBundle = ResourceBundle.getBundle(TEMPLATE_BUNDLE_BASE_NAME, currentLocale);
-        } catch (Exception e) {
-            // 回退到默认资源或创建空资源
-            try {
-                messageBundle = ResourceBundle.getBundle(BUNDLE_BASE_NAME, Locale.ENGLISH);
-                templateBundle = ResourceBundle.getBundle(TEMPLATE_BUNDLE_BASE_NAME, Locale.ENGLISH);
-            } catch (Exception fallbackException) {
-                // 如果仍然失败，设置为null，使用方法中的回退逻辑
-                messageBundle = null;
-                templateBundle = null;
+        messageProperties = loadProperties(BUNDLE_BASE_NAME, currentLocale);
+        templateProperties = loadProperties(TEMPLATE_BUNDLE_BASE_NAME, currentLocale);
+    }
+
+    /**
+     * 加载指定语言环境的 properties 文件
+     */
+    private static Properties loadProperties(String baseName, Locale locale) {
+        Properties properties = new Properties();
+        String language = locale.getLanguage();
+        String resourceName = baseName + "_" + language + ".properties";
+
+        // 先加载英语作为默认 fallback
+        if (!"en".equals(language)) {
+            loadPropertiesFile(properties, baseName + "_en.properties");
+        }
+
+        // 再加载目标语言，覆盖默认值
+        loadPropertiesFile(properties, resourceName);
+
+        return properties;
+    }
+
+    private static void loadPropertiesFile(Properties properties, String resourceName) {
+        try (InputStream is = I18nSupport.class.getClassLoader().getResourceAsStream(resourceName)) {
+            if (is != null) {
+                try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                    properties.load(reader);
+                }
             }
+        } catch (IOException e) {
+            // 忽略加载失败，使用已有内容或空属性
         }
     }
 
