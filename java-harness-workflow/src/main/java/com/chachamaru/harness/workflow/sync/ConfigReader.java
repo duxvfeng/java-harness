@@ -51,13 +51,27 @@ public class ConfigReader {
             project.setName(projectTable.getString("name"));
             project.setVersion(projectTable.getString("version"));
             project.setDescription(projectTable.getString("description"));
-            project.setAuthorName(projectTable.contains("author_name") ? projectTable.getString("author_name") : null);
-            project.setAuthorUrl(projectTable.contains("author_url") ? projectTable.getString("author_url") : null);
+            // 支持 camelCase 和 snake_case 两种格式
+            if (projectTable.contains("author_name")) {
+                project.setAuthorName(projectTable.getString("author_name"));
+            } else if (projectTable.contains("authorName")) {
+                project.setAuthorName(projectTable.getString("authorName"));
+            }
+            if (projectTable.contains("author_url")) {
+                project.setAuthorUrl(projectTable.getString("author_url"));
+            } else if (projectTable.contains("authorUrl")) {
+                project.setAuthorUrl(projectTable.getString("authorUrl"));
+            }
             project.setHomepage(projectTable.contains("homepage") ? projectTable.getString("homepage") : null);
             project.setRepository(projectTable.contains("repository") ? projectTable.getString("repository") : null);
             project.setLicense(projectTable.contains("license") ? projectTable.getString("license") : null);
             project.setKeywords(projectTable.contains("keywords") ? toList(projectTable.getArray("keywords")) : null);
-            project.setOutputStyles(projectTable.contains("output_styles") ? toList(projectTable.getArray("output_styles")) : null);
+            // 支持 camelCase 和 snake_case 两种格式
+            if (projectTable.contains("output_styles")) {
+                project.setOutputStyles(toList(projectTable.getArray("output_styles")));
+            } else if (projectTable.contains("outputStyles")) {
+                project.setOutputStyles(toList(projectTable.getArray("outputStyles")));
+            }
 
             config.setProject(project);
         }
@@ -100,20 +114,39 @@ public class ConfigReader {
                 TomlTable sandboxTable = safetyTable.getTable("sandbox");
                 SyncConfig.SandboxConfig sandbox = new SyncConfig.SandboxConfig();
 
-                sandbox.setFailIfUnavailable(sandboxTable.getBoolean("fail_if_unavailable"));
+                // 支持 camelCase 和 snake_case 两种格式
+                Boolean failIfUnavailable = sandboxTable.getBoolean("fail_if_unavailable");
+                if (failIfUnavailable == null) {
+                    failIfUnavailable = sandboxTable.getBoolean("failIfUnavailable");
+                }
+                sandbox.setFailIfUnavailable(failIfUnavailable != null && failIfUnavailable);
 
                 if (sandboxTable.contains("network")) {
                     TomlTable networkTable = sandboxTable.getTable("network");
                     SyncConfig.NetworkConfig network = new SyncConfig.NetworkConfig();
-                    network.setDeniedDomains(networkTable.contains("denied_domains") ? toList(networkTable.getArray("denied_domains")) : null);
+                    // 支持 camelCase 和 snake_case 两种格式
+                    if (networkTable.contains("denied_domains")) {
+                        network.setDeniedDomains(toList(networkTable.getArray("denied_domains")));
+                    } else if (networkTable.contains("deniedDomains")) {
+                        network.setDeniedDomains(toList(networkTable.getArray("deniedDomains")));
+                    }
                     sandbox.setNetwork(network);
                 }
 
                 if (sandboxTable.contains("filesystem")) {
                     TomlTable fsTable = sandboxTable.getTable("filesystem");
                     SyncConfig.FilesystemConfig filesystem = new SyncConfig.FilesystemConfig();
-                    filesystem.setDenyRead(fsTable.contains("deny_read") ? toList(fsTable.getArray("deny_read")) : null);
-                    filesystem.setAllowRead(fsTable.contains("allow_read") ? toList(fsTable.getArray("allow_read")) : null);
+                    // 支持 camelCase 和 snake_case 两种格式
+                    if (fsTable.contains("deny_read")) {
+                        filesystem.setDenyRead(toList(fsTable.getArray("deny_read")));
+                    } else if (fsTable.contains("denyRead")) {
+                        filesystem.setDenyRead(toList(fsTable.getArray("denyRead")));
+                    }
+                    if (fsTable.contains("allow_read")) {
+                        filesystem.setAllowRead(toList(fsTable.getArray("allow_read")));
+                    } else if (fsTable.contains("allowRead")) {
+                        filesystem.setAllowRead(toList(fsTable.getArray("allowRead")));
+                    }
                     sandbox.setFilesystem(filesystem);
                 }
 

@@ -1,5 +1,7 @@
 package com.chachamaru.harness.workflow.skill.core;
 
+import com.chachamaru.harness.workflow.skill.framework.SkillContext;
+import com.chachamaru.harness.workflow.skill.framework.SkillExecutionException;
 import com.chachamaru.harness.workflow.sync.SyncConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,7 @@ class SyncSkillTest {
     private Path hooksDir;
     private Path hooksJsonPath;
     private Path tomlPath;
+    private SyncSkill syncSkill;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -42,6 +45,7 @@ class SyncSkillTest {
         hooksDir = projectRoot.resolve("hooks");
         hooksJsonPath = hooksDir.resolve("hooks.json");
         tomlPath = projectRoot.resolve("harness.toml");
+        syncSkill = new SyncSkill();
 
         // 创建 hooks 目录
         Files.createDirectories(hooksDir);
@@ -63,6 +67,16 @@ class SyncSkillTest {
     @AfterEach
     void tearDown() {
         // 清理由 @TempDir 自动处理
+    }
+
+    /**
+     * 创建 SkillContext
+     */
+    private SkillContext createContext(Path projectRoot) {
+        return SkillContext.builder()
+                .userIntent("sync")
+                .projectRoot(projectRoot)
+                .build();
     }
 
     /**
@@ -102,7 +116,7 @@ class SyncSkillTest {
         Files.writeString(tomlPath, tomlContent);
 
         // 执行
-        SyncResult result = SyncSkill.execute(projectRoot.toFile());
+        SyncResult result = (SyncResult) syncSkill.execute(createContext(projectRoot));
 
         // 验证
         assertTrue(result.isSuccess(), "同步应该成功");
@@ -137,10 +151,10 @@ class SyncSkillTest {
         // 准备：不创建 harness.toml
 
         // 执行 & 验证
-        SyncSkill.SyncException exception = assertThrows(
-            SyncSkill.SyncException.class,
-            () -> SyncSkill.execute(projectRoot.toFile()),
-            "应该抛出 SyncException"
+        SkillExecutionException exception = assertThrows(
+            SkillExecutionException.class,
+            () -> syncSkill.execute(createContext(projectRoot)),
+            "应该抛出 SkillExecutionException"
         );
 
         assertTrue(exception.getMessage().contains("未找到 harness.toml"),
@@ -161,10 +175,10 @@ class SyncSkillTest {
         Files.writeString(tomlPath, invalidToml);
 
         // 执行 & 验证
-        SyncSkill.SyncException exception = assertThrows(
-            SyncSkill.SyncException.class,
-            () -> SyncSkill.execute(projectRoot.toFile()),
-            "应该抛出 SyncException"
+        SkillExecutionException exception = assertThrows(
+            SkillExecutionException.class,
+            () -> syncSkill.execute(createContext(projectRoot)),
+            "应该抛出 SkillExecutionException"
         );
 
         assertTrue(exception.getMessage().contains("同步失败"),
@@ -205,7 +219,7 @@ class SyncSkillTest {
         Files.writeString(pluginDir.resolve("settings.json"), oldSettings);
 
         // 执行
-        SyncResult result = SyncSkill.execute(projectRoot.toFile());
+        SyncResult result = (SyncResult) syncSkill.execute(createContext(projectRoot));
 
         // 验证：应该成功，但有漂移警告
         assertTrue(result.isSuccess(), "同步应该成功（漂移不导致失败）");
@@ -230,7 +244,7 @@ class SyncSkillTest {
         Files.writeString(tomlPath, minimalToml);
 
         // 执行
-        SyncResult result = SyncSkill.execute(projectRoot.toFile());
+        SyncResult result = (SyncResult) syncSkill.execute(createContext(projectRoot));
 
         // 验证
         assertTrue(result.isSuccess(), "同步应该成功");
@@ -250,13 +264,13 @@ class SyncSkillTest {
     @Test
     void testExecute_ProjectRootNotExists() {
         // 准备：使用不存在的路径
-        File nonExistentDir = projectRoot.resolve("non-existent").toFile();
+        Path nonExistentDir = projectRoot.resolve("non-existent");
 
         // 执行 & 验证
-        SyncSkill.SyncException exception = assertThrows(
-            SyncSkill.SyncException.class,
-            () -> SyncSkill.execute(nonExistentDir),
-            "应该抛出 SyncException"
+        SkillExecutionException exception = assertThrows(
+            SkillExecutionException.class,
+            () -> syncSkill.execute(createContext(nonExistentDir)),
+            "应该抛出 SkillExecutionException"
         );
 
         assertTrue(exception.getMessage().contains("项目根目录不存在"),
@@ -278,7 +292,7 @@ class SyncSkillTest {
         Files.deleteIfExists(hooksJsonPath);
 
         // 执行
-        SyncResult result = SyncSkill.execute(projectRoot.toFile());
+        SyncResult result = (SyncResult) syncSkill.execute(createContext(projectRoot));
 
         // 验证：应该部分失败
         assertFalse(result.isSuccess(), "同步应该部分失败");
@@ -307,7 +321,7 @@ class SyncSkillTest {
         Files.writeString(tomlPath, tomlContent);
 
         // 执行
-        SyncResult result = SyncSkill.execute(projectRoot.toFile());
+        SyncResult result = (SyncResult) syncSkill.execute(createContext(projectRoot));
 
         // 验证：应该成功，无漂移警告
         assertTrue(result.isSuccess(), "同步应该成功");

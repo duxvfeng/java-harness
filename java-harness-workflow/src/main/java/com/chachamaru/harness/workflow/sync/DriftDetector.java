@@ -32,23 +32,39 @@ public class DriftDetector {
      * @throws IOException 如果读取失败
      */
     public static List<String> check(File projectRoot, byte[] newContent) throws IOException {
-        List<String> warnings = new ArrayList<>();
-
         Path settingsPath = projectRoot.toPath().resolve(".claude-plugin").resolve("settings.json");
 
         // 文件不存在 = 首次生成，无漂移
         if (!Files.exists(settingsPath)) {
-            return warnings;
+            return new ArrayList<>();
         }
 
         // 读取现有内容
         byte[] existingContent = Files.readAllBytes(settingsPath);
+        return check(existingContent, newContent);
+    }
 
-        // 去除空白后比较
-        String existingTrimmed = new String(existingContent).trim();
-        String newTrimmed = new String(newContent).trim();
+    /**
+     * 检测配置漂移（直接比较两个内容）
+     *
+     * <p>用于 SyncSkill 在生成新配置前已读取旧内容的场景
+     *
+     * @param existingContent 现有文件内容（旧内容）
+     * @param newContent 新生成的文件内容
+     * @return 警告列表，如果无漂移则返回空列表
+     */
+    public static List<String> check(byte[] existingContent, byte[] newContent) {
+        List<String> warnings = new ArrayList<>();
 
-        if (existingTrimmed.equals(newTrimmed)) {
+        if (existingContent == null || existingContent.length == 0) {
+            return warnings;
+        }
+
+        // 去除所有空白后比较（语义比较）
+        String existingNormalized = normalizeWhitespace(new String(existingContent));
+        String newNormalized = normalizeWhitespace(new String(newContent));
+
+        if (existingNormalized.equals(newNormalized)) {
             return warnings; // 无漂移
         }
 
@@ -74,6 +90,18 @@ public class DriftDetector {
         }
 
         return warnings;
+    }
+
+    /**
+     * 规范化 JSON 字符串中的空白字符
+     *
+     * <p>移除所有空白字符（空格、制表符、换行符），用于语义比较
+     *
+     * @param json JSON 字符串
+     * @return 规范化后的字符串（无空白字符）
+     */
+    private static String normalizeWhitespace(String json) {
+        return json.replaceAll("\\s+", "");
     }
 
     /**

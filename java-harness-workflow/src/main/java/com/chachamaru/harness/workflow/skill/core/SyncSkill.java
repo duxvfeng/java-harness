@@ -129,8 +129,8 @@ public class SyncSkill implements Skill {
                 // 5. 读取新生成的 settings.json 内容用于漂移检测
                 byte[] newSettingsContent = Files.readAllBytes(Path.of(generatedSettingsPath));
 
-                // 检测配置漂移
-                List<String> driftWarnings = DriftDetector.check(projectRoot, newSettingsContent);
+                // 检测配置漂移（使用之前读取的旧内容）
+                List<String> driftWarnings = DriftDetector.check(existingSettingsContent, newSettingsContent);
                 for (String warning : driftWarnings) {
                     resultBuilder.addDriftWarning(warning);
                 }

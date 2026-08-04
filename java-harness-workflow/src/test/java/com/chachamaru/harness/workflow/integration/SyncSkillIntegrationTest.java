@@ -167,7 +167,7 @@ class SyncSkillIntegrationTest {
               "sandbox": {
                 "failIfUnavailable": false,
                 "network": {
-                  "deniedDomains": ["olddomain.com", "another.com"]
+                  "deniedDomains": ["olddomain.com", "another.com", "extra.com"]
                 }
               }
             }
