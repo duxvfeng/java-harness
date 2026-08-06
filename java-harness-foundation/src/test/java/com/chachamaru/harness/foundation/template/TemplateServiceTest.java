@@ -76,6 +76,18 @@ class TemplateServiceTest {
     }
 
     @Test
+    void testGenerateContentPreservesUtf8Characters() {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("PROJECT_NAME", "中文项目名");
+        variables.put("AUTHOR", "作者");
+
+        String content = templateService.generateContent("claude-md", variables);
+
+        assertTrue(content.contains("中文项目名"));
+        assertTrue(content.contains("作者"));
+    }
+
+    @Test
     void testListTemplates() {
         List<String> templates = templateService.listTemplates();
 

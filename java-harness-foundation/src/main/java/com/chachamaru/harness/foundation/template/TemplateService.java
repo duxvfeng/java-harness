@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -69,7 +70,7 @@ public class TemplateService {
                 logger.warn("模板资源不存在: {}", resourcePath);
                 return createDefaultTemplate(resourcePath);
             }
-            return new String(is.readAllBytes());
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             logger.error("加载模板失败: {}", resourcePath, e);
             return createDefaultTemplate(resourcePath);

@@ -83,6 +83,18 @@ class RuleTemplateServiceTest {
     }
 
     @Test
+    void testInvalidRuleTemplateType() {
+        Map<String, Object> variables = new HashMap<>();
+
+        TemplateRegistryException exception = assertThrows(TemplateRegistryException.class, () -> {
+            ruleTemplateService.generateRule("non-existent-type", variables);
+        });
+
+        assertTrue(exception.getMessage().contains("未知的规则模板类型"));
+        assertTrue(exception.getMessage().contains("non-existent-type"));
+    }
+
+    @Test
     void testGenerateRuleFile() throws Exception {
         Map<String, Object> variables = new HashMap<>();
         variables.put("RULE_NAME", "文件测试规则");
@@ -241,16 +253,6 @@ class RuleTemplateServiceTest {
     void testNullVariablesValidation() {
         assertThrows(TemplateRegistryException.class, () -> {
             ruleTemplateService.generateRule("rule-md", null);
-        });
-    }
-
-    @Test
-    void testInvalidRuleTemplateType() {
-        Map<String, Object> variables = new HashMap<>();
-
-        // 不存在的模板类型应该抛出异常或返回空内容
-        assertThrows(Exception.class, () -> {
-            ruleTemplateService.generateRule("non-existent-type", variables);
         });
     }
 

@@ -101,6 +101,14 @@ public class RuleTemplateService {
      * @return 生成的规则内容
      */
     public String generateRule(String ruleTemplateType, Map<String, Object> variables) {
+        // 验证模板类型是否存在
+        if (!ruleConfigs.containsKey(ruleTemplateType)) {
+            throw new TemplateRegistryException(
+                TemplateRegistryException.ErrorCode.TEMPLATE_NOT_FOUND,
+                "未知的规则模板类型: " + ruleTemplateType
+            );
+        }
+
         // 验证必需变量
         validateRequiredVariables(ruleTemplateType, variables);
 

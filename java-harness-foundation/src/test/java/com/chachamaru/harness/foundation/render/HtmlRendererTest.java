@@ -154,4 +154,61 @@ class HtmlRendererTest {
         String result = HtmlRenderer.render(template, variables);
         assertTrue(result.contains("<p>Line 1\nLine 2</p>"));
     }
+
+    @Test
+    void testRenderWithNullTemplate() {
+        String result = HtmlRenderer.render(null, Map.of("KEY", "value"));
+        assertEquals("", result);
+    }
+
+    @Test
+    void testRenderDefaultDoesNotMutateInputVariables() {
+        Map<String, String> variables = Map.of("PROJECT_NAME", "Test Project");
+
+        HtmlRenderer.renderDefault("Title", "Content", variables);
+
+        assertEquals(1, variables.size());
+        assertEquals("Test Project", variables.get("PROJECT_NAME"));
+    }
+
+    @Test
+    void testRenderDefaultWithNullVariables() {
+        String result = HtmlRenderer.renderDefault("Title", "Content", null);
+
+        assertTrue(result.contains("<title>Title</title>"));
+        assertTrue(result.contains("Content"));
+        assertTrue(result.contains("生成时间:"));
+    }
+
+    @Test
+    void testMarkdownToHtmlEscapesHtmlCharacters() {
+        String markdown = "Use <script>alert('xss')</script>";
+        String html = HtmlRenderer.markdownToHtml(markdown);
+
+        assertTrue(html.contains("&lt;script&gt;"));
+        assertTrue(html.contains("&lt;/script&gt;"));
+        assertFalse(html.contains("<script>alert('xss')</script>"));
+    }
+
+    @Test
+    void testMarkdownToHtmlWithListGrouping() {
+        String markdown = "- Item 1\n- Item 2\n\nSome paragraph.";
+        String html = HtmlRenderer.markdownToHtml(markdown);
+
+        assertTrue(html.contains("<ul>"));
+        assertTrue(html.contains("</ul>"));
+        assertTrue(html.contains("<li>Item 1</li>"));
+        assertTrue(html.contains("<li>Item 2</li>"));
+        assertTrue(html.contains("<p>Some paragraph.</p>"));
+    }
+
+    @Test
+    void testMarkdownToHtmlPreservesCodeBlockContent() {
+        String markdown = "```\n**not bold**\n# not heading\n```";
+        String html = HtmlRenderer.markdownToHtml(markdown);
+
+        assertTrue(html.contains("<pre><code>"));
+        assertTrue(html.contains("**not bold**"));
+        assertTrue(html.contains("# not heading"));
+    }
 }

@@ -20,10 +20,9 @@ import java.util.regex.Pattern;
 public class PlansMdSyncService implements StateSynchronizationEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(PlansMdSyncService.class);
-    // 匹配 Plans.md 中的任务状态行（灵活的6列格式）
-    // 实际格式可能有变体，使用更宽松的匹配
+    // 匹配 Plans.md 中的任务状态行（6列格式：Task | 内容 | DoD | Depends | Status）
     private static final Pattern STATUS_PATTERN = Pattern.compile(
-        "\\|\\s*(\\d+\\.\\d+\\.\\d+)\\s*\\|[^\\|]+\\|[^\\|]+\\|[^\\|]+\\|[^\\|]+\\|([^\\|\\n]+)\\|"
+        "\\|\\s*(\\d+\\.\\d+\\.\\d+)\\s*\\|[^\\|]+\\|[^\\|]+\\|[^\\|]+\\|([^\\|\\n]+)\\|"
     );
     private static final int MAX_TASK_ID_LENGTH = 50; // 防止 ReDoS 攻击
 
@@ -81,6 +80,13 @@ public class PlansMdSyncService implements StateSynchronizationEngine {
                     } else {
                         logger.warn("Duplicate task line detected: {} at position {}", taskId, lineStart);
                     }
+                } else {
+                    // 任务行不存在，追加新行到表格末尾
+                    String newRow = String.format("| %s | | | - | %s |", taskId, newStatus);
+                    content = appendAfterLastTableRow(content, newRow);
+                    changes.add(new TaskSyncChange(taskId,
+                            TaskSyncChange.ChangeType.STATUS_CHANGED,
+                            null, newStatus));
                 }
             }
 
@@ -258,9 +264,9 @@ public class PlansMdSyncService implements StateSynchronizationEngine {
      * 查找任务行的位置
      */
     private Optional<int[]> findTaskLine(String content, String taskId) {
-        // 使用更安全的模式匹配
+        // 使用更安全的模式匹配（6列格式）
         Pattern taskPattern = Pattern.compile(
-                "^\\|\\s*" + Pattern.quote(taskId) + "\\s*\\|[^\\|]*\\|[^\\|]*\\|[^\\|]*\\|[^\\|]*\\|\\s*[^\\|]*?\\s*\\|$",
+                "^\\|\\s*" + Pattern.quote(taskId) + "\\s*\\|[^\\|]*\\|[^\\|]*\\|[^\\|]*\\|\\s*[^\\|]*?\\s*\\|$",
                 Pattern.MULTILINE
         );
 
@@ -278,9 +284,30 @@ public class PlansMdSyncService implements StateSynchronizationEngine {
         // 只替换最后一列（状态列）
         int lastPipeIndex = line.lastIndexOf('|');
         if (lastPipeIndex > 0) {
-            return line.substring(0, lastPipeIndex + 1) + " " + newStatus + " |";
+            int prevPipeIndex = line.lastIndexOf('|', lastPipeIndex - 1);
+            if (prevPipeIndex >= 0) {
+                return line.substring(0, prevPipeIndex + 1) + " " + newStatus + " |";
+            }
         }
         return line;
+    }
+
+    /**
+     * 在表格最后一行后追加新任务行
+     */
+    private String appendAfterLastTableRow(String content, String newRow) {
+        Matcher matcher = STATUS_PATTERN.matcher(content);
+        int lastEnd = -1;
+        while (matcher.find()) {
+            lastEnd = matcher.end();
+        }
+
+        if (lastEnd >= 0) {
+            return content.substring(0, lastEnd) + "\n" + newRow + content.substring(lastEnd);
+        }
+
+        // 如果没有任务行，回退到在内容末尾追加
+        return content.trim() + "\n" + newRow;
     }
 
     /**

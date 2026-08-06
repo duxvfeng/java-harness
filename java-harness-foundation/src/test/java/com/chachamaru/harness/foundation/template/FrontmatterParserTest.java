@@ -68,6 +68,38 @@ class FrontmatterParserTest {
     }
 
     @Test
+    void testParseYamlFrontmatterWithUnknownProperties() {
+        String content = "---\n" +
+                "_harness_version: 4.0.0\n" +
+                "_author: test\n" +
+                "unknown_field: should_be_ignored\n" +
+                "another_unknown: 42\n" +
+                "---\n" +
+                "Content body here";
+
+        FrontmatterParser.FrontmatterResult result = parser.parse(content);
+
+        assertTrue(result.hasFrontmatter());
+        assertEquals("4.0.0", result.getMetadata().getHarnessVersion());
+        assertEquals("test", result.getMetadata().getAuthor());
+        assertEquals("Content body here", result.getContent().trim());
+    }
+
+    @Test
+    void testParseFrontmatterTrimsLeadingWhitespace() {
+        String content = "  \n  ---\n" +
+                "_harness_version: 4.0.0\n" +
+                "---\n" +
+                "Content";
+
+        FrontmatterParser.FrontmatterResult result = parser.parse(content);
+
+        assertTrue(result.hasFrontmatter());
+        assertEquals("4.0.0", result.getMetadata().getHarnessVersion());
+        assertEquals("Content", result.getContent().trim());
+    }
+
+    @Test
     void testParseEmptyFrontmatter() {
         String content = "Plain content without frontmatter";
 

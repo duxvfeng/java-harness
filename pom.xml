@@ -164,6 +164,14 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0</version>
+                    <configuration>
+                        <argLine>-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m -XX:CodeCacheSize=512m -Dfile.encoding=UTF-8</argLine>
+                        <forkCount>1</forkCount>
+                        <reuseForks>true</reuseForks>
+                        <systemPropertyVariables>
+                            <jacoco-agent.skip>true</jacoco-agent.skip>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>

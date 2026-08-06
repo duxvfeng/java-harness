@@ -112,6 +112,22 @@ class PlansMdSyncServiceTest {
     }
 
     @Test
+    void testSyncToPlansAddsNewTaskRow() throws SyncException, IOException {
+        Map<String, TaskState> states = new HashMap<>();
+        states.put("8.4.5", new TaskState("8.4.5", "cc:TODO 📝", "新增任务"));
+
+        StateSnapshot snapshot = new StateSnapshot(states, "test-session");
+        SyncResult result = syncService.syncToPlans(snapshot, plansMdPath);
+
+        assertTrue(result.isSuccess());
+        assertEquals(1, result.getChangeCount());
+
+        String updatedContent = Files.readString(plansMdPath);
+        assertTrue(updatedContent.contains("8.4.5"));
+        assertTrue(updatedContent.contains("cc:TODO 📝"));
+    }
+
+    @Test
     void testGetPlansHash() throws SyncException, IOException {
         String hash1 = syncService.getPlansHash(plansMdPath);
         assertNotNull(hash1);

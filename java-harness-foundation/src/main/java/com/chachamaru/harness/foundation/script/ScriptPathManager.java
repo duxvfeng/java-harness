@@ -43,28 +43,21 @@ public class ScriptPathManager {
     private static String detectProjectRoot() {
         Path currentPath = Paths.get("").toAbsolutePath().normalize();
 
-        // 如果当前目录已经是项目根目录（包含 pom.xml）
-        if (currentPath.resolve("pom.xml").toFile().exists()) {
-            return currentPath.toString();
-        }
-
-        // 如果当前目录在子模块中，向上查找项目根目录
+        // 向上查找同时包含 pom.xml 和 scripts 目录的项目根目录
         Path path = currentPath;
-        while (path != null && path.getParent() != null) {
+        while (path != null) {
             if (path.resolve("pom.xml").toFile().exists() &&
                 path.resolve("scripts").toFile().exists()) {
                 return path.toString();
             }
-            path = path.getParent();
+            Path parent = path.getParent();
+            if (parent == null || parent.equals(path)) {
+                break;
+            }
+            path = parent;
         }
 
-        // 如果找不到，返回当前目录的父目录（假设在子模块中）
-        Path parentPath = currentPath.getParent();
-        if (parentPath != null && parentPath.resolve("pom.xml").toFile().exists()) {
-            return parentPath.toString();
-        }
-
-        // 最后回退到当前目录
+        // 如果找不到，回退到当前目录
         return currentPath.toString();
     }
 
@@ -145,7 +138,7 @@ public class ScriptPathManager {
         if (relativePath == null) {
             throw new IllegalArgumentException("未知的脚本名称: " + scriptName);
         }
-        return Paths.get(PROJECT_ROOT, SCRIPTS_BASE_DIR, relativePath).toString();
+        return (PROJECT_ROOT + "/" + SCRIPTS_BASE_DIR + "/" + relativePath).replace('\\', '/');
     }
 
     /**
@@ -159,7 +152,7 @@ public class ScriptPathManager {
         if (relativePath == null) {
             throw new IllegalArgumentException("未知的脚本名称: " + scriptName);
         }
-        return Paths.get(SCRIPTS_BASE_DIR, relativePath).toString();
+        return (SCRIPTS_BASE_DIR + "/" + relativePath).replace('\\', '/');
     }
 
     /**
@@ -172,7 +165,7 @@ public class ScriptPathManager {
         try {
             String fullPath = getScriptPath(scriptName);
             File scriptFile = new File(fullPath);
-            return scriptFile.exists() && scriptFile.isFile() && scriptFile.canExecute();
+            return scriptFile.exists() && scriptFile.isFile();
         } catch (IllegalArgumentException e) {
             return false;
         }

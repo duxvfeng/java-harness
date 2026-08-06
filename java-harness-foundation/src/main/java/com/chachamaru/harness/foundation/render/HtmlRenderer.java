@@ -2,6 +2,9 @@ package com.chachamaru.harness.foundation.render;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,6 +103,10 @@ public class HtmlRenderer {
      * @return 渲染后的 HTML
      */
     public static String render(String template, Map<String, String> variables) {
+        if (template == null) {
+            return "";
+        }
+
         String result = template;
 
         // 替换变量
@@ -108,6 +115,9 @@ public class HtmlRenderer {
             String value = entry.getValue() != null ? entry.getValue() : "";
             result = result.replace(placeholder, value);
         }
+
+        // 将未提供值的占位符替换为空字符串
+        result = result.replaceAll("\\{\\{([^}]+)\\}\\}", "");
 
         return result;
     }
@@ -121,16 +131,17 @@ public class HtmlRenderer {
      * @return 渲染后的 HTML
      */
     public static String renderDefault(String title, String content, Map<String, String> variables) {
-        variables.put("TITLE", title);
-        variables.put("CONTENT", content);
-        variables.put("TIMESTAMP", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        Map<String, String> mutableVariables = new HashMap<>(variables != null ? variables : Map.of());
+        mutableVariables.put("TITLE", title);
+        mutableVariables.put("CONTENT", content);
+        mutableVariables.put("TIMESTAMP", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
         // 设置默认值
-        variables.putIfAbsent("LANGUAGE", "en");
-        variables.putIfAbsent("VERSION", "4.0.0");
-        variables.putIfAbsent("DATE", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        mutableVariables.putIfAbsent("LANGUAGE", "en");
+        mutableVariables.putIfAbsent("VERSION", "4.0.0");
+        mutableVariables.putIfAbsent("DATE", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
 
-        return render(DEFAULT_TEMPLATE, variables);
+        return render(DEFAULT_TEMPLATE, mutableVariables);
     }
 
     /**
@@ -140,33 +151,135 @@ public class HtmlRenderer {
      * @return HTML 内容
      */
     public static String markdownToHtml(String markdown) {
-        if (markdown == null) {
+        if (markdown == null || markdown.isEmpty()) {
             return "";
         }
 
-        String html = markdown;
+        String[] rawLines = markdown.split("\\r?\\n");
+        List<String> result = new ArrayList<>();
+        List<String> listItems = new ArrayList<>();
+        StringBuilder codeBlock = new StringBuilder();
+        boolean inList = false;
+        boolean inCodeBlock = false;
 
-        // 标题处理
-        html = html.replaceAll("^# (.+)$", "<h1>$1</h1>");
-        html = html.replaceAll("^## (.+)$", "<h2>$1</h2>");
-        html = html.replaceAll("^### (.+)$", "<h3>$1</h3>");
+        for (String rawLine : rawLines) {
+            String trimmed = rawLine.trim();
 
-        // 粗体和斜体
-        html = html.replaceAll("\\*\\*(.+?)\\*\\*", "<strong>$1</strong>");
-        html = html.replaceAll("\\*(.+?)\\*", "<em>$1</em>");
+            // 代码块边界
+            if (trimmed.startsWith("```")) {
+                if (inCodeBlock) {
+                    // 结束代码块
+                    result.add("<pre><code>" + escapeHtml(codeBlock.toString()) + "</code></pre>");
+                    codeBlock.setLength(0);
+                    inCodeBlock = false;
+                } else {
+                    // 开始代码块
+                    if (inList) {
+                        closeList(result, listItems);
+                        inList = false;
+                    }
+                    inCodeBlock = true;
+                }
+                continue;
+            }
 
-        // 代码块
-        html = html.replaceAll("```([\\s\\S]*?)```", "<pre><code>$1</code></pre>");
-        html = html.replaceAll("`(.+?)`", "<code>$1</code>");
+            if (inCodeBlock) {
+                if (codeBlock.length() > 0) {
+                    codeBlock.append("\n");
+                }
+                codeBlock.append(rawLine);
+                continue;
+            }
 
-        // 列表
-        html = html.replaceAll("^- (.+)$", "<li>$1</li>");
-        html = html.replaceAll("(<li>.+)</n", "$1\n");
+            if (trimmed.isEmpty()) {
+                if (inList) {
+                    closeList(result, listItems);
+                    inList = false;
+                }
+                continue;
+            }
 
-        // 段落
-        html = html.replaceAll("^(?!<[h|p|l|u])(.+)$", "<p>$1</p>");
+            // 标题
+            if (trimmed.startsWith("# ")) {
+                if (inList) {
+                    closeList(result, listItems);
+                    inList = false;
+                }
+                result.add("<h1>" + escapeHtml(trimmed.substring(2)) + "</h1>");
+                continue;
+            }
+            if (trimmed.startsWith("## ")) {
+                if (inList) {
+                    closeList(result, listItems);
+                    inList = false;
+                }
+                result.add("<h2>" + escapeHtml(trimmed.substring(3)) + "</h2>");
+                continue;
+            }
+            if (trimmed.startsWith("### ")) {
+                if (inList) {
+                    closeList(result, listItems);
+                    inList = false;
+                }
+                result.add("<h3>" + escapeHtml(trimmed.substring(4)) + "</h3>");
+                continue;
+            }
 
-        return html;
+            // 列表项
+            if (trimmed.startsWith("- ")) {
+                String itemContent = formatInline(trimmed.substring(2));
+                listItems.add("<li>" + itemContent + "</li>");
+                inList = true;
+                continue;
+            }
+
+            if (inList) {
+                closeList(result, listItems);
+                inList = false;
+            }
+
+            // 普通段落
+            result.add("<p>" + formatInline(trimmed) + "</p>");
+        }
+
+        // 处理未关闭的代码块
+        if (inCodeBlock && codeBlock.length() > 0) {
+            result.add("<pre><code>" + escapeHtml(codeBlock.toString()) + "</code></pre>");
+        }
+
+        if (inList) {
+            closeList(result, listItems);
+        }
+
+        return String.join("\n", result);
+    }
+
+    private static void closeList(List<String> result, List<String> listItems) {
+        if (listItems.isEmpty()) {
+            return;
+        }
+        result.add("<ul>");
+        result.addAll(listItems);
+        result.add("</ul>");
+        listItems.clear();
+    }
+
+    private static String formatInline(String text) {
+        String result = escapeHtml(text);
+        // 粗体
+        result = result.replaceAll("\\*\\*(.+?)\\*\\*", "<strong>$1</strong>");
+        // 斜体（避免匹配粗体已处理的部分）
+        result = result.replaceAll("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)", "<em>$1</em>");
+        // 行内代码
+        result = result.replaceAll("`(.+?)`", "<code>$1</code>");
+        return result;
+    }
+
+    private static String escapeHtml(String text) {
+        return text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;");
     }
 
     /**

@@ -81,6 +81,21 @@ class ScriptPathManagerTest {
     }
 
     @Test
+    void testGetScriptPathUsesForwardSlashes() {
+        String path = ScriptPathManager.getScriptPath("build");
+
+        assertFalse(path.contains("\\"), "脚本路径应该使用正斜杠以保持跨平台一致性");
+        assertTrue(path.contains("scripts/build/build.sh"));
+    }
+
+    @Test
+    void testScriptExistsDoesNotRequireExecutableBit() {
+        // 存在的脚本应该被识别，无论可执行位如何（在 Windows 上 canExecute 不可靠）
+        assertTrue(ScriptPathManager.scriptExists("build"));
+        assertFalse(ScriptPathManager.scriptExists("definitely-not-a-real-script"));
+    }
+
+    @Test
     void testGetProjectRoot() {
         String projectRoot = ScriptPathManager.getProjectRoot();
         assertNotNull(projectRoot);

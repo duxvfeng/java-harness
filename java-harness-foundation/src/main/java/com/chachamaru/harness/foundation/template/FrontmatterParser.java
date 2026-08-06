@@ -1,5 +1,6 @@
 package com.chachamaru.harness.foundation.template;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -50,6 +51,7 @@ public class FrontmatterParser {
     public FrontmatterParser() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     /**
@@ -63,11 +65,13 @@ public class FrontmatterParser {
             return new FrontmatterResult(new FrontmatterMetadata(), "");
         }
 
+        String trimmed = content.trim();
+
         // 尝试解析 YAML Frontmatter
-        Matcher yamlMatcher = YAML_FRONTMATTER_PATTERN.matcher(content.trim());
+        Matcher yamlMatcher = YAML_FRONTMATTER_PATTERN.matcher(trimmed);
         if (yamlMatcher.find()) {
             String yamlContent = yamlMatcher.group(1);
-            String bodyContent = content.substring(yamlMatcher.end());
+            String bodyContent = trimmed.substring(yamlMatcher.end());
 
             try {
                 FrontmatterMetadata metadata = parseYamlMetadata(yamlContent);
