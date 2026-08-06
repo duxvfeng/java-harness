@@ -1,12 +1,20 @@
 name: Build Native Images
 
 on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'java-harness-cli/src/**'
+      - 'pom.xml'
+      - '.github/workflows/build-native.yml'
   workflow_dispatch:
     inputs:
       create_release:
         description: '创建 GitHub Release'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 env:
@@ -76,7 +84,7 @@ jobs:
           fi
 
       - name: 📤 上传构建产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
@@ -93,7 +101,7 @@ jobs:
 
     steps:
       - name: 📥 下载所有构建产物
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           path: binaries
 
