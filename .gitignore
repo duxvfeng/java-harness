@@ -33,5 +33,4 @@ release.properties
 Thumbs.db
 
 # Native Image 可执行文件
-bin/
-!bin/README.md
+

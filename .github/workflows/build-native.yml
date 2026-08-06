@@ -106,6 +106,28 @@ jobs:
             chmod +x bin/macos-${{ matrix.arch }}/harness
           fi
 
+      - name: 📝 调整 marketplace.json
+        shell: bash
+        run: |
+          # 根据当前平台设置可执行文件路径
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            EXECUTABLE="bin/windows/harness.exe"
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            EXECUTABLE="bin/linux-${{ matrix.arch }}/harness"
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            EXECUTABLE="bin/macos-${{ matrix.arch }}/harness"
+          fi
+
+          # 修改 marketplace.json
+          if command -v jq &> /dev/null; then
+            jq ".plugins[0].executable = \"$EXECUTABLE\"" .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+            mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+          else
+            sed -i "s|\"executable\":.*|\"executable\": \"$EXECUTABLE\",|g" .claude-plugin/marketplace.json
+          fi
+
+          echo " marketplace.json 已设置为: $EXECUTABLE"
+
       - name: 🧪 测试可执行文件
         shell: bash
         run: |
@@ -128,6 +150,7 @@ jobs:
             bin/windows/*
             bin/linux-*/
             bin/macos-*/
+            .claude-plugin/marketplace.json
           retention-days: 7
           if-no-files-found: warn
 
