@@ -2,6 +2,9 @@
 .claude/
 *.lock
 
+# Java - 崩溃日志
+hs_err_pid*.log
+
 # Java - 编译产物
 *.class
 *.jar
