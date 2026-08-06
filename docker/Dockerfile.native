@@ -1,0 +1,56 @@
+# Dockerfile.native - 多平台 Native Image 构建
+FROM ghcr.io/graalvm/native-image-community:17
+
+# 设置工作目录
+WORKDIR /build
+
+# 安装构建依赖（针对不同架构）
+RUN microdnf install -y findutils || \
+    apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+
+# 复制项目文件（先复制依赖配置层）
+COPY pom.xml .
+COPY java-harness-cli/pom.xml ./java-harness-cli/
+COPY java-harness-shared/pom.xml ./java-harness-shared/
+COPY java-harness-foundation/pom.xml ./java-harness-foundation/
+COPY java-harness-protocol/pom.xml ./java-harness-protocol/
+COPY java-harness-security/pom.xml ./java-harness-security/
+COPY java-harness-workflow/pom.xml ./java-harness-workflow/
+COPY java-harness-collaboration/pom.xml ./java-harness-collaboration/
+COPY java-harness-tools/pom.xml ./java-harness-tools/
+
+# 复制源代码
+COPY java-harness-shared/src ./java-harness-shared/src
+COPY java-harness-foundation/src ./java-harness-foundation/src
+COPY java-harness-protocol/src ./java-harness-protocol/src
+COPY java-harness-security/src ./java-harness-security/src
+COPY java-harness-workflow/src ./java-harness-workflow/src
+COPY java-harness-collaboration/src ./java-harness-collaboration/src
+COPY java-harness-tools/src ./java-harness-tools/src
+COPY java-harness-cli/src ./java-harness-cli/src
+
+# 设置 Maven 本地仓库（加速构建）
+RUN mvn dependency:go-offline -B || true
+
+# 构建 Native Image
+WORKDIR /build/java-harness-cli
+RUN mvn -Pnative package -DskipTests
+
+# 复制输出文件
+RUN mkdir -p /output && \
+    cp target/harness /output/ && \
+    chmod +x /output/harness
+
+# 设置输出目录到对应的平台目录
+RUN mkdir -p /build/bin/linux && \
+    cp /output/harness /build/bin/linux/ && \
+    chmod +x /build/bin/linux/harness && \
+    mkdir -p /build/bin/linux-arm64 && \
+    cp /output/harness /build/bin/linux-arm64/ && \
+    chmod +x /build/bin/linux-arm64/harness
+
+VOLUME ["/build/bin"]
+WORKDIR /build/bin
+
+# 默认命令
+CMD ["ls", "-lh"]

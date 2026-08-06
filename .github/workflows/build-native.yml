@@ -1,0 +1,133 @@
+name: Build Native Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: '创建 GitHub Release'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  GRAALVM_VERSION: '17'
+
+jobs:
+  build-matrix:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: amd64
+            runner: ubuntu-latest
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            runner: ubuntu-latest
+          - os: macos-latest
+            platform: darwin
+            arch: amd64
+            runner: macos-latest
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            runner: macos-latest
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+            runner: windows-latest
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: 📥 Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 🔧 设置 GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.GRAALVM_VERSION }}
+          java-version: '17'
+          components: 'native-image'
+
+      - name: ✅ 验证环境
+        run: |
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          native-image --version
+          java -version
+
+      - name: 📦 构建 Native Image
+        shell: bash
+        run: |
+          cd java-harness-cli
+          mvn -Pnative package -DskipTests -B
+
+          # 创建 bin 目录
+          mkdir -p ../bin/${{ matrix.platform }}-${{ matrix.arch }}
+
+          # 复制到对应的 bin 目录
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            cp target/harness.exe ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
+          else
+            cp target/harness ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+            chmod +x ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+          fi
+
+      - name: 📤 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+            bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
+          retention-days: 7
+
+  release:
+    needs: build-matrix
+    if: inputs.create_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+
+      - name: 📦 创建 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Native Images - ${{ github.run_number }}
+          draft: false
+          prerelease: true
+          files: |
+            binaries/harness-linux-amd64/harness
+            binaries/harness-linux-arm64/harness
+            binaries/harness-darwin-amd64/harness
+            binaries/harness-darwin-arm64/harness
+            binaries/harness-windows-amd64/harness.exe
+          body: |
+            ## Java Harness Native Image 多平台构建
+
+            ### 可用版本：
+            - `harness` - Linux AMD64 (x86_64)
+            - `harness` - Linux ARM64 (aarch64)
+            - `harness` - macOS Intel (x86_64)
+            - `harness` - macOS Apple Silicon (arm64)
+            - `harness.exe` - Windows (x86_64)
+
+            ### 使用方法：
+            ```bash
+            # Linux/macOS
+            chmod +x harness
+            ./harness --version
+
+            # Windows
+            harness.exe --version
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
