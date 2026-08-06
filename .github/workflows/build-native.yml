@@ -73,13 +73,13 @@ jobs:
       - name: 📦 构建所有模块
         shell: bash
         run: |
-          mvn clean install -DskipTests -B
+          mvn clean install -DskipTests -Dmaven.test.skip=true -B
 
       - name: 🔨 构建 Native Image
         shell: bash
         run: |
           cd java-harness-cli
-          mvn -Pnative package -DskipTests -B
+          mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
 
       - name: 📁 创建输出目录
         shell: bash
