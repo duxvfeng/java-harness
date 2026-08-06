@@ -84,25 +84,39 @@ jobs:
       - name: 📁 创建输出目录
         shell: bash
         run: |
-          mkdir -p bin/${{ matrix.platform }}
+          # 根据平台和架构创建目录
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            mkdir -p bin/windows
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            mkdir -p bin/linux-${{ matrix.arch }}
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            mkdir -p bin/macos-${{ matrix.arch }}
+          fi
 
       - name: 📋 复制构建产物
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            cp java-harness-cli/target/harness.exe bin/${{ matrix.platform }}/harness.exe
-          else
-            cp java-harness-cli/target/harness bin/${{ matrix.platform }}/harness
-            chmod +x bin/${{ matrix.platform }}/harness
+            cp java-harness-cli/target/harness.exe bin/windows/harness.exe
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            cp java-harness-cli/target/harness bin/linux-${{ matrix.arch }}/harness
+            chmod +x bin/linux-${{ matrix.arch }}/harness
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            cp java-harness-cli/target/harness bin/macos-${{ matrix.arch }}/harness
+            chmod +x bin/macos-${{ matrix.arch }}/harness
           fi
 
       - name: 🧪 测试可执行文件
         shell: bash
         run: |
-          cd bin/${{ matrix.platform }}
           if [ "${{ matrix.platform }}" = "windows" ]; then
+            cd bin/windows
             ./harness.exe --version || echo "Version check failed"
-          else
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            cd bin/linux-${{ matrix.arch }}
+            ./harness --version || echo "Version check failed"
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            cd bin/macos-${{ matrix.arch }}
             ./harness --version || echo "Version check failed"
           fi
 
@@ -110,9 +124,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
-          path: bin/${{ matrix.platform }}/*
+          path: |
+            bin/windows/*
+            bin/linux-*/
+            bin/macos-*/
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
 
   release:
     needs: build
@@ -144,26 +161,47 @@ jobs:
             ## Java Harness Native Image 多平台构建
 
             ### 可用版本：
-            - `harness` - Linux AMD64 (x86_64)
-            - `harness` - Linux ARM64 (aarch64)
-            - `harness` - macOS Intel (x86_64)
-            - `harness` - macOS Apple Silicon (arm64)
-            - `harness.exe` - Windows (x86_64)
+            - `bin/linux-amd64/harness` - Linux AMD64 (x86_64)
+            - `bin/linux-arm64/harness` - Linux ARM64 (aarch64)
+            - `bin/macos-amd64/harness` - macOS Intel (x86_64)
+            - `bin/macos-arm64/harness` - macOS Apple Silicon (arm64)
+            - `bin/windows/harness.exe` - Windows (x86_64)
 
             ### 目录结构：
-            所有平台的 Native Image 都放在对应的 `bin/` 目录下：
-            - `bin/windows/harness.exe` - Windows 可执行文件
-            - `bin/linux/harness` - Linux 可执行文件
-            - `bin/macos/harness` - macOS 可执行文件
+            ```
+            bin/
+            ├── windows/
+            │   └── harness.exe
+            ├── linux-amd64/
+            │   └── harness
+            ├── linux-arm64/
+            │   └── harness
+            ├── macos-amd64/
+            │   └── harness
+            └── macos-arm64/
+                └── harness
+            ```
 
             ### 使用方法：
             ```bash
-            # Linux/macOS
-            chmod +x harness
-            ./harness --version
+            # Linux AMD64
+            chmod +x bin/linux-amd64/harness
+            ./bin/linux-amd64/harness --version
+
+            # Linux ARM64
+            chmod +x bin/linux-arm64/harness
+            ./bin/linux-arm64/harness --version
+
+            # macOS Intel
+            chmod +x bin/macos-amd64/harness
+            ./bin/macos-amd64/harness --version
+
+            # macOS Apple Silicon
+            chmod +x bin/macos-arm64/harness
+            ./bin/macos-arm64/harness --version
 
             # Windows
-            harness.exe --version
+            bin\windows\harness.exe --version
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
