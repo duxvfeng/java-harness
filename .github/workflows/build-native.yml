@@ -70,7 +70,12 @@ jobs:
         run: |
           gu install native-image || echo "native-image already installed"
 
-      - name: 📦 构建项目
+      - name: 📦 构建所有模块
+        shell: bash
+        run: |
+          mvn clean install -DskipTests -B
+
+      - name: 🔨 构建 Native Image
         shell: bash
         run: |
           cd java-harness-cli
