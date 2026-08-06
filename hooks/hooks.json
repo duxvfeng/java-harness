@@ -1,0 +1,20 @@
+{
+  "description": "java-harness: automation hooks",
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "PermissionRequest": [],
+    "SessionStart": [],
+    "SessionEnd": [],
+    "PostToolUseFailure": [],
+    "PermissionDenied": [],
+    "AskUserQuestion": [],
+    "SessionInit": [],
+    "SessionMonitor": [],
+    "PostCompact": [],
+    "Notification": [],
+    "CIStatus": [],
+    "SubagentStart": [],
+    "SubagentStop": []
+  }
+}
