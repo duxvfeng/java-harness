@@ -84,22 +84,22 @@ jobs:
       - name: 📁 创建输出目录
         shell: bash
         run: |
-          mkdir -p bin/${{ matrix.platform }}-${{ matrix.arch }}
+          mkdir -p bin/${{ matrix.platform }}
 
       - name: 📋 复制构建产物
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            cp java-harness-cli/target/harness.exe bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
+            cp java-harness-cli/target/harness.exe bin/${{ matrix.platform }}/harness.exe
           else
-            cp java-harness-cli/target/harness bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
-            chmod +x bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+            cp java-harness-cli/target/harness bin/${{ matrix.platform }}/harness
+            chmod +x bin/${{ matrix.platform }}/harness
           fi
 
       - name: 🧪 测试可执行文件
         shell: bash
         run: |
-          cd bin/${{ matrix.platform }}-${{ matrix.arch }}
+          cd bin/${{ matrix.platform }}
           if [ "${{ matrix.platform }}" = "windows" ]; then
             ./harness.exe --version || echo "Version check failed"
           else
@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
-          path: bin/${{ matrix.platform }}-${{ matrix.arch }}/*
+          path: bin/${{ matrix.platform }}/*
           retention-days: 7
           if-no-files-found: error
 
@@ -149,6 +149,12 @@ jobs:
             - `harness` - macOS Intel (x86_64)
             - `harness` - macOS Apple Silicon (arm64)
             - `harness.exe` - Windows (x86_64)
+
+            ### 目录结构：
+            所有平台的 Native Image 都放在对应的 `bin/` 目录下：
+            - `bin/windows/harness.exe` - Windows 可执行文件
+            - `bin/linux/harness` - Linux 可执行文件
+            - `bin/macos/harness` - macOS 可执行文件
 
             ### 使用方法：
             ```bash
