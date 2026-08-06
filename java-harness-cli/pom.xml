@@ -172,8 +172,7 @@
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                                 <buildArg>-H:IncludeResources=.*\\.yaml$</buildArg>
                                 <buildArg>-H:IncludeResources=.*\.json$</buildArg>
-                                <buildArg>-H:IncludeResources=.*\\.yml$</buildArg>
-                                <buildArg>-H:ConfigurationFileDirectories=src/main/resources/META-INF/native-image</buildArg>
+                                <buildArg>-H:IncludeResources=.*\.yml$</buildArg>
                             </buildArgs>
                         </configuration>
                         <executions>
