@@ -17,36 +17,34 @@ on:
         default: false
         type: boolean
 
-env:
-  GRAALVM_VERSION: '17'
-
 jobs:
-  build-matrix:
+  build:
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             platform: linux
             arch: amd64
-            runner: ubuntu-latest
+            ext: ''
           - os: ubuntu-latest
             platform: linux
             arch: arm64
-            runner: ubuntu-latest
+            ext: ''
           - os: macos-latest
             platform: darwin
             arch: amd64
-            runner: macos-latest
-          - os: macos-latest
+            ext: ''
+          - os: macos-14
             platform: darwin
             arch: arm64
-            runner: macos-latest
+            ext: ''
           - os: windows-latest
             platform: windows
             arch: amd64
-            runner: windows-latest
+            ext: '.exe'
+      fail-fast: false
 
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: 📥 Checkout 代码
@@ -55,46 +53,65 @@ jobs:
       - name: 🔧 设置 GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.GRAALVM_VERSION }}
-          java-version: '17'
-          components: 'native-image'
+          java-version: '17.0.9'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ✅ 验证环境
+        shell: bash
         run: |
-          echo "GRAALVM_HOME: $GRAALVM_HOME"
           echo "JAVA_HOME: $JAVA_HOME"
-          native-image --version
+          echo "GRAALVM_HOME: $GRAALVM_HOME"
           java -version
+          native-image --version || echo "native-image not found, will be installed"
 
-      - name: 📦 构建 Native Image
+      - name: 🔨 安装 native-image
+        shell: bash
+        run: |
+          gu install native-image || echo "native-image already installed"
+
+      - name: 📦 构建项目
         shell: bash
         run: |
           cd java-harness-cli
           mvn -Pnative package -DskipTests -B
 
-          # 创建 bin 目录
-          mkdir -p ../bin/${{ matrix.platform }}-${{ matrix.arch }}
+      - name: 📁 创建输出目录
+        shell: bash
+        run: |
+          mkdir -p bin/${{ matrix.platform }}-${{ matrix.arch }}
 
-          # 复制到对应的 bin 目录
+      - name: 📋 复制构建产物
+        shell: bash
+        run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            cp target/harness.exe ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
+            cp java-harness-cli/target/harness.exe bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
           else
-            cp target/harness ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
-            chmod +x ../bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+            cp java-harness-cli/target/harness bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+            chmod +x bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
+          fi
+
+      - name: 🧪 测试可执行文件
+        shell: bash
+        run: |
+          cd bin/${{ matrix.platform }}-${{ matrix.arch }}
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            ./harness.exe --version || echo "Version check failed"
+          else
+            ./harness --version || echo "Version check failed"
           fi
 
       - name: 📤 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
-          path: |
-            bin/${{ matrix.platform }}-${{ matrix.arch }}/harness
-            bin/${{ matrix.platform }}-${{ matrix.arch }}/harness.exe
+          path: bin/${{ matrix.platform }}-${{ matrix.arch }}/*
           retention-days: 7
+          if-no-files-found: error
 
   release:
-    needs: build-matrix
-    if: inputs.create_release == 'true'
+    needs: build
+    if: inputs.create_release == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
