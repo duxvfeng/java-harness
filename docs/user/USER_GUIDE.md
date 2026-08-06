@@ -145,6 +145,58 @@ harness hook subagent-start    # Track agent lifecycle start
 harness hook subagent-stop     # Track agent lifecycle stop
 ```
 
+#### Hooks 配置文件
+
+java-harness 包含完整的 hooks 配置，支持 16 个自动化 hooks，涵盖核心安全、会话管理、工作流和监控功能。
+
+**配置文件位置：**
+- 源文件: `hooks/hooks.json` （手动维护）
+- 生成文件: `.claude-plugin/hooks.json` （由 HooksSyncer 自动同步）
+
+**Hook 事件分类：**
+
+1. **核心安全 Hooks（5个）**
+   - `PreToolUse`: 工具调用前安全检查
+   - `PostToolUse`: 工具调用后篡改检查
+   - `PermissionRequest`: 权限请求自动处理
+   - `PostToolUseFailure`: 工具失败计数和升级
+   - `PermissionDenied`: 权限拒绝事件记录
+
+2. **会话管理 Hooks（5个）**
+   - `SessionInit`: 会话初始化（once: true）
+   - `SessionStart`: 会话开始环境设置
+   - `SessionEnd`: 会话结束清理
+   - `SessionMonitor`: 项目状态收集
+   - `SessionSummary`: 会话总结
+
+3. **工作流 Hooks（3个）**
+   - `PostCompact`: 上下文压缩后重新注入
+   - `Notification`: 通知事件记录
+   - `CIStatus`: CI 状态检查（git push/merge 后）
+
+4. **监控 Hooks（2个）**
+   - `SubagentStart`: 子代理启动跟踪
+   - `SubagentStop`: 子代理停止跟踪
+
+5. **特殊 Hooks（1个）**
+   - `AskUserQuestion`: 问题答案桥接
+
+**调用机制：**
+
+所有 hooks 使用统一的调用格式：
+```bash
+bin/java-harness hook <hook-subcommand>
+```
+
+**配置同步：**
+
+运行 `/harness-sync` skill 自动同步：
+1. 读取 `harness.toml` 配置
+2. 生成 `.claude-plugin/plugin.json`
+3. 生成 `.claude-plugin/settings.json`
+4. 同步 `hooks/hooks.json` → `.claude-plugin/hooks.json`
+5. 检测配置漂移
+
 ### 4. 国际化支持
 
 ```bash
