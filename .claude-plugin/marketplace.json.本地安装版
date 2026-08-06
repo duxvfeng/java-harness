@@ -22,7 +22,7 @@
         "source": "url",
         "url": "https://gitee.com/duxvfeng/java-harness.git"
       },
-      "install": "安装完成",
+      "install": "mvn clean package -Pnative -pl java-harness-cli -DskipTests && cp java-harness-cli/target/harness ./",
       "executable": "bin/windows/harness.exe",
       "skills": [
         "skills/harness-plan",
