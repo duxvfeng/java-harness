@@ -18,7 +18,7 @@
         "email": "395781596@qq.com"
       },
       "source": {
-        "source": "git",
+        "source": "url",
         "url": "https://gitee.com/duxvfeng/java-harness.git"
       },
       "executable": "bin/windows/harness.exe",
