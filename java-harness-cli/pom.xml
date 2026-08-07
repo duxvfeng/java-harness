@@ -163,11 +163,11 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
-                        <version>0.10.0</version>
+                        <version>${native.maven.plugin.version}</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <imageName>harness-${native.os}-${native.arch}</imageName>
-                            <mainClass>com.chachamaru.harness.cli.HarnessCLI</mainClass>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>com.chachamaru.harness.cli.command.HarnessCLI</mainClass>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
                                 <buildArg>--initialize-at-build-time=java.time.LocalDateTime</buildArg>
