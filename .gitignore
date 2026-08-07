@@ -33,4 +33,6 @@ release.properties
 Thumbs.db
 
 # Native Image 可执行文件
-
+bin/windows/harness.exe
+bin/linux/*/harness
+bin/macos/*/harness
