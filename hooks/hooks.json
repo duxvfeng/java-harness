@@ -65,6 +65,12 @@
             "type": "command",
             "command": "bin/java-harness hook session-start",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "bin/java-harness hook session-init",
+            "timeout": 60,
+            "once": true
           }
         ]
       }
@@ -102,38 +108,13 @@
         ]
       }
     ],
-    "AskUserQuestion": [
+    "UserPromptSubmit": [
       {
-        "matcher": "AskUserQuestion",
         "hooks": [
           {
             "type": "command",
             "command": "bin/java-harness hook ask-user-question-normalize",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionInit": [
-      {
-        "matcher": "init",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bin/java-harness hook session-init",
-            "timeout": 60,
-            "once": true
-          }
-        ]
-      }
-    ],
-    "SessionMonitor": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bin/java-harness hook session-monitor",
-            "timeout": 10
           }
         ]
       }
@@ -160,18 +141,6 @@
         ]
       }
     ],
-    "CIStatus": [
-      {
-        "matcher": "Bash(git push*)|Bash(git merge*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bin/java-harness hook ci-status",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "SubagentStart": [
       {
         "hooks": [
@@ -190,17 +159,6 @@
             "type": "command",
             "command": "bin/java-harness hook subagent-stop",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionSummary": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bin/java-harness hook session-summary",
-            "timeout": 10
           }
         ]
       }
