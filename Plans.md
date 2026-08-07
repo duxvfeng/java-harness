@@ -353,3 +353,51 @@
 ---
 
 这个 Phase 8 扩展计划将确保 Java Harness 实现与 Go 版本 **100% 功能对等**，包括完整的模板系统、脚本功能和国际化支持，真正实现"功能完全完备"的目标。
+
+---
+
+## Phase 9: 跨平台 Hooks Wrapper 统一方案（1 周）
+
+### 目标
+统一跨平台 hooks 配置，使用 wrapper 脚本自动检测平台并调用正确的二进制，消除维护多份平台特定模板文件的开销
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 9.1 | 创建备份目录并移动旧配置 | 将 4 个多平台 hooks 配置移到 docs/reference/multi-platform-hooks-backup/ | 备份完成，4 个文件已移动 | - | cc:completed ✅ |
+| 9.2 | 创建 Unix Wrapper 脚本 | bin/harness 平台检测脚本，支持 Linux/macOS/Windows | shell 语法验证通过，bin/harness --version 输出版本号 | 9.1 | cc:TODO |
+| 9.3 | 创建 Windows Wrapper 脚本 | bin/harness.bat 平台检测脚本，支持 Windows 和 JAR fallback | batch 脚本创建，bin/harness.bat --version 工作正常 | 9.2 | cc:TODO |
+| 9.4 | 更新 hooks.json 为统一配置 | 批量替换所有 command 字段为 bin/harness | JSON 格式验证通过，所有 command 统一为 bin/harness | 9.3 | cc:TODO |
+| 9.5 | 提交 Wrapper 脚本和统一配置 | git commit bin/harness, bin/harness.bat, hooks/hooks.json | 提交完成，commit message 符合规范 | 9.4 | cc:TODO |
+| 9.6 | 更新 PLATFORM_SETUP.md 文档 | 移除多平台复制步骤，添加 wrapper 验证步骤 | 文档更新正确，验证步骤清晰 | 9.5 | cc:TODO |
+| 9.7 | 集成测试验证 Wrapper 功能 | 测试版本命令、Hook 子命令、Fallback 机制 | 所有测试通过，wrapper 功能正常 | 9.6 | cc:TODO |
+| 9.8 | 跨平台验证 | 在 Git Bash (MINGW) 环境测试平台检测 | 平台检测正确，错误处理完整 | 9.7 | cc:TODO |
+| 9.9 | 文档和收尾 | 检查其他文档引用，生成实现总结 | 文档完整，实现总结已创建 | 9.8 | cc:TODO |
+
+### 详细说明
+
+**实现范围**：
+- 创建 `bin/harness`（Unix wrapper）和 `bin/harness.bat`（Windows wrapper）
+- 统一 `hooks/hooks.json` 配置，所有平台使用 `bin/harness` 命令
+- 备份旧的多平台配置到参考目录
+- 更新文档移除手动配置步骤
+
+**支持平台**：
+- Windows x86_64 → `bin/windows/harness.exe`
+- Linux AMD64 → `bin/linux/linux-amd64/harness`
+- Linux ARM64 → `bin/linux/linux-arm64/harness`
+- macOS Intel → `bin/macos/macos-amd64/harness`
+- macOS ARM64 → `bin/macos/macos-arm64/harness`
+- 全平台 JAR fallback
+
+**验收标准**：
+- ✅ `bin/harness` 和 `bin/harness.bat` 创建并通过语法检查
+- ✅ `bin/harness --version` 输出 `harness 4.1.1`
+- ✅ `hooks/hooks.json` 所有 command 统一为 `bin/harness`
+- ✅ 旧配置已备份到 `docs/reference/multi-platform-hooks-backup/`
+- ✅ `PLATFORM_SETUP.md` 已更新
+- ✅ Fallback 机制验证通过
+- ✅ 所有变更已 commit
+
+### 相关文档
+- 设计文档: `docs/superpowers/specs/2026-08-07-cross-platform-hooks-wrapper-design.md`
+- 实现计划: `docs/superpowers/plans/2026-08-07-cross-platform-hooks-wrapper.md`
