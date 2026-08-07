@@ -368,7 +368,7 @@
 | 9.3 | 创建 Windows Wrapper 脚本 | bin/harness.bat 平台检测脚本，支持 Windows 和 JAR fallback | batch 脚本创建，bin/harness.bat --version 工作正常 | 9.2 | cc:completed ✅ f55f9b1 |
 | 9.4 | 更新 hooks.json 为统一配置 | 批量替换所有 command 字段为 bin/harness | JSON 格式验证通过，所有 command 统一为 bin/harness | 9.3 | cc:completed ✅ 2ebbbd9 |
 | 9.5 | 提交 Wrapper 脚本和统一配置 | git commit bin/harness, bin/harness.bat, hooks/hooks.json | 提交完成，commit message 符合规范 | 9.4 | cc:completed ✅ 66b0cb5,f55f9b1,2ebbbd9 |
-| 9.6 | 更新 PLATFORM_SETUP.md 文档 | 移除多平台复制步骤，添加 wrapper 验证步骤 | 文档更新正确，验证步骤清晰 | 9.5 | cc:completed ✅ |
+| 9.6 | 更新 PLATFORM_SETUP.md 文档 | 移除多平台复制步骤，添加 wrapper 验证步骤 | 文档更新正确，验证步骤清晰 | 9.5 | cc:completed ✅ 1dfeb71 |
 | 9.7 | 集成测试验证 Wrapper 功能 | 测试版本命令、Hook 子命令、Fallback 机制 | 所有测试通过，wrapper 功能正常 | 9.6 | cc:TODO |
 | 9.8 | 跨平台验证 | 在 Git Bash (MINGW) 环境测试平台检测 | 平台检测正确，错误处理完整 | 9.7 | cc:TODO |
 | 9.9 | 文档和收尾 | 检查其他文档引用，生成实现总结 | 文档完整，实现总结已创建 | 9.8 | cc:TODO |
