@@ -32,7 +32,18 @@ release.properties
 .DS_Store
 Thumbs.db
 
-# Native Image 可执行文件
-bin/windows/harness.exe
-bin/linux/*/harness
-bin/macos/*/harness
+# Native Image 可执行文件（新格式：与Go版本一致）
+bin/harness-darwin-amd64
+bin/harness-darwin-arm64
+bin/harness-darwin-x86_64
+bin/harness-linux-amd64
+bin/harness-linux-arm64
+bin/harness-linux-386
+bin/harness-windows-amd64.exe
+bin/harness-windows-arm64.exe
+bin/harness-windows-386.exe
+
+# 旧的子目录结构（保持兼容过渡期）
+# bin/windows/harness.exe
+# bin/linux/*/harness
+# bin/macos/*/harness
