@@ -1,5 +1,5 @@
 {
-  "description": "java-harness: automation hooks - Windows platform",
+  "description": "java-harness: automation hooks - Linux/macOS platform (default: amd64)",
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook pre-tool",
+            "command": "bin/macos/macos-amd64/harness hook pre-tool",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook ask-user-question-normalize",
+            "command": "bin/macos/macos-amd64/harness hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook post-tool",
+            "command": "bin/macos/macos-amd64/harness hook post-tool",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook permission",
+            "command": "bin/macos/macos-amd64/harness hook permission",
             "timeout": 10
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook permission",
+            "command": "bin/macos/macos-amd64/harness hook permission",
             "timeout": 10
           }
         ]
@@ -63,12 +63,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook session-start",
+            "command": "bin/macos/macos-amd64/harness hook session-start",
             "timeout": 30
           },
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook session-init",
+            "command": "bin/macos/macos-amd64/harness hook session-init",
             "timeout": 60,
             "once": true
           }
@@ -80,7 +80,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook session-cleanup",
+            "command": "bin/macos/macos-amd64/harness hook session-cleanup",
             "timeout": 10
           }
         ]
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook post-tool-failure",
+            "command": "bin/macos/macos-amd64/harness hook post-tool-failure",
             "timeout": 5
           }
         ]
@@ -102,7 +102,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook permission-denied",
+            "command": "bin/macos/macos-amd64/harness hook permission-denied",
             "timeout": 5
           }
         ]
@@ -113,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook ask-user-question-normalize",
+            "command": "bin/macos/macos-amd64/harness hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -124,7 +124,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook post-compact",
+            "command": "bin/macos/macos-amd64/harness hook post-compact",
             "timeout": 10
           }
         ]
@@ -135,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook notification",
+            "command": "bin/macos/macos-amd64/harness hook notification",
             "timeout": 5
           }
         ]
@@ -146,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook subagent-start",
+            "command": "bin/macos/macos-amd64/harness hook subagent-start",
             "timeout": 5
           }
         ]
@@ -157,7 +157,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/windows/harness.exe hook subagent-stop",
+            "command": "bin/macos/macos-amd64/harness hook subagent-stop",
             "timeout": 5
           }
         ]
