@@ -11,10 +11,6 @@
   "plugins": [
     {
       "name": "java-harness",
-      "source": {
-        "source": "url",
-        "url": "https://gitee.com/duxvfeng/java-harness.git"
-      },
       "description": "Claude Code Harness Java plugin",
       "version": "4.0.0",
       "author": {
