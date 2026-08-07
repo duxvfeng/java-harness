@@ -25,23 +25,22 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: amd64
-            ext: ''
           - os: ubuntu-latest
             platform: linux
             arch: arm64
-            ext: ''
-          - os: macos-13
+          # ✅ 长期方案：在 Apple Silicon 运行器上交叉编译 Intel 二进制
+          - os: macos-latest
             platform: darwin
             arch: amd64
-            ext: ''
+            native_target: 'x86_64'   # 关键：指定 Intel 目标
+          # Apple Silicon 原生构建
           - os: macos-latest
             platform: darwin
             arch: arm64
-            ext: ''
+            native_target: 'aarch64'  # 关键：指定 ARM 目标
           - os: windows-latest
             platform: windows
             arch: amd64
-            ext: '.exe'
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -79,80 +78,57 @@ jobs:
         shell: bash
         run: |
           cd java-harness-cli
-          mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
-
-      - name: 📁 创建输出目录
-        shell: bash
-        run: |
-          # 根据平台和架构创建目录
-          if [ "${{ matrix.platform }}" = "windows" ]; then
-            mkdir -p bin/windows
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
-            mkdir -p bin/linux-${{ matrix.arch }}
-          elif [ "${{ matrix.platform }}" = "darwin" ]; then
-            mkdir -p bin/macos-${{ matrix.arch }}
+          # 关键：通过 -Dnative-image.target 指定目标架构
+          # 对于 darwin-amd64 (Intel)，target 为 x86_64
+          # 对于 darwin-arm64 (Apple Silicon)，target 为 aarch64
+          if [ -n "${{ matrix.native_target }}" ]; then
+            mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B \
+              -Dnative-image.target=${{ matrix.native_target }}
+          else
+            # Linux 和 Windows 保持原有方式
+            mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
           fi
 
       - name: 📋 复制构建产物
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            cp java-harness-cli/target/harness.exe bin/windows/harness.exe
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
-            cp java-harness-cli/target/harness bin/linux-${{ matrix.arch }}/harness
-            chmod +x bin/linux-${{ matrix.arch }}/harness
-          elif [ "${{ matrix.platform }}" = "darwin" ]; then
-            cp java-harness-cli/target/harness bin/macos-${{ matrix.arch }}/harness
-            chmod +x bin/macos-${{ matrix.arch }}/harness
-          fi
-
-      - name: 📝 调整 marketplace.json
-        shell: bash
-        run: |
-          # 根据当前平台设置可执行文件路径
-          if [ "${{ matrix.platform }}" = "windows" ]; then
-            EXECUTABLE="bin/windows/harness.exe"
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
-            EXECUTABLE="bin/linux-${{ matrix.arch }}/harness"
-          elif [ "${{ matrix.platform }}" = "darwin" ]; then
-            EXECUTABLE="bin/macos-${{ matrix.arch }}/harness"
-          fi
-
-          # 修改 marketplace.json
-          if command -v jq &> /dev/null; then
-            jq ".plugins[0].executable = \"$EXECUTABLE\"" .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
-            mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+            TARGET_DIR="bin/windows"
+            SOURCE_FILE="java-harness-cli/target/harness.exe"
           else
-            sed -i "s|\"executable\":.*|\"executable\": \"$EXECUTABLE\",|g" .claude-plugin/marketplace.json
+            TARGET_DIR="bin/${{ matrix.platform }}-${{ matrix.arch }}"
+            SOURCE_FILE="java-harness-cli/target/harness"
           fi
-
-          echo " marketplace.json 已设置为: $EXECUTABLE"
+          mkdir -p "$TARGET_DIR"
+          cp "$SOURCE_FILE" "$TARGET_DIR/"
+          if [ "${{ matrix.platform }}" != "windows" ]; then
+            chmod +x "$TARGET_DIR/harness"
+          fi
+          echo "✅ 产物已复制到 $TARGET_DIR"
 
       - name: 🧪 测试可执行文件
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            cd bin/windows
-            ./harness.exe --version || echo "Version check failed"
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
-            cd bin/linux-${{ matrix.arch }}
-            ./harness --version || echo "Version check failed"
-          elif [ "${{ matrix.platform }}" = "darwin" ]; then
-            cd bin/macos-${{ matrix.arch }}
-            ./harness --version || echo "Version check failed"
+            BIN="bin/windows/harness.exe"
+          else
+            BIN="bin/${{ matrix.platform }}-${{ matrix.arch }}/harness"
           fi
+          if [ ! -f "$BIN" ]; then
+            echo "❌ 二进制文件不存在: $BIN"
+            exit 1
+          fi
+          echo "✅ 测试运行 $BIN --version"
+          $BIN --version
 
       - name: 📤 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            bin/windows/*
-            bin/linux-*/
-            bin/macos-*/
-            .claude-plugin/marketplace.json
+            bin/${{ matrix.platform == 'windows' && 'windows' || format('{0}-{1}', matrix.platform, matrix.arch) }}/
           retention-days: 7
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     needs: build
@@ -167,6 +143,21 @@ jobs:
         with:
           path: binaries
 
+      - name: 📦 打包所有平台二进制
+        shell: bash
+        run: |
+          mkdir -p release_bin
+          find binaries -type f -name "harness*" -exec cp {} release_bin/ \;
+          cd release_bin
+          for f in harness*; do
+            dir=$(dirname $(find ../binaries -name "$f" -type f | head -1))
+            platform_arch=$(basename "$dir" | sed 's/harness-//')
+            mv "$f" "harness-${platform_arch}${f##harness}"
+          done
+          ls -la
+          zip -r harness-all.zip .
+          echo "✅ 打包完成，生成 harness-all.zip"
+
       - name: 📦 创建 Release
         uses: softprops/action-gh-release@v1
         with:
@@ -174,57 +165,25 @@ jobs:
           name: Native Images - ${{ github.run_number }}
           draft: false
           prerelease: true
-          files: |
-            binaries/harness-linux-amd64/harness
-            binaries/harness-linux-arm64/harness
-            binaries/harness-darwin-amd64/harness
-            binaries/harness-darwin-arm64/harness
-            binaries/harness-windows-amd64/harness.exe
+          files: release_bin/harness-all.zip
           body: |
             ## Java Harness Native Image 多平台构建
 
-            ### 可用版本：
-            - `bin/linux-amd64/harness` - Linux AMD64 (x86_64)
-            - `bin/linux-arm64/harness` - Linux ARM64 (aarch64)
-            - `bin/macos-amd64/harness` - macOS Intel (x86_64)
-            - `bin/macos-arm64/harness` - macOS Apple Silicon (arm64)
-            - `bin/windows/harness.exe` - Windows (x86_64)
-
-            ### 目录结构：
-            ```
-            bin/
-            ├── windows/
-            │   └── harness.exe
-            ├── linux-amd64/
-            │   └── harness
-            ├── linux-arm64/
-            │   └── harness
-            ├── macos-amd64/
-            │   └── harness
-            └── macos-arm64/
-                └── harness
-            ```
+            ### 压缩包内容：
+            - `harness-linux-amd64` - Linux AMD64 (x86_64)
+            - `harness-linux-arm64` - Linux ARM64 (aarch64)
+            - `harness-darwin-amd64` - macOS Intel (x86_64) **（通过交叉编译构建）**
+            - `harness-darwin-arm64` - macOS Apple Silicon (arm64)
+            - `harness-windows-amd64.exe` - Windows (x86_64)
 
             ### 使用方法：
             ```bash
-            # Linux AMD64
-            chmod +x bin/linux-amd64/harness
-            ./bin/linux-amd64/harness --version
+            # 解压
+            unzip harness-all.zip
 
-            # Linux ARM64
-            chmod +x bin/linux-arm64/harness
-            ./bin/linux-arm64/harness --version
+            # 添加执行权限（Linux/macOS）
+            chmod +x harness-*
 
-            # macOS Intel
-            chmod +x bin/macos-amd64/harness
-            ./bin/macos-amd64/harness --version
-
-            # macOS Apple Silicon
-            chmod +x bin/macos-arm64/harness
-            ./bin/macos-arm64/harness --version
-
-            # Windows
-            bin\windows\harness.exe --version
-            ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            # 运行
+            ./harness-linux-amd64 --version
+            # Windows 直接运行 .exe
