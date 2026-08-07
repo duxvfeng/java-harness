@@ -28,9 +28,6 @@
   "workflows": [
     "./workflows/"
   ],
-  "hooks": [
-    "./hooks/"
-  ],
   "metadata": {
     "phase": "1.5",
     "alignment": "complete",
