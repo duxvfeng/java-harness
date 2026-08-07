@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook pre-tool",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook pre-tool",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook ask-user-question-normalize",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook post-tool",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook post-tool",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook permission",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook permission",
             "timeout": 10
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook permission",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook permission",
             "timeout": 10
           }
         ]
@@ -63,12 +63,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook session-start",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook session-start",
             "timeout": 30
           },
           {
             "type": "command",
-            "command": "bin/harness hook session-init",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook session-init",
             "timeout": 60,
             "once": true
           }
@@ -80,7 +80,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook session-cleanup",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook session-cleanup",
             "timeout": 10
           }
         ]
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook post-tool-failure",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook post-tool-failure",
             "timeout": 5
           }
         ]
@@ -102,7 +102,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook permission-denied",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook permission-denied",
             "timeout": 5
           }
         ]
@@ -113,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook ask-user-question-normalize",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -124,7 +124,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook post-compact",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook post-compact",
             "timeout": 10
           }
         ]
@@ -135,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook notification",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook notification",
             "timeout": 5
           }
         ]
@@ -146,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook subagent-start",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook subagent-start",
             "timeout": 5
           }
         ]
@@ -157,7 +157,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/harness hook subagent-stop",
+            "command": "bash D:/project/java-harness/.claude-plugin/hook-wrapper.sh hook subagent-stop",
             "timeout": 5
           }
         ]
