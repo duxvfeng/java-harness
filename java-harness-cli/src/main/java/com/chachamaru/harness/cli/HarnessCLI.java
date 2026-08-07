@@ -59,7 +59,11 @@ public class HarnessCLI {
             HookConstants.POST_COMPACT,
             HookConstants.PERMISSION_DENIED,
             HookConstants.NOTIFICATION,
-            HookConstants.CONFIG_CHANGE
+            HookConstants.CONFIG_CHANGE,
+            HookConstants.USER_PROMPT_SUBMIT,
+            HookConstants.POST_TOOL_FAILURE,
+            HookConstants.SUBAGENT_START,
+            HookConstants.SUBAGENT_STOP
         };
 
         for (String event : otherEvents) {
