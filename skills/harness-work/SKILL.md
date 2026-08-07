@@ -37,6 +37,7 @@ Harness 的集成执行技能。
 | `/harness-work 3` | solo | 仅立即执行任务3 |
 | `/harness-work --parallel 5` | parallel | 5工作器并行执行（强制） |
 | `/harness-work --codex` | codex | 向 Codex CLI 委托（仅明确时） |
+| `/harness-work --isolate-branch` | **branch-iso** | 在隔离分支执行，测试通过后合并 |
 | Cursor host (adapter candidate) | cursor | Task/subagent routing via `.cursor/AGENTS.md`; not auto-selected |
 | `/harness-work --breezing` | breezing | 强制团队执行 |
 | `/harness-work 3 --plan roadmap` | solo | 从名为 Plans 的 `roadmap` 执行任务3 |
@@ -57,6 +58,62 @@ Harness 的集成执行技能。
 1. **明确标志始终覆盖自动模式**（`--parallel N` / `--breezing` / `--codex` 与任务数无关强制执行）
 2. **`--codex` 仅在明确时触发**。因存在 Codex CLI 未安装的环境，不自动选择
 3. `--codex` 可与其他模式组合: `--codex --breezing` → Codex + Breezing
+
+## Branch Isolation Mode（分支隔离模式）
+
+**Purpose**: 在任务执行前自动创建 git 分支隔离，确保主分支稳定性。测试通过后再合并回主分支。
+
+### 核心流程
+
+```
+1. 检查当前分支（是否在主分支）
+2. 自动创建 feature 分支（使用 git worktree）
+3. 在隔离分支中执行任务实现
+4. 运行测试验证
+5. 测试通过：合并回主分支，清理 feature 分支
+6. 测试失败：保留 feature 分支用于调试
+```
+
+### 基础用法
+
+```bash
+# 单个任务，自动创建分支并合并
+/harness-work 3 --isolate-branch
+
+# 全部任务，每个任务独立分支
+/harness-work all --isolate-branch
+
+# Breezing 模式 + 分支隔离
+/harness-work --breezing --isolate-branch
+```
+
+### 高级用法
+
+```bash
+# 执行后保留分支，手动创建 PR
+/harness-work 3 --isolate-branch --keep-branch
+
+# 自定义分支名称
+/harness-work 5 --isolate-branch --branch-name feature/add-user-auth
+
+# 测试后不自动合并，等待人工审查
+/harness-work 3-6 --isolate-branch --no-merge
+
+# 与其他模式组合
+/harness-work --parallel 3 --isolate-branch --no-merge
+```
+
+### 适用场景
+
+- **团队协作**: 使用 `--keep-branch` 保留分支用于 Code Review
+- **CI/CD**: 使用 `--no-merge` 让 CI 控制合并时机
+- **调试**: 测试失败时自动保留分支现场
+- **安全**: 避免直接在主分支上工作
+
+### 详细文档
+
+分支隔离模式的完整实现细节、错误处理、状态文件格式、配置支持等详见：
+**[references/branch-isolation.md](${CLAUDE_SKILL_DIR}/references/branch-isolation.md)**
 
 ## Execution Backend Selection（实现后端选择）
 
@@ -116,6 +173,10 @@ bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role revi
 | `--tdd-bypass` | 仅在紧急情况下绕过 TDD 强制。将 `HARNESS_TDD_BYPASS_REASON` 或明确理由保留在 audit 中 | false |
 | `--no-simplify` | 跳过 Auto-Refinement | false |
 | `--auto-mode` | 明确 Harness 侧的 Auto Mode rollout。与在 CC 2.1.111 中已不需要的 `--enable-auto-mode` 不同 | false |
+| `--isolate-branch` | 启用分支隔离模式。任务执行前自动创建 feature 分支，测试通过后合并回主分支 | false |
+| `--no-merge` | 与 `--isolate-branch` 配合使用，完成测试后保留分支不自动合并 | false |
+| `--branch-name <name>` | 自定义分支名称（默认：feature/task-<id>-<timestamp>） | auto |
+| `--keep-branch` | 完成后保留 feature 分支（用于人工审查或创建 PR） | false |
 
 ## Progressive Disclosure
 
@@ -125,6 +186,7 @@ bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role revi
 |---|---|
 | Solo / Breezing 的 1-17 步骤完整版、Phase A/B/C 完整版 | `references/execution-modes.md` |
 | Backend role-scoped 限制、非 claude 拓扑、Mode 1 层级、review→iterate | `references/backend-selection.md` |
+| **分支隔离模式、git worktree 管理、自动合并流程** | `references/branch-isolation.md` |
 | Codex review、Reviewer fallback、verdict mapping、修正循环 | `references/review-loop.md` |
 | Sprint Contract 字段一览、PR Closeout | `references/sprint-contract.md` |
 | effort tier 的多要素得分详情 | `references/effort-routing.md` |
