@@ -16,6 +16,10 @@
       "author": {
         "name": "dxf",
         "email": "395781596@qq.com"
+      },
+      "source": {
+        "source": "git",
+        "url": "https://gitee.com/duxvfeng/java-harness.git"
       }
     }
   ]
