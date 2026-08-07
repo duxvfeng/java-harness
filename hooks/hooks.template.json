@@ -1,5 +1,6 @@
 {
-  "description": "java-harness: automation hooks - Linux/macOS platform (default: amd64)",
+  "description": "java-harness hooks template - replace {{BINARY}} with platform-specific binary path",
+  "binary": "{{BINARY}}",
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook pre-tool",
+            "command": "{{BINARY}} hook pre-tool",
             "timeout": 10
           }
         ]
@@ -17,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook ask-user-question-normalize",
+            "command": "{{BINARY}} hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -29,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook post-tool",
+            "command": "{{BINARY}} hook post-tool",
             "timeout": 5
           }
         ]
@@ -41,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook permission",
+            "command": "{{BINARY}} hook permission",
             "timeout": 10
           }
         ]
@@ -52,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook permission",
+            "command": "{{BINARY}} hook permission",
             "timeout": 10
           }
         ]
@@ -63,12 +64,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook session-start",
+            "command": "{{BINARY}} hook session-start",
             "timeout": 30
           },
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook session-init",
+            "command": "{{BINARY}} hook session-init",
             "timeout": 60,
             "once": true
           }
@@ -80,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook session-cleanup",
+            "command": "{{BINARY}} hook session-cleanup",
             "timeout": 10
           }
         ]
@@ -91,7 +92,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook post-tool-failure",
+            "command": "{{BINARY}} hook post-tool-failure",
             "timeout": 5
           }
         ]
@@ -102,7 +103,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook permission-denied",
+            "command": "{{BINARY}} hook permission-denied",
             "timeout": 5
           }
         ]
@@ -113,7 +114,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook ask-user-question-normalize",
+            "command": "{{BINARY}} hook ask-user-question-normalize",
             "timeout": 5
           }
         ]
@@ -124,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook post-compact",
+            "command": "{{BINARY}} hook post-compact",
             "timeout": 10
           }
         ]
@@ -135,7 +136,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook notification",
+            "command": "{{BINARY}} hook notification",
             "timeout": 5
           }
         ]
@@ -146,7 +147,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook subagent-start",
+            "command": "{{BINARY}} hook subagent-start",
             "timeout": 5
           }
         ]
@@ -157,7 +158,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bin/linux/linux-amd64/harness hook subagent-stop",
+            "command": "{{BINARY}} hook subagent-stop",
             "timeout": 5
           }
         ]

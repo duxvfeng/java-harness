@@ -28,6 +28,16 @@
   "workflows": [
     "./workflows/"
   ],
+  "hooks": [
+    "./hooks/"
+  ],
+  "platformHooks": {
+    "windows": "./hooks/hooks.windows.json",
+    "linux-amd64": "./hooks/hooks.json",
+    "linux-arm64": "./hooks/hooks.json",
+    "macos-amd64": "./hooks/hooks.json",
+    "macos-arm64": "./hooks/hooks.json"
+  },
   "metadata": {
     "phase": "1.5",
     "alignment": "complete",
