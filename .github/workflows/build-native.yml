@@ -30,11 +30,11 @@ jobs:
             platform: linux
             arch: arm64
             ext: ''
-          - os: macos-latest
+          - os: macos-13
             platform: darwin
             arch: amd64
             ext: ''
-          - os: macos-14
+          - os: macos-latest
             platform: darwin
             arch: arm64
             ext: ''
