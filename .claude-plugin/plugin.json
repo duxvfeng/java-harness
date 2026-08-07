@@ -22,11 +22,6 @@
     "complete-alignment"
   ],
   "categories": ["productivity", "workflow", "team-collaboration"],
-  "commands": {
-    "java-harness": {
-      "description": "Java Harness CLI - 统一命令入口，支持86个命令"
-    }
-  },
   "skills": [
     "./skills/"
   ],
