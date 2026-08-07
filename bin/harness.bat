@@ -37,13 +37,35 @@ if exist "%BINARY_PATH%" (
     exit /b !ERRORLEVEL!
 )
 
+REM Fallback: 尝试旧的子目录结构(向后兼容)
+set "OLD_BINARY_PATH="
+if "%OS%"=="windows" (
+    if "%ARCH%"=="amd64" (
+        set "OLD_BINARY_PATH=%SCRIPT_DIR%\windows\windows-amd64\harness.exe"
+    ) else if "%ARCH%"=="arm64" (
+        set "OLD_BINARY_PATH=%SCRIPT_DIR%\windows\windows-arm64\harness.exe"
+    ) else if "%ARCH%"=="386" (
+        set "OLD_BINARY_PATH=%SCRIPT_DIR%\windows\windows-386\harness.exe"
+    )
+)
+
+if exist "!OLD_BINARY_PATH!" (
+    echo [java-harness] Using legacy binary path ^(deprecated^) >&2
+    "!OLD_BINARY_PATH!" %*
+    exit /b !ERRORLEVEL!
+)
+
 REM Fallback to JAR
 set "PROJECT_ROOT=%SCRIPT_DIR%\.."
 set "JAR_PATTERN=%PROJECT_ROOT%\java-harness-cli\target\java-harness-cli-*-shaded.jar"
 
+REM 改进 for 循环，过滤 original- 文件
 for %%F in ("%JAR_PATTERN%") do (
-    set "JAR_FILE=%%F"
-    goto :found_jar
+    echo %%F | findstr /v "original-" >nul
+    if !ERRORLEVEL! equ 0 (
+        set "JAR_FILE=%%F"
+        goto :found_jar
+    )
 )
 
 :found_jar
