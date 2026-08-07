@@ -1,8 +1,0 @@
-com\chachamaru\harness\shared\dto\StateQuery.class
-com\chachamaru\harness\shared\dto\StateUpdate.class
-com\chachamaru\harness\shared\dto\HookEvent.class
-com\chachamaru\harness\shared\dto\StateQuery$QueryType.class
-com\chachamaru\harness\shared\constants\GuardrailConstants.class
-com\chachamaru\harness\shared\dto\GuardrailDecision$Action.class
-com\chachamaru\harness\shared\constants\HookConstants.class
-com\chachamaru\harness\shared\dto\GuardrailDecision.class
