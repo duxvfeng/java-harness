@@ -1,0 +1,76 @@
+#!/bin/sh
+# java-harness platform wrapper
+# Detects platform and delegates to the correct harness binary
+
+set -e  # Exit on error
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Platform detection
+OS_TYPE="$(uname -s)"
+ARCH_TYPE="$(uname -m)"
+
+# Detect platform and set binary path
+HARNESS_BIN=""
+
+case "$OS_TYPE" in
+  Linux*)
+    case "$ARCH_TYPE" in
+      x86_64|amd64)
+        HARNESS_BIN="$SCRIPT_DIR/linux/linux-amd64/harness"
+        ;;
+      aarch64|arm64)
+        HARNESS_BIN="$SCRIPT_DIR/linux/linux-arm64/harness"
+        ;;
+      *)
+        echo "[java-harness] Warning: Unsupported Linux architecture: $ARCH_TYPE" >&2
+        ;;
+    esac
+    ;;
+  Darwin*)
+    case "$ARCH_TYPE" in
+      x86_64|amd64)
+        HARNESS_BIN="$SCRIPT_DIR/macos/macos-amd64/harness"
+        ;;
+      arm64|aarch64)
+        HARNESS_BIN="$SCRIPT_DIR/macos/macos-arm64/harness"
+        ;;
+      *)
+        echo "[java-harness] Warning: Unsupported macOS architecture: $ARCH_TYPE" >&2
+        ;;
+    esac
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash / MSYS environment on Windows
+    # In this case, prefer the Windows .exe but verify it exists
+    if [ -f "$SCRIPT_DIR/windows/harness.exe" ]; then
+      # On Windows, we need to use Windows path syntax
+      HARNESS_BIN="$SCRIPT_DIR/windows/harness.exe"
+    fi
+    ;;
+  *)
+    echo "[java-harness] Warning: Unsupported OS: $OS_TYPE" >&2
+    ;;
+esac
+
+# Try native binary if found and executable
+if [ -n "$HARNESS_BIN" ] && [ -f "$HARNESS_BIN" ]; then
+  if [ -x "$HARNESS_BIN" ] || [ "$OS_TYPE" = "MINGW64_NT-10.0-26200" ] || [ "$OS_TYPE" = "MINGW"* ]; then
+    exec "$HARNESS_BIN" "$@"
+  fi
+fi
+
+# Fallback to JAR
+JAR_PATTERN="$PROJECT_ROOT/java-harness-cli/target/java-harness-cli-*-shaded.jar"
+JAR_FILE=$(ls $JAR_PATTERN 2>/dev/null | grep -v "original-" | head -1)
+
+if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
+  echo "[java-harness] Using JAR fallback (slower performance)" >&2
+  exec java -jar "$JAR_FILE" "$@"
+fi
+
+# Nothing found
+echo "[java-harness] Error: No harness binary or JAR found. Please run: mvn package" >&2
+exit 1
