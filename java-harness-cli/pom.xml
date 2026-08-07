@@ -166,7 +166,7 @@
                         <version>0.10.0</version>
                         <extensions>true</extensions>
                         <configuration>
-                            <imageName>harness</imageName>
+                            <imageName>harness-${native.os}-${native.arch}</imageName>
                             <mainClass>com.chachamaru.harness.cli.HarnessCLI</mainClass>
                             <buildArgs>
                                 <buildArg>--no-fallback</buildArg>
