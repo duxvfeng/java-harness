@@ -111,8 +111,8 @@
 | 9.7 | 集成测试验证 Wrapper 功能 | 测试版本命令、Hook 子命令、Fallback 机制 | 所有测试通过，wrapper 功能正常 | 9.6 | cc:completed ✅ d5f0065 |
 | 9.8 | 跨平台验证 | 在 Git Bash (MINGW) 环境测试平台检测 | 平台检测正确，错误处理完整 | 9.7 | cc:completed ✅ 829eb10 |
 | 9.9 | 文档和收尾 | 检查其他文档引用，生成实现总结 | 文档完整，实现总结已创建 | 9.8 | cc:completed ✅ 18dcd02 |
-| 9.10 | 诊断 Hook 调用失败问题 | 调试 bin/harness 在 Hook 系统中的 "No such file or directory" 错误 | 找到根本原因并确认修复方案 | 9.9 | cc:completed ✅ dd32db9 |
-| 9.11 | 修复 Hook 路径解析问题 | 确保 hooks.json 中的 command 在所有环境下都能正确解析 bin/harness | Hooks 不再报 "bin/harness: No such file or directory" 错误 | 9.10 | cc:completed ✅ dd32db9 |
+| 9.10 | 诊断 Hook 调用失败问题 | 调试 bin/harness 在 Hook 系统中的 "No such file or directory" 错误 | 找到根本原因并确认修复方案 | 9.9 | cc:completed ✅ 91bcb23 |
+| 9.11 | 修复 Hook 路径解析问题 | 确保 hooks.json 中的 command 在所有环境下都能正确解析 bin/harness | Hooks 不再报 "bin/harness: No such file or directory" 错误 | 9.10 | cc:completed ✅ 91bcb23 |
 
 ### 详细说明
 
