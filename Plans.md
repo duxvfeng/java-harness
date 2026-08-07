@@ -364,8 +364,8 @@
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
 | 9.1 | 创建备份目录并移动旧配置 | 将 4 个多平台 hooks 配置移到 docs/reference/multi-platform-hooks-backup/ | 备份完成，4 个文件已移动 | - | cc:completed ✅ 0cdc64c |
-| 9.2 | 创建 Unix Wrapper 脚本 | bin/harness 平台检测脚本，支持 Linux/macOS/Windows | shell 语法验证通过，bin/harness --version 输出版本号 | 9.1 | cc:completed ✅ |
-| 9.3 | 创建 Windows Wrapper 脚本 | bin/harness.bat 平台检测脚本，支持 Windows 和 JAR fallback | batch 脚本创建，bin/harness.bat --version 工作正常 | 9.2 | cc:TODO |
+| 9.2 | 创建 Unix Wrapper 脚本 | bin/harness 平台检测脚本，支持 Linux/macOS/Windows | shell 语法验证通过，bin/harness --version 输出版本号 | 9.1 | cc:completed ✅ 66b0cb5 |
+| 9.3 | 创建 Windows Wrapper 脚本 | bin/harness.bat 平台检测脚本，支持 Windows 和 JAR fallback | batch 脚本创建，bin/harness.bat --version 工作正常 | 9.2 | cc:completed ✅ |
 | 9.4 | 更新 hooks.json 为统一配置 | 批量替换所有 command 字段为 bin/harness | JSON 格式验证通过，所有 command 统一为 bin/harness | 9.3 | cc:TODO |
 | 9.5 | 提交 Wrapper 脚本和统一配置 | git commit bin/harness, bin/harness.bat, hooks/hooks.json | 提交完成，commit message 符合规范 | 9.4 | cc:TODO |
 | 9.6 | 更新 PLATFORM_SETUP.md 文档 | 移除多平台复制步骤，添加 wrapper 验证步骤 | 文档更新正确，验证步骤清晰 | 9.5 | cc:TODO |
