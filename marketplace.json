@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "java-harness-plugin",
+      "name": "java-harness",
       "source": {
         "source": "url",
         "url": "https://gitee.com/duxvfeng/java-harness.git"
