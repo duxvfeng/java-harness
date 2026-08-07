@@ -1,55 +1,56 @@
 # java-harness Platform Setup
 
-此插件需要根据您的操作系统配置正确的 hooks 文件。
+java-harness 使用跨平台 wrapper 脚本自动检测平台并调用正确的二进制文件。
 
-## 快速配置
+## 快速验证
 
-安装完成后，运行以下命令自动配置：
+安装完成后，运行以下命令验证安装：
 
 ```bash
-# 检测平台并自动配置
-python3 -c "import platform, os, shutil; system = platform.system(); machine = platform.machine(); target = 'hooks/windows.json' if system == 'Windows' else f'hooks/{\"linux\" if system == \"Linux\" else \"macos\"}-{\"amd64\" if machine in [\"x86_64\", \"AMD64\"] else \"arm64\"}.json'; shutil.copy(target, 'hooks/hooks.json') if os.path.exists(target) else print(f'Platform not supported: {system} {machine}')"
+# Windows
+bin\harness.bat --version
+
+# Linux/macOS/Windows (Git Bash)
+bin/harness --version
 ```
 
-## 手动配置
+**预期输出**：`harness 4.1.1`
 
-如果自动配置失败，请手动选择对应平台的配置文件：
+## 自动平台检测
 
-### Windows
-```bash
-cp hooks/hooks.windows.json hooks/hooks.json
+`bin/harness` 和 `bin/harness.bat` 会自动检测您的操作系统和架构：
+
+### 支持的平台
+
+| 操作系统 | 架构 | 二进制路径 |
+|---------|------|-----------|
+| Windows | x86_64 | `bin/windows/harness.exe` |
+| Linux | x86_64 (AMD64) | `bin/linux/linux-amd64/harness` |
+| Linux | ARM64 | `bin/linux/linux-arm64/harness` |
+| macOS | Intel (x86_64) | `bin/macos/macos-amd64/harness` |
+| macOS | Apple Silicon (ARM64) | `bin/macos/macos-arm64/harness` |
+
+### Fallback 机制
+
+如果平台特定的二进制文件不存在，wrapper 会自动回退到 JAR 文件：
+```
+java-harness-cli/target/java-harness-cli-*-shaded.jar
 ```
 
-### Linux (AMD64/Intel)
-```bash
-cp hooks/hooks.linux-amd64.json hooks/hooks.json
-```
-
-### Linux (ARM64)
-```bash
-cp hooks/hooks.linux-arm64.json hooks/hooks.json
-```
-
-### macOS (Intel)
-```bash
-cp hooks/hooks.macos-amd64.json hooks/hooks.json
-```
-
-### macOS (Apple Silicon)
-```bash
-cp hooks/hooks.macos-arm64.json hooks/hooks.json
-```
+**注意**：JAR fallback 性能较慢，建议构建 Native Image 以获得最佳性能。
 
 ## 重新加载插件
 
-配置完成后，重新加载插件：
+安装完成后，重新加载插件：
 ```bash
 /plugin reload
 ```
 
-## 验证
+## 验证 Hooks 配置
 
 ```bash
-# 检查 hooks 配置
-cat hooks/hooks.json | grep -E "windows|linux|macos"
+# 检查 hooks 配置（应该使用统一的 wrapper）
+cat hooks/hooks.json | grep "bin/harness"
 ```
+
+**预期输出**：所有 command 字段应该显示 `bin/harness hook ...`
