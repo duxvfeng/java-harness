@@ -20,6 +20,30 @@
       "source": {
         "source": "url",
         "url": "https://gitee.com/duxvfeng/java-harness.git"
+      },
+      "executable": "bin/windows/harness.exe",
+      "skills": [
+        "skills/harness-plan",
+        "skills/harness-work",
+        "skills/harness-review",
+        "skills/harness-release",
+        "skills/harness-plan-brief",
+        "skills/harness-loop",
+        "skills/breezing"
+      ],
+      "hooks": ".claude-plugin/hooks.json",
+      "workflows": "workflows/",
+      "permissions": {
+        "allow": [
+          "Bash(git status:*)",
+          "Bash(mvn -version)",
+          "Bash(java -version)",
+          "Read(*)",
+          "Write(*)"
+        ],
+        "deny": [
+          "Bash(rm -rf *)"
+        ]
       }
     }
   ]

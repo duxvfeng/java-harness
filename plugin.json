@@ -22,51 +22,9 @@
     "complete-alignment"
   ],
   "categories": ["productivity", "workflow", "team-collaboration"],
-  "capabilities": {
-    "commands": {
-      "java-harness": {
-        "binary": "java-harness",
-        "description": "Java Harness CLI - 统一命令入口，支持86个命令"
-      }
-    },
-    "hooks": {
-      "supported": [
-        "PreToolUse",
-        "PostToolUse",
-        "PermissionRequest",
-        "SessionStart",
-        "SessionEnd",
-        "PreToolFailure",
-        "PostCompact",
-        "Notification",
-        "PermissionDenied",
-        "SessionInit",
-        "SessionMonitor",
-        "SessionSummary",
-        "CIStatus",
-        "SubagentStart",
-        "SubagentStop"
-      ],
-      "total": 16
-    },
-    "skills": {
-      "total": 21,
-      "harness_core": 10,
-      "tools": 11,
-      "categories": {
-        "planning": ["harness-plan", "harness-plan-brief"],
-        "execution": ["harness-work", "harness-loop", "harness-accept"],
-        "review": ["harness-review"],
-        "release": ["harness-release"],
-        "setup": ["harness-setup"],
-        "sync": ["harness-sync", "harness-progress"],
-        "team": ["breezing"],
-        "automation": ["agent-browser"],
-        "ci": ["ci"],
-        "cursor": ["cursor-ask", "cursor-do", "cursor-review", "cursor-setup"],
-        "knowledge": ["memory", "failure-codifier", "maintenance"],
-        "updates": ["cc-update-review"]
-      }
+  "commands": {
+    "java-harness": {
+      "description": "Java Harness CLI - 统一命令入口，支持86个命令"
     }
   },
   "skills": [

@@ -1,0 +1,42 @@
+#!/bin/bash
+# Java Harness - 跨平台包装脚本
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+    Linux*)
+        case "$ARCH" in
+            x86_64|amd64) BINARY="$SCRIPT_DIR/linux/linux-amd64/harness" ;;
+            aarch64|arm64) BINARY="$SCRIPT_DIR/linux/linux-arm64/harness" ;;
+            *) BINARY="$SCRIPT_DIR/linux/harness" ;;
+        esac
+        ;;
+    Darwin*)
+        case "$ARCH" in
+            x86_64|amd64) BINARY="$SCRIPT_DIR/macos/macos-amd64/harness" ;;
+            arm64|aarch64) BINARY="$SCRIPT_DIR/macos/macos-arm64/harness" ;;
+            *) BINARY="$SCRIPT_DIR/macos/harness" ;;
+        esac
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        BINARY="$SCRIPT_DIR/windows/harness.exe"
+        ;;
+    *)
+        echo '{"error": "Unsupported OS: '"$OS"'"}' >&2
+        exit 1
+        ;;
+esac
+
+if [ ! -f "$BINARY" ]; then
+    echo '{"error": "Binary not found: '"$BINARY"'"}' >&2
+    exit 1
+fi
+
+if [[ "$BINARY" == *.exe ]]; then
+    "$BINARY" "$@"
+else
+    [ -x "$BINARY" ] || chmod +x "$BINARY" 2>/dev/null || true
+    exec "$BINARY" "$@"
+fi
