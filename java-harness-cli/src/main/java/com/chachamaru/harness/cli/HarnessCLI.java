@@ -151,9 +151,37 @@ public class HarnessCLI {
     }
 
     public static void main(String[] args) {
-        log.info("Starting Java Harness CLI Gateway v4.1.0-SNAPSHOT");
+        String version = VersionInfo.getVersion();
+
+        // Handle CLI flags before initializing the heavy hook gateway
+        if (args.length > 0) {
+            String firstArg = args[0];
+            if ("--version".equals(firstArg) || "-v".equals(firstArg)) {
+                System.out.println("harness " + version);
+                System.exit(0);
+            }
+            if ("--help".equals(firstArg) || "-h".equals(firstArg) || "help".equals(firstArg)) {
+                printHelp(version);
+                System.exit(0);
+            }
+        }
+
+        log.info("Starting Java Harness CLI Gateway v{}", version);
 
         HarnessCLI cli = new HarnessCLI();
         cli.run();
+    }
+
+    private static void printHelp(String version) {
+        System.out.println("harness " + version + " - Java Harness CLI Gateway");
+        System.out.println();
+        System.out.println("Usage:");
+        System.out.println("  harness --version              Print version information");
+        System.out.println("  harness --help                 Show this help message");
+        System.out.println("  harness hook <event>           Read a Claude Code hook event from stdin");
+        System.out.println();
+        System.out.println("When invoked as a hook, harness reads a JSON HookInput from stdin and");
+        System.out.println("writes a JSON HookOutput to stdout. The <event> argument is ignored;");
+        System.out.println("routing is determined by the hook_event_name field in the input.");
     }
 }

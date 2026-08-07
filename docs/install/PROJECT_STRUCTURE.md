@@ -1,7 +1,7 @@
 # Java Harness 项目结构文档
 
 **生成时间**: 2026-08-06
-**项目版本**: 4.0.0-java-SNAPSHOT
+**项目版本**: 4.1.1
 **技术栈**: JDK 17 + GraalVM Native Image
 
 ---
@@ -524,7 +524,7 @@ mvn clean package -Pnative -pl java-harness-cli
 mvn clean package -pl java-harness-service
 
 # 运行
-java -jar java-harness-service/target/java-harness-service-4.0.0-java-SNAPSHOT.jar
+java -jar java-harness-service/target/java-harness-service-4.1.1.jar
 ```
 
 ### 构建全部

@@ -42,7 +42,7 @@ cd java-harness-cli
 mvn clean package -DskipTests
 
 # 生成的文件位置
-# java-harness-cli/target/java-harness-cli-4.0.0-java-SNAPSHOT.jar
+# java-harness-cli/target/java-harness-cli-4.1.1.jar
 ```
 
 #### 选项 B: 构建 Native Image（推荐生产环境）
@@ -107,7 +107,7 @@ chmod +x ~/.claude/plugins/java-harness/java-harness
 
 # 或者使用 JAR 文件
 cd java-harness-cli
-cp target/java-harness-cli-4.0.0-java-SNAPSHOT.jar ~/.claude/plugins/java-harness/java-harness.jar
+cp target/java-harness-cli-4.1.1.jar ~/.claude/plugins/java-harness/java-harness.jar
 ```
 
 Windows 用户:
@@ -116,7 +116,7 @@ Windows 用户:
 copy java-harness-cli\target\harness.exe %USERPROFILE%\.claude\plugins\java-harness\java-harness.exe
 
 # 或者使用 JAR 文件
-copy java-harness-cli\target\java-harness-cli-4.0.0-java-SNAPSHOT.jar %USERPROFILE%\.claude\plugins\java-harness\java-harness.jar
+copy java-harness-cli\target\java-harness-cli-4.1.1.jar %USERPROFILE%\.claude\plugins\java-harness\java-harness.jar
 ```
 
 ### 步骤 4: 配置环境变量

@@ -25,7 +25,7 @@ mvn package -DskipTests
 
 echo ""
 echo "Build completed successfully!"
-echo "JAR file: cli-native/target/harness-cli-native-4.0.0-java-SNAPSHOT.jar"
+echo "JAR file: java-harness-cli/target/java-harness-cli-4.1.1.jar"
 echo ""
 echo "To build native image, run:"
 echo "  mvn -Pnative native:compile -DskipTests"

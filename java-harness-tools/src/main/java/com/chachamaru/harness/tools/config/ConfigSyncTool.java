@@ -245,7 +245,7 @@ public class ConfigSyncTool {
         // Metadata
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("project", projectName);
-        meta.put("version", "4.1.0-SNAPSHOT");
+        meta.put("version", "4.1.1");
         meta.put("generatedBy", "ConfigSyncTool");
         meta.put("generatedAt", java.time.LocalDateTime.now().toString());
         settings.put("meta", meta);
@@ -263,7 +263,7 @@ public class ConfigSyncTool {
 
         // Project configuration
         config.put("project", projectName);
-        config.put("version", "4.1.0-SNAPSHOT");
+        config.put("version", "4.1.1");
 
         // Feature flags
         Map<String, Object> features = new LinkedHashMap<>();

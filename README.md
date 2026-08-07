@@ -160,7 +160,7 @@ cd java-harness
 mvn clean package
 
 # 运行
-java -cp java-harness-cli/target/harness-cli-4.1.0.jar \
+java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
      com.chachamaru.harness.cli.HarnessCli --version
 ```
 
@@ -193,8 +193,8 @@ mvn clean package
 
 ```bash
 # 运行编译后的JAR
-java -cp cli-native/target/harness-cli-native-4.0.0-java-SNAPSHOT.jar \
-     com.chachamaru.harness.cli.HarnessCli
+java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
+     com.chachamaru.harness.cli.HarnessCLI
 ```
 
 ### Hook协议
@@ -301,8 +301,8 @@ mvn test -Dtest=HookCodecTest
 ```bash
 # 模拟Hook输入
 echo '{"session_id":"test","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"sudo rm -rf /"}}' | \
-  java -cp cli-native/target/harness-cli-native-4.0.0-java-SNAPSHOT.jar \
-     com.chachamaru.harness.cli.HarnessCli
+  java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
+     com.chachamaru.harness.cli.HarnessCLI
 ```
 
 ## 性能目标
@@ -322,7 +322,7 @@ echo '{"session_id":"test","hook_event_name":"PreToolUse","tool_name":"Bash","to
 
 ## 版本信息
 
-- **当前版本**: 4.1.0-java
+- **当前版本**: 4.1.1
 - **基于Go版本**: claude-code-harness v5.5.0
 - **Java版本**: 17
 - **GraalVM版本**: 23.1.0

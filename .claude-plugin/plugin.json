@@ -1,6 +1,6 @@
 {
   "name": "java-harness",
-  "version": "5.0.0-java",
+  "version": "4.1.1",
   "description": "Java implementation of Claude Code Harness - 完整对齐Go项目的所有21个技能，支持Plan→Work→Review→Release完整工作流闭环",
   "author": {
     "name": "dxf",
@@ -21,7 +21,11 @@
     "phase-1.5",
     "complete-alignment"
   ],
-  "categories": ["productivity", "workflow", "team-collaboration"],
+  "categories": [
+    "productivity",
+    "workflow",
+    "team-collaboration"
+  ],
   "skills": [
     "./skills/"
   ],

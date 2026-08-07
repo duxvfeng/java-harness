@@ -3,7 +3,7 @@
 ## Product Identity
 
 **Name**: Java Harness  
-**Version**: 4.1.0-java  
+**Version**: 4.1.1  
 **Purpose**: Java implementation of Claude Code Harness v4  
 **Reference**: Go implementation at `D:\go-project\claude-code-harness`
 

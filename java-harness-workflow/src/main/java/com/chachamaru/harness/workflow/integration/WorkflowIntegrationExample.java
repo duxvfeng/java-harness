@@ -99,7 +99,7 @@ public class WorkflowIntegrationExample {
 
         // 设置变量
         context.setVariable("project_name", "java-harness");
-        context.setVariable("version", "4.1.0");
+        context.setVariable("version", "4.1.1");
         context.setVariable("feature_ready", true);
 
         // 设置文件上下文

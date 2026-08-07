@@ -8,7 +8,7 @@
     <parent>
         <groupId>com.chachamaru</groupId>
         <artifactId>claude-harness-parent</artifactId>
-        <version>4.0.0-java-SNAPSHOT</version>
+        <version>4.1.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

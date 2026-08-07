@@ -14,7 +14,7 @@ import picocli.CommandLine.Command;
  */
 @Command(name = "harness",
          mixinStandardHelpOptions = true,
-         version = "4.1.0-java",
+         versionProvider = HarnessVersionProvider.class,
          description = "Java Harness - Claude Code Harness CLI for Java",
          subcommands = {
              // Hook command group

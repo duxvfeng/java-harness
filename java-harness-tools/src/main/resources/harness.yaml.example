@@ -3,7 +3,7 @@
 
 # Project identification
 project: java-harness
-version: 4.1.0-SNAPSHOT
+version: 4.1.1
 
 # Feature flags
 features:
