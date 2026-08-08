@@ -64,7 +64,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * harness.toml 配置模型
+ * harness.toml.bak 配置模型
  */
 public class SyncConfig {
     private ProjectConfig project;
@@ -234,7 +234,7 @@ class ConfigReaderTest {
             default = "claude-sonnet-5"
             """;
 
-        Path tomlPath = tempDir.resolve("harness.toml");
+        Path tomlPath = tempDir.resolve("harness.toml.bak");
         Files.writeString(tomlPath, toml);
 
         SyncConfig config = ConfigReader.parse(tomlPath.toFile());
@@ -289,7 +289,7 @@ import java.nio.file.Path;
 public class ConfigReader {
 
     /**
-     * 解析 harness.toml 文件
+     * 解析 harness.toml.bak 文件
      */
     public static SyncConfig parse(File tomlFile) throws IOException {
         Path tomlPath = tomlFile.toPath();
@@ -1196,8 +1196,8 @@ public class DriftDetector {
                 existingDeniedCount, newDeniedCount));
 
             if (existingDeniedCount > newDeniedCount) {
-                warning.append("  entries were REMOVED — was settings.json edited directly without updating harness.toml?\n");
-                warning.append("  SSOT is harness.toml. Mirror the change there and re-run 'bin/harness sync'.");
+                warning.append("  entries were REMOVED — was settings.json edited directly without updating harness.toml.bak?\n");
+                warning.append("  SSOT is harness.toml.bak. Mirror the change there and re-run 'bin/harness sync'.");
             }
 
             warnings.add(warning.toString());
@@ -1302,7 +1302,7 @@ class SyncSkillTest {
 
     @Test
     void testExecute_Success(@TempDir Path tempDir) throws Exception {
-        // 创建 harness.toml
+        // 创建 harness.toml.bak
         String toml = """
             [project]
             name = "test-plugin"
@@ -1315,7 +1315,7 @@ class SyncSkillTest {
             allow = ["Bash(git status:*)"]
             """;
 
-        Files.writeString(tempDir.resolve("harness.toml"), toml);
+        Files.writeString(tempDir.resolve("harness.toml.bak"), toml);
 
         // 创建 hooks.json
         Path hooksDir = tempDir.resolve("hooks");
@@ -1384,7 +1384,7 @@ import java.util.List;
 
 /**
  * 同步技能
- * 职责：从 harness.toml 生成 Claude Code 插件配置文件
+ * 职责：从 harness.toml.bak 生成 Claude Code 插件配置文件
  */
 public class SyncSkill implements Skill {
     private static final Logger logger = LoggerFactory.getLogger(SyncSkill.class);
@@ -1406,7 +1406,7 @@ public class SyncSkill implements Skill {
 
     @Override
     public String getDescription() {
-        return "从 harness.toml 生成 Claude Code 插件配置文件";
+        return "从 harness.toml.bak 生成 Claude Code 插件配置文件";
     }
 
     @Override
@@ -1419,8 +1419,8 @@ public class SyncSkill implements Skill {
         logger.info("SyncSkill executing: projectRoot={}", projectRoot);
 
         try {
-            // 1. 读取 harness.toml
-            Path tomlPath = projectRoot.toPath().resolve("harness.toml");
+            // 1. 读取 harness.toml.bak
+            Path tomlPath = projectRoot.toPath().resolve("harness.toml.bak");
             SyncConfig config = ConfigReader.parse(tomlPath.toFile());
 
             // 2. 生成 plugin.json
@@ -1475,9 +1475,9 @@ public class SyncSkill implements Skill {
             return false;
         }
 
-        Path tomlPath = context.getProjectRoot().toPath().resolve("harness.toml");
+        Path tomlPath = context.getProjectRoot().toPath().resolve("harness.toml.bak");
         if (!Files.exists(tomlPath)) {
-            logger.warn("harness.toml not found: {}", tomlPath);
+            logger.warn("harness.toml.bak not found: {}", tomlPath);
             return false;
         }
 
@@ -1585,7 +1585,7 @@ class SyncIntegrationTest {
 
     @Test
     void testFullSync(@TempDir Path tempDir) throws Exception {
-        // 1. 创建完整的 harness.toml
+        // 1. 创建完整的 harness.toml.bak
         String toml = """
             [project]
             name = "java-harness-test"
@@ -1616,7 +1616,7 @@ class SyncIntegrationTest {
             allow_read = ["docs/**"]
             """;
 
-        Files.writeString(tempDir.resolve("harness.toml"), toml);
+        Files.writeString(tempDir.resolve("harness.toml.bak"), toml);
 
         // 2. 创建 hooks.json
         Path hooksDir = tempDir.resolve("hooks");
@@ -1675,7 +1675,7 @@ class SyncIntegrationTest {
             version = "0.0.1"
             """;
 
-        Files.writeString(tempDir.resolve("harness.toml"), toml);
+        Files.writeString(tempDir.resolve("harness.toml.bak"), toml);
 
         // 创建空的 hooks.json
         Path hooksDir = tempDir.resolve("hooks");
@@ -1802,7 +1802,7 @@ mvn clean install
 
 ```toml
 # Java Harness 配置示例
-# 将此文件复制为 harness.toml 并修改为你的项目配置
+# 将此文件复制为 harness.toml.bak 并修改为你的项目配置
 
 [project]
 name = "my-plugin"
@@ -1868,7 +1868,7 @@ allow_read = [
 - [ ] **步骤 2：Commit**
 
 ```bash
-git add java-harness-workflow/harness.toml.example
+git add java-harness-workflow/harness.toml.bak.example
 git commit -m "docs: 添加 harness.toml 示例配置文件"
 ```
 

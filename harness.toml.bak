@@ -1,0 +1,173 @@
+# ============================================
+# Java Harness 跨平台兼容配置
+# ============================================
+
+[harness]
+# 自动检测运行平台
+auto_detect_platform = true
+
+# 版本信息
+version = "4.1.1-java"
+project_root = "."
+
+# 平台检测优先级
+# 1. 环境检测 > 2. 配置指定 > 3. 系统默认
+platform_detection = "auto"
+
+# ============================================
+# [platform.claude] Claude Code 平台配置
+# ============================================
+[platform.claude]
+# Claude Code 特定配置
+enable = true
+default_backend = "claude"
+
+# 原生功能支持
+native_agents = true
+realtime_review = true
+native_hooks = true
+
+# 性能优化
+effort = "high"           # Claude 推荐高强度推理
+review_rounds = 5        # 更多审查轮数
+timeout = 900            # 更长超时时间
+
+# Hook 系统
+hooks_enabled = true
+pre_tool_use = true
+post_tool_use = true
+
+# ============================================
+# [platform.codex] Codex 平台配置
+# ============================================
+[platform.codex]
+# Codex 特定配置
+enable = true
+default_backend = "codex"
+
+# Codex 集成
+codex_adapter = true
+skill_bridge = true
+config_file = ".codex/config.toml"
+
+# 性能优化
+effort = "medium"        # Codex 平衡性能
+review_rounds = 3        # 标准审查轮数
+timeout = 600            # 标准超时时间
+
+# Hook 系统桥接
+hooks_enabled = true
+bridge_mode = "compatible"
+
+# ============================================
+# [compatibility] 兼容性配置
+# ============================================
+[compatibility]
+# 启用跨平台兼容模式
+universal_mode = true
+
+# 技能格式桥接
+skill_bridge_enabled = true
+unified_skill_format = true
+
+# 配置文件同步
+sync_config_files = false
+
+# 向后兼容
+preserve_legacy_behavior = true
+
+# ============================================
+# [features] 功能模块配置
+# ============================================
+[features]
+# 核心功能模块
+plan = true
+work = true
+review = true
+release = true
+
+# 高级功能
+workflow = true
+coordination = true
+
+# 实验性功能
+experimental = false
+
+# ============================================
+# [work] 工作执行配置
+# ============================================
+[work]
+enable = true
+default_effort = "medium"
+auto_review = true
+
+# 后端选择策略
+backend_selection = "platform_aware"  # platform_aware, explicit, auto
+fallback_backend = "claude"
+
+# 并行执行配置
+parallel_workers = 4
+
+# ============================================
+# [review] 代码审查配置
+# ============================================
+[review]
+enable = true
+strict_mode = false
+max_review_rounds = 3
+
+# 审查器选择
+reviewer_selection = "platform_optimal"
+
+# Claude 审查器配置
+[review.claude]
+strict_mode = true
+max_rounds = 5
+
+# Codex 审查器配置
+[review.codex]
+strict_mode = false
+max_rounds = 3
+
+# ============================================
+# [skills] 技能系统配置
+# ============================================
+[skills]
+enable = true
+bridge_enabled = true
+unified_format = true
+
+# 技能目录配置
+claude_skills = "skills/"
+codex_skills = "skills-codex/"
+
+# 技能桥接配置
+[skills.bridge]
+enable = true
+convert_format = "auto"
+validate_after_conversion = true
+
+# ============================================
+# [logging] 日志配置
+# ============================================
+[logging]
+level = "INFO"
+file = ".claude/logs/harness.log"
+
+# 平台特定日志
+[logging.platforms]
+claude = ".claude/logs/harness-claude.log"
+codex = ".claude/logs/harness-codex.log"
+
+# ============================================
+# [state] 状态管理配置
+# ============================================
+[state]
+persist = true
+session_file = ".claude/state/session.jsonl"
+work_file = ".claude/state/work.jsonl"
+
+# 跨平台状态同步
+[state.cross_platform]
+sync_enabled = false
+backup_interval = 300  # 5分钟

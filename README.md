@@ -448,7 +448,7 @@ java-harness/
 ```bash
 # 1. 生成项目配置
 harness init
-# 创建 .claude/harness.toml 配置文件
+# 创建 .claude/harness.toml.bak 配置文件
 
 # 2. 验证配置
 harness validate

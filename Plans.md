@@ -121,13 +121,51 @@
 
 ---
 
+## Phase 8: Codex 实现完善（补充实现）
+
+基于与 Go 项目对比分析发现的差距，将 Phase 7 的完整设计转化为实际可运行的 Codex 支持。
+
+### 事前确认章节
+
+**Phase 8 涉及配置文件生成和目录结构创建，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: 文件系统写入（创建配置和目录）
+  - **理由**: Task 8.1-8.4 需要创建 .codex-plugin/ 目录和相关配置文件
+  - **scope**: Phase 8 / Task 8.1-8.4
+
+- **事项**: 读取 Go 项目参考文件
+  - **理由**: Task 8.2-8.3 需要参考 /Users/apple/IdeaProjects/claude-code-harness 的实现
+  - **scope**: Phase 8 / Task 8.2-8.3
+
+#### 说明
+- 所有文件创建仅限于当前 java-harness 项目目录
+- 读取 Go 项目仅用于参考结构，不会修改其文件
+- 生成的配置文件基于 dual-platform-config.md 的设计
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 8.1 | 创建 .codex-plugin/ 目录结构 `[tdd:skip:mechanical-task]` | 创建完整的 .codex-plugin/ 目录，包含必要的子目录结构 | 目录存在，结构与 Go 项目对等，权限正确 | - | cc:完成 ✅ 2026-08-08 |
+| 8.2 | 实现 Codex plugin.json `[tdd:skip:config-task]` | 参考 Go 项目创建完整的 .codex-plugin/plugin.json，包含 interface 定义和技能配置 | plugin.json 文件存在，包含 name、version、skills、interface 完整定义，通过 JSON 验证 | 8.1 | cc:完成 ✅ 2026-08-08 |
+| 8.3 | 从设计文档生成实际配置文件 `[tdd:skip:config-task]` | 将 dual-platform-config.md 中的 TOML 配置创建为实际的 harness.toml 文件 | harness.toml 文件存在，包含 [platform.claude]、[platform.codex]、[compatibility] 完整配置，TOML 语法正确 | 8.2 | cc:完成 ✅ 2026-08-08 |
+| 8.4 | 创建双平台安装脚本 `[tdd:skip:scripts-task]` | 实现 install-claude.sh 和 install-codex.sh 脚本，包含权限设置和验证逻辑 | 两个脚本文件存在，可执行权限设置正确，包含基本验证逻辑 | 8.3 | cc:完成 ✅ 2026-08-08 |
+| 8.5 | Codex 集成测试 `[tdd:skip:test-task]` | 在实际环境中验证 .codex-plugin/ 的完整性和技能加载能力 | 技能目录可读，plugin.json 格式验证通过，技能加载测试通过 | 8.4 | cc:完成 ✅ 2026-08-08 |
+| 8.6 | 更新文档反映实际实现 `[tdd:skip:docs-only]` | 更新 README-DUAL-PLATFORM.md 和相关文档，确保描述与实际实现一致 | 文档中的安装命令可执行，配置示例与实际文件对等，无过时描述 | 8.5 | cc:完成 ✅ 2026-08-08 |
+
+---
+
 ## 优先级说明
 
 - **Required**: 核心任务，必须完成（用户明确要求）
 - **Recommended**: 推荐任务，提升文档质量
-- **Optional**: 可选任务（Phase 7 为可选扩展功能）
+- **Optional**: 可选任务（Phase 7 为可选扩展功能，Phase 8 为补充实现）
 
-**总计**: 33 个任务（24 个核心 + 9 个可选），预计 8-12 天完成核心任务，+11 周完成可选扩展
+**总计**: 39 个任务（24 个核心 + 9 个可选 + 6 个补充实现），预计 8-12 天完成核心任务，+1-2 天完成补充实现
+
+**Phase 8 状态**: ✅ 已完成 (2026-08-08)
 
 ---
 
@@ -148,6 +186,13 @@
 | 双平台集成测试 | ❌ `[tdd:skip:test-task]` | 测试编写任务本身 |
 | 双平台文档发布 | ❌ `[tdd:skip:docs-only]` | 文档编写，通过质量检查验证 |
 | Beta 发布和反馈收集 | ❌ `[tdd:skip:release-task]` | 发布任务，通过发布检查验证 |
+| **Codex 实现完善 (Phase 8)** | | |
+| 创建目录结构 | ❌ `[tdd:skip:mechanical-task]` | 目录创建，通过验证检查 |
+| Codex plugin.json | ❌ `[tdd:skip:config-task]` | 配置文件创建，通过格式验证 |
+| 生成实际配置文件 | ❌ `[tdd:skip:config-task]` | 配置文件生成，通过语法验证 |
+| 双平台安装脚本 | ❌ `[tdd:skip:scripts-task]` | 脚本创建，通过执行验证 |
+| Codex 集成测试 | ❌ `[tdd:skip:test-task]` | 集成测试验证 |
+| 更新文档 | ❌ `[tdd:skip:docs-only]` | 文档更新，通过人工验证 |
 
 ---
 

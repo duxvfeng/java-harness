@@ -1,0 +1,59 @@
+{
+  "name": "java-harness",
+  "version": "4.1.1",
+  "description": "Java implementation of Claude Code Harness with Codex CLI support - Plan, Work, Review, and Release workflows for Codex CLI users",
+  "author": {
+    "name": "dxf",
+    "url": "https://gitee.com/duxvfeng/java-harness/"
+  },
+  "homepage": "https://gitee.com/duxvfeng/java-harness/",
+  "repository": "https://gitee.com/duxvfeng/java-harness.git",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "java",
+    "skills",
+    "workflow",
+    "plan-work-review",
+    "harness",
+    "dual-platform"
+  ],
+  "skills": "../skills-codex/",
+  "hooks": {
+    "description": "Codex project hooks are managed separately; hooks inherited from Claude configuration through compatibility layer.",
+    "hooks": {}
+  },
+  "interface": {
+    "displayName": "Java Harness",
+    "shortDescription": "Java implementation of Harness workflow skills for Codex CLI",
+    "longDescription": "Use Java Harness skills in Codex CLI for evidence-backed planning, implementation, review, release, setup, sync, and team execution workflows. This provides Codex CLI compatibility while maintaining full feature parity with Claude Code implementation.",
+    "developerName": "dxf",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "Use $harness-plan to plan this change.",
+      "Use $harness-work to execute the next Plans.md task.",
+      "Use $harness-review to review implementation changes."
+    ],
+    "websiteURL": "https://gitee.com/duxvfeng/java-harness",
+    "privacyPolicyURL": "https://gitee.com/duxvfeng/java-harness/blob/main/SECURITY.md",
+    "termsOfServiceURL": "https://gitee.com/duxvfeng/java-harness/blob/main/LICENSE",
+    "brandColor": "#FF4500",
+    "screenshots": []
+  },
+  "metadata": {
+    "phase": "8",
+    "alignment": "codex-implementation-complete",
+    "go_project_reference": true,
+    "chinese_localization": true,
+    "dual_platform_support": true,
+    "platform": "codex",
+    "compatibility_layer": true,
+    "total_skills": 21,
+    "implementation_date": "2026-08-08"
+  }
+}

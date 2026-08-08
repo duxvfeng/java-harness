@@ -65,7 +65,7 @@ public class PlatformDetector {
 public class ConfigCompatLayer {
     // 支持配置优先级：
     // 1. 平台特定配置 (.claude/config.toml 或 .codex/config.toml)
-    // 2. 标准配置 (harness.toml)
+    // 2. 标准配置 (harness.toml.bak)
     // 3. 平台默认值
 }
 ```

@@ -279,7 +279,7 @@ java-harness/
 ```bash
 # 1. Generate project configuration
 harness init
-# Creates .claude/harness.toml configuration file
+# Creates .claude/harness.toml.bak configuration file
 
 # 2. Validate configuration
 harness validate

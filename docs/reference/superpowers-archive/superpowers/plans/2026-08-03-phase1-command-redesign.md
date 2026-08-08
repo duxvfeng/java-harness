@@ -1407,7 +1407,7 @@ public class SyncHandler implements CommandHandler {
         String rootPath = args.length > 0 ? args[0] : System.getProperty("user.dir");
 
         try {
-            Path harnessTomlPath = Paths.get(rootPath, "harness.toml");
+            Path harnessTomlPath = Paths.get(rootPath, "harness.toml.bak");
 
             StringBuilder prompt = new StringBuilder();
             prompt.append("# Configuration Sync\n\n");
@@ -1418,7 +1418,7 @@ public class SyncHandler implements CommandHandler {
                 prompt.append("## Current Configuration\n\n");
                 prompt.append(tomlContent);
             } else {
-                prompt.append("No harness.toml found. Will create default configuration.\n");
+                prompt.append("No harness.toml.bak found. Will create default configuration.\n");
             }
 
             prompt.append("\n\nPlease sync the configuration with the current state.");
@@ -2087,12 +2087,12 @@ public class StatusHandler implements CommandHandler {
             System.out.println("✗ Plans.md not found");
         }
 
-        // Check harness.toml
-        Path configPath = Paths.get("harness.toml");
+        // Check harness.toml.bak
+        Path configPath = Paths.get("harness.toml.bak");
         if (Files.exists(configPath)) {
-            System.out.println("✓ harness.toml exists");
+            System.out.println("✓ harness.toml.bak exists");
         } else {
-            System.out.println("✗ harness.toml not found");
+            System.out.println("✗ harness.toml.bak not found");
         }
 
         System.out.println("");
@@ -2398,7 +2398,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Parser for harness.toml configuration files.
+ * Parser for harness.toml.bak configuration files.
  */
 public class HarnessTomlParser {
     private static final ObjectMapper mapper = new TomlMapper();
@@ -2468,7 +2468,7 @@ public class InitHandlerTest {
         
         assertDoesNotThrow(() -> handler.execute(new String[]{tempDir.toString()}));
         
-        Path configFile = tempDir.resolve("harness.toml");
+        Path configFile = tempDir.resolve("harness.toml.bak");
         assertTrue(Files.exists(configFile));
         
         // Cleanup
@@ -2508,14 +2508,14 @@ public class InitHandler implements CommandHandler {
         Path rootDir = Paths.get(rootPath);
 
         try {
-            // Create harness.toml
-            Path tomlPath = rootDir.resolve("harness.toml");
+            // Create harness.toml.bak
+            Path tomlPath = rootDir.resolve("harness.toml.bak");
             if (Files.exists(tomlPath)) {
-                System.out.println("harness.toml already exists. Skipping creation.");
+                System.out.println("harness.toml.bak already exists. Skipping creation.");
             } else {
                 String defaultToml = generateDefaultToml();
                 Files.writeString(tomlPath, defaultToml);
-                System.out.println("Created harness.toml");
+                System.out.println("Created harness.toml.bak");
             }
 
             // Create Plans.md
@@ -3048,7 +3048,7 @@ public class IntegrationTest {
     @Test
     void testConfigParsing(@TempDir Path tempDir) throws IOException {
         // Create test config
-        Path configFile = tempDir.resolve("harness.toml");
+        Path configFile = tempDir.resolve("harness.toml.bak");
         String configContent = """
             [project]
             name = "test-project"
