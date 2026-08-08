@@ -80,47 +80,44 @@
 
 ---
 
-## Phase 7: GPT Codex 支持（可选扩展）
+## Phase 7: 双平台适配（可选扩展）
 
 ### 事前确认章节
 
-**Phase 7 涉及新产品集成和外部工具访问，需要在计划批准时预先确认以下事项：**
+**Phase 7 涉及双平台集成和外部工具访问，需要在计划批准时预先确认以下事项：**
 
 #### 计划时批准事项
 
-- **事项**: secret-read（读取 Codex 配置和状态）
-  - **理由**: Task 7.3-7.5 需要读取 `$HOME/.codex/` 和项目 `.codex/` 目录的配置文件
-  - **scope**: Phase 7 / Task 7.3-7.5
+- **事项**: secret-read（读取双平台配置和状态）
+  - **理由**: Task 7.2-7.6 需要读取 `$HOME/.codex/`、`$HOME/.claude/` 和项目配置目录的配置文件
+  - **scope**: Phase 7 / Task 7.2-7.6
 
-- **事项**: external-send（调用 Codex CLI）
-  - **理由**: Task 7.3-7.7 需要调用 `codex` 命令进行功能验证和测试
-  - **scope**: Phase 7 / Task 7.3-7.7
+- **事项**: external-send（调用平台 CLI）
+  - **理由**: Task 7.2-7.7 需要调用平台命令进行功能验证和测试
+  - **scope**: Phase 7 / Task 7.2-7.7
 
-- **事项**: secret-read（读取 OpenAI API 密钥）
-  - **理由**: Task 7.6 需要验证 Codex 的安全规则涉及 API 密钥保护
-  - **scope**: Phase 7 / Task 7.6
-
-- **事项**: external-send（网络请求到 OpenAI API）
-  - **理由**: Task 7.7 集成测试需要验证 Codex 的实际 API 调用
+- **事项**: external-send（网络请求到 AI API）
+  - **理由**: Task 7.7 集成测试需要验证双平台的实际 API 调用
   - **scope**: Phase 7 / Task 7.7
 
 #### 说明
 - 以上事项仅在 Phase 7 实施时生效，Phase 1-6 的文档任务不涉及
-- 所有 Codex 配置读取仅为功能验证需要，不会记录或传输密钥内容
+- 所有配置读取仅为功能验证需要，不会记录或传输密钥内容
 - 网络请求仅用于集成测试，不会在实际产品代码中进行未经授权的 API 调用
 
 ---
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 7.1 | Codex 支持技术调研和架构设计 | 完成技术调研、架构设计、风险评估 | 技术调研报告、架构设计文档、风险评估 | - | cc:完成 ✅ 2026-08-08 |
-| 7.2 | Codex 适配器层实现 | 实现 AIToolAdapter 接口和 CodexAdapter 类 | 接口定义完成，CodexAdapter 实现并通过单元测试 | 7.1 | cc:TODO |
-| 7.3 | Codex Backend 增强 | 增强 CodexBackend 状态管理和配置支持 | CodexBackend 支持完整的状态管理和配置 | 7.2 | cc:TODO |
-| 7.4 | Codex 技能桥接实现 | 实现 CodexSkillBridge 技能转换和加载 | 能够加载和转换 .codex/skills/ 中的技能文件 | 7.3 | cc:TODO |
-| 7.5 | Codex Setup 和配置管理 | 实现 CodexSetup 和 CodexConfig 类 | setup-codex.sh 功能在 Java 中实现，支持 TOML 配置 | 7.4 | cc:TODO |
-| 7.6 | Codex 安全规则集成 | 添加 Codex 特定的 Guardrail 规则 | 新规则通过安全测试，文档化安全模型差异 | 7.5 | cc:TODO |
-| 7.7 | Codex 集成测试和文档 | 编写端到端测试和用户文档 | 测试覆盖率达到 80%，文档完整 | 7.6 | cc:TODO |
-| 7.8 | Beta 发布和反馈收集 | 作为 Beta 功能发布，收集用户反馈 | Beta 发布完成，反馈收集和分析报告 | 7.7 | cc:TODO |
+| 7.1 | 双平台架构设计验证 | 验证现有架构设计是否符合双平台需求，确认统一插件结构和配置兼容层 | 架构验证报告，设计文档确认 | - | cc:完成 ✅ 2026-08-08 |
+| 7.2 | 平台检测机制实现 `[tdd:required]` | 实现 PlatformDetector 类，支持 Claude Code 和 Codex 环境检测 | PlatformDetector.detectCurrentPlatform() 准确识别平台，单元测试通过 | 7.1 | cc:TODO |
+| 7.3 | 统一技能接口实现 `[tdd:required]` | 实现 UniversalSkill 接口，支持平台特定适配，保持现有技能兼容 | 现有技能在新接口下正常运行，兼容性测试通过 | 7.2 | cc:TODO |
+| 7.4 | 后端选择策略实现 `[tdd:required]` | 实现 BackendSelector 类，支持明确指定、自动检测、平台默认、系统默认的优先级 | 能根据配置和环境选择正确后端，集成测试通过 | 7.3 | cc:TODO |
+| 7.5 | 配置兼容层实现 `[tdd:required]` | 创建双平台配置文件结构，实现统一的 harness.toml 配置解析器 | 两个平台都能正确读取配置，配置解析测试通过 | 7.4 | cc:TODO |
+| 7.6 | 双平台配置文件更新 `[tdd:skip:config-task]` | 更新 plugin.json 支持两个平台，创建 marketplace.json 和 Codex plugin.json | 两个平台都能正确安装和识别插件，安装测试通过 | 7.5 | cc:TODO |
+| 7.7 | 双平台集成测试 `[tdd:skip:test-task]` | 编写端到端测试，验证平台检测、技能执行、后端选择、配置解析的集成 | 测试覆盖率达到 80%，两个平台功能等价性验证通过 | 7.6 | cc:TODO |
+| 7.8 | 双平台文档发布 `[tdd:skip:docs-only]` | 更新 README.md 包含双平台安装指南，创建详细使用文档，更新 CHANGELOG | 文档完整，两个平台的安装流程清晰，用户能按照文档成功安装 | 7.7 | cc:TODO |
+| 7.9 | Beta 发布和反馈收集 `[tdd:skip:release-task]` | 将双平台支持作为 Beta 功能发布，收集两个平台的用户反馈并优化 | Beta 发布完成，反馈收集和分析报告完成 | 7.8 | cc:TODO |
 
 ---
 
@@ -130,7 +127,7 @@
 - **Recommended**: 推荐任务，提升文档质量
 - **Optional**: 可选任务（Phase 7 为可选扩展功能）
 
-**总计**: 32 个任务（24 个核心 + 8 个可选），预计 8-12 天完成核心任务，+11 周完成可选扩展
+**总计**: 33 个任务（24 个核心 + 9 个可选），预计 8-12 天完成核心任务，+11 周完成可选扩展
 
 ---
 
@@ -142,13 +139,15 @@
 | README 编写 | ❌ `[tdd:skip:docs-only]` | 文档创作，通过人工验证 |
 | 翻译任务 | ❌ `[tdd:skip:docs-only]` | 文档翻译，通过质量检查验证 |
 | 文档体系设计 | ❌ `[tdd:skip:docs-only]` | 文档结构设计，通过评审验证 |
-| Codex 技术调研 | ❌ `[tdd:skip:research-task]` | 研究性任务，通过评审验证 |
-| Codex 适配器实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| Codex Backend 增强 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| Codex 技能桥接 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| Codex Setup 实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| Codex 安全规则 | ✅ `[tdd:required]` | 安全相关代码，必须先写失败测试 |
-| Codex 集成测试 | ❌ `[tdd:skip:test-task]` | 测试编写任务本身 |
+| 双平台架构验证 | ❌ `[tdd:skip:research-task]` | 研究性任务，通过评审验证 |
+| 平台检测机制实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| 统一技能接口实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| 后端选择策略实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| 配置兼容层实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| 双平台配置文件更新 | ❌ `[tdd:skip:config-task]` | 配置文件更新，通过验证测试 |
+| 双平台集成测试 | ❌ `[tdd:skip:test-task]` | 测试编写任务本身 |
+| 双平台文档发布 | ❌ `[tdd:skip:docs-only]` | 文档编写，通过质量检查验证 |
+| Beta 发布和反馈收集 | ❌ `[tdd:skip:release-task]` | 发布任务，通过发布检查验证 |
 
 ---
 
@@ -196,7 +195,7 @@
 
 ---
 
-**Spec Skip Reason**: Phase 1-6 为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更，现有 spec.md 已充分定义。Phase 7 为可选的 Codex 支持，涉及新产品集成，需要更新 spec.md 添加 Codex 集成的产品契约。
+**Spec Skip Reason**: Phase 1-6 为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更，现有 spec.md 已充分定义。Phase 7 为可选的双平台适配，涉及新产品集成和平台兼容性，需要更新 spec.md 添加双平台集成的产品契约。
 
 ---
 
