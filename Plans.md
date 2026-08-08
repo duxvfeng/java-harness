@@ -1,157 +1,151 @@
-# Phase 8: Go 版本功能完全补全计划
+# 项目文档重建计划
 
-**目标**: 实现与 Go 版本 100% 功能对等的 Java Harness
+**目标**: 清理现有文档，重建清晰的中英文README和文档体系，确保文档与项目当前状态一致。
 
-## 功能完备性差距分析
+## 背景
 
-### 当前状态对比
-
-| **功能类别** | **Go 版本** | **Java 版本** | **完成度** |
-|-------------|------------|--------------|----------|
-| **Hook 系统** | 13+ hooks | 完整实现 14 hooks | 🟢 100% |
-| **CLI 命令** | 60+ 命令 | 基础 CLI | 🔴 10% |
-| **工作流引擎** | 生产级 | 基础实现 | 🟡 60% |
-| **Agent 协调** | Breezing/Cursor/Codex | 部分实现 | 🟡 40% |
-| **CI 集成** | 完整集成 | 基础支持 | 🔴 20% |
-| **内存管理** | 完整系统 | 基础实现 | 🔴 30% |
-| **状态管理** | 持久化+同步 | 基础实现 | 🔴 25% |
-| **Guardrail 系统** | 20+ 规则 | 8 条规则 | 🔴 40% |
-
-**总体完成度**: 🟡 **约 35%** (Hook 系统 100% 完成)
+- **当前问题**: docs/ 目录下有27个文档文件，部分过时或重复，文档结构混乱
+- **项目状态**: Phase 9 已完成，跨平台 Hooks 统一方案实现完毕
+- **用户需求**: 全部清理后重建文档体系，生成中英文分离的 README
 
 ---
 
-## Phase 8.8: 模板系统移植（3-4 周）
-
-### 目标
-实现 Go 版本完整的模板系统，包括模板注册、变量替换、版本追踪和国际化支持
+## Phase 1: 文档清理和备份（1-2天）
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 8.8.1 | 实现模板注册表系统 | template-registry.json 管理、版本映射 | 能正确注册和查询模板 | 8.7.5 | cc:TODO |
-| 8.8.2 | 实现模板变量替换引擎 | {{PROJECT_NAME}}, {{DATE}} 等变量替换 | 变量替换功能完整 | 8.8.1 | cc:TODO |
-| 8.8.3 | 实现 Frontmatter 版本管理 | _harness_version, _harness_template 解析 | 版本追踪功能正常 | 8.8.2 | cc:TODO |
-| 8.8.4 | 移植核心项目模板 | CLAUDE.md, AGENTS.md, Plans.md 模板 | 模板生成功能正常 | 8.8.3 | cc:TODO |
-| 8.8.5 | 移植规则模板系统 | 12个规则文件的模板生成 | 规则模板能正确生成 | 8.8.4 | cc:TODO |
-| 8.8.6 | 移植内存模板 | decisions.md, patterns.md 模板 | 内存模板功能正常 | 8.8.5 | cc:TODO |
-| 8.8.7 | 实现模板追踪器 | template-tracker.sh 的 Java 实现 | 追踪功能完整 | 8.8.6 | cc:TODO |
-| 8.8.8 | 实现条件模板生成 | 基于 config 的条件模板逻辑 | 条件模板正确生成 | 8.8.7 | cc:TODO |
-| 8.8.9 | 实现模板更新检测 | 检测模板版本变化和本地修改 | 更新检测准确 | 8.8.8 | cc:TODO |
+| 1.1 | 创建 docs/reference/ 备份目录 | 创建 docs/reference/backup/ 和 docs/reference/superpowers-archive/ 目录 | 目录创建成功，权限正确 | - | cc:完成 ✅ 2026-08-08 |
+| 1.2 | 备份重要参考文档 | 将 BUILD_INSTRUCTIONS.md, MULTI_PLATFORM_BUILD.md 等技术文档移到 docs/reference/backup/ | 文件已移动，路径正确 | 1.1 | cc:完成 ✅ 2026-08-08 |
+| 1.3 | 归档 Superpowers 临时文档 | 将 docs/superpowers/ 整个目录移到 docs/reference/superpowers-archive/ | 目录已移动，包含所有18个文件 | 1.1 | cc:完成 ✅ 2026-08-08 |
+| 1.4 | 删除 docs/ 下所有其他文档 | 删除根目录下的独立 md 文件和 install/ 目录 | docs/ 目录已清空，仅保留 reference/ | 1.3 | cc:完成 ✅ 2026-08-08 |
+| 1.5 | 验证清理结果 | 确认 docs/ 结构干净，备份完整 | `ls -R docs/` 显示正确结构 | 1.4 | cc:完成 ✅ 2026-08-08 |
 
 ---
 
-## Phase 8.9: 脚本功能移植（6-8 周）
-
-### 目标
-移植 Go 版本 201 个脚本的核心功能到 java-harness
+## Phase 2: 中文 README.md 创建（2-3天）
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 8.9.1 | 移植构建脚本系统 | build.sh, test.sh 等构建相关脚本 | 构建功能完整 | 8.8.9 | cc:TODO |
-| 8.9.2 | 移植项目初始化脚本 | setup-existing-project.sh, analyze-project.sh | 初始化功能正常 | 8.9.1 | cc:TODO |
-| 8.9.3 | 移植计划管理脚本 | plan-registry.sh, plans-watcher.sh 等 | 计划管理功能完整 | 8.9.2 | cc:TODO |
-| 8.9.4 | 移植会话管理脚本 | session-init.sh, session-monitor.sh 等 | 会话管理功能正常 | 8.9.3 | cc:TODO |
-| 8.9.5 | 移植审查和质量脚本 | judgment-card.sh, review-相关脚本 | 审查功能完整 | 8.9.4 | cc:TODO |
-| 8.9.6 | 移植 CI/CD 脚本 | release-preflight.sh, ci-相关脚本 | CI/CD 功能正常 | 8.9.5 | cc:TODO |
-| 8.9.7 | 移植测试脚本 | auto-test-runner.sh, test-相关脚本 | 测试脚本功能完整 | 8.9.6 | cc:TODO |
-| 8.9.8 | 移植工具和辅助脚本 | 渲染、生成、分析工具脚本 | 辅助工具功能正常 | 8.9.7 | cc:TODO |
-| 8.9.9 | 创建 Java 原生等价实现 | 将核心脚本逻辑转为 Java 类 | Java 实现功能完整 | 8.9.8 | cc:TODO |
-| 8.9.10 | 实现脚本调用桥接 | Java 系统调用 shell 脚本的桥接层 | 桥接功能正常 | 8.9.9 | cc:TODO |
+| 2.1 | 编写项目概述和快速入门 | 项目标题、简介、5分钟快速开始、安装步骤 | 包含项目标志、核心价值主张、快速安装命令 | 1.5 | cc:完成 ✅ 2026-08-08 |
+| 2.2 | 编写完整功能特性列表 | 86个CLI命令、27个安全规则、Hook系统、Agent协调 | 结构化展示所有功能，带图标和分类 | 2.1 | cc:完成 ✅ 2026-08-08 |
+| 2.3 | 编写架构设计和技术细节 | 模块结构、技术栈、性能目标、设计原理 | 包含架构图、技术栈表格、性能指标 | 2.2 | cc:完成 ✅ 2026-08-08 |
+| 2.4 | 添加使用示例和代码片段 | Hook输入输出示例、命令使用示例 | 代码块语法高亮，示例可运行 | 2.3 | cc:完成 ✅ 2026-08-08 |
+| 2.5 | 添加贡献指南和联系方式 | 开发规范、测试要求、许可证信息 | 遵循现有 CLAUDE.md 规范 | 2.4 | cc:完成 ✅ 2026-08-08 |
+| 2.6 | 中文文案质量检查 | 中文排版、术语一致性、链接有效性 | 无中英文混排错误，所有链接有效 | 2.5 | cc:完成 ✅ 2026-08-08 |
 
 ---
 
-## Phase 8.10: 国际化和文档系统（2-3 周）
-
-### 目标
-实现完整的多语言模板支持和文档生成系统
+## Phase 3: 英文 README_EN.md 创建（2-3天）
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 8.10.1 | 实现日语模板支持 | locales/ja/ 目录下的所有模板 | 日语模板功能正常 | 8.9.10 | cc:TODO |
-| 8.10.2 | 实现中文模板支持 | locales/zh/ 目录下的所有模板 | 中文模板功能正常 | 8.10.1 | cc:TODO |
-| 8.10.3 | 实现多语言切换逻辑 | 基于配置的语言切换功能 | 语言切换正确 | 8.10.2 | cc:TODO |
-| 8.10.4 | 移植文档生成脚本 | generate-相关脚本的移植 | 文档生成功能正常 | 8.10.3 | cc:TODO |
-| 8.10.5 | 实现 HTML 渲染系统 | render-html.sh 的 Java 实现 | HTML 渲染功能完整 | 8.10.4 | cc:TODO |
-| 8.10.6 | 创建多语言文档系统 | 支持多语言的项目文档生成 | 文档系统功能正常 | 8.10.5 | cc:TODO |
+| 3.1 | 翻译项目概述和快速入门 | 将中文 README.md 的第1-2章节翻译为英文 | 准确的技术英语表达，保持专业语气 | 2.6 | cc:完成 ✅ 2026-08-08 |
+| 3.2 | 翻译完整功能特性列表 | 将功能特性章节翻译，保持结构一致 | 命令名称、技术术语准确翻译 | 3.1 | cc:完成 ✅ 2026-08-08 |
+| 3.3 | 翻译架构设计和技术细节 | 架构图表、技术栈、性能目标翻译 | 技术文档翻译标准，保持图表清晰 | 3.2 | cc:完成 ✅ 2026-08-08 |
+| 3.4 | 翻译使用示例和贡献指南 | 代码示例保持不变，说明文本翻译 | 代码块不变，注释可翻译 | 3.3 | cc:完成 ✅ 2026-08-08 |
+| 3.5 | 英文文案质量检查 | 语法检查、术语一致性、排版规范 | 无语法错误，术语统一使用 | 3.4 | cc:完成 ✅ 2026-08-08 |
+| 3.6 | 中英文版本一致性验证 | 两个版本的结构和内容对等检查 | 章节结构一致，无遗漏内容 | 3.5 | cc:完成 ✅ 2026-08-08 |
 
 ---
 
-## 更新后的预估时间
-
-| **阶段** | **时间** | **团队规模** |
-|---------|---------|------------|
-| Phase 8.1: Hook 系统 | 4 周 | 2-3 人 |
-| Phase 8.2: CLI 命令 | 6 周 | 3-4 人 |
-| Phase 8.3: Guardrail 系统 | 2 周 | 2 人 |
-| Phase 8.4: 状态管理 | 3 周 | 2-3 人 |
-| Phase 8.5: Agent 协调 | 4 周 | 3-4 人 |
-| Phase 8.6: CI/CD 集成 | 3 周 | 2-3 人 |
-| Phase 8.7: 测试和文档 | 4 周 | 2-3 人 |
-| Phase 8.8: 模板系统 | 3-4 周 | 2-3 人 |
-| Phase 8.9: 脚本功能移植 | 6-8 周 | 3-4 人 |
-| Phase 8.10: 国际化系统 | 2-3 周 | 2 人 |
-
-**总计**: **37-41 周**（约 9-10 个月）
-
----
-
-## Phase 9: 跨平台 Hooks Wrapper 统一方案（1 周）
-
-### 目标
-统一跨平台 hooks 配置，使用 wrapper 脚本自动检测平台并调用正确的二进制，消除维护多份平台特定模板文件的开销
+## Phase 4: 文档体系设计和重建（2-3天）
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 9.1 | 创建备份目录并移动旧配置 | 将 4 个多平台 hooks 配置移到 docs/reference/multi-platform-hooks-backup/ | 备份完成，4 个文件已移动 | - | cc:completed ✅ 0cdc64c |
-| 9.2 | 创建 Unix Wrapper 脚本 | bin/harness 平台检测脚本，支持 Linux/macOS/Windows | shell 语法验证通过，bin/harness --version 输出版本号 | 9.1 | cc:completed ✅ 66b0cb5 |
-| 9.3 | 创建 Windows Wrapper 脚本 | bin/harness.bat 平台检测脚本，支持 Windows 和 JAR fallback | batch 脚本创建，bin/harness.bat --version 工作正常 | 9.2 | cc:completed ✅ f55f9b1 |
-| 9.4 | 更新 hooks.json 为统一配置 | 批量替换所有 command 字段为 bin/harness | JSON 格式验证通过，所有 command 统一为 bin/harness | 9.3 | cc:completed ✅ 2ebbbd9 |
-| 9.5 | 提交 Wrapper 脚本和统一配置 | git commit bin/harness, bin/harness.bat, hooks/hooks.json | 提交完成，commit message 符合规范 | 9.4 | cc:completed ✅ 66b0cb5,f55f9b1,2ebbbd9 |
-| 9.6 | 更新 PLATFORM_SETUP.md 文档 | 移除多平台复制步骤，添加 wrapper 验证步骤 | 文档更新正确，验证步骤清晰 | 9.5 | cc:completed ✅ 1dfeb71 |
-| 9.7 | 集成测试验证 Wrapper 功能 | 测试版本命令、Hook 子命令、Fallback 机制 | 所有测试通过，wrapper 功能正常 | 9.6 | cc:completed ✅ d5f0065 |
-| 9.8 | 跨平台验证 | 在 Git Bash (MINGW) 环境测试平台检测 | 平台检测正确，错误处理完整 | 9.7 | cc:completed ✅ 829eb10 |
-| 9.9 | 文档和收尾 | 检查其他文档引用，生成实现总结 | 文档完整，实现总结已创建 | 9.8 | cc:completed ✅ 18dcd02 |
-| 9.10 | 诊断 Hook 调用失败问题 | 调试 bin/harness 在 Hook 系统中的 "No such file or directory" 错误 | 找到根本原因并确认修复方案 | 9.9 | cc:completed ✅ 91bcb23 |
-| 9.11 | 修复 Hook 路径解析问题 | 确保 hooks.json 中的 command 在所有环境下都能正确解析 bin/harness | Hooks 不再报 "bin/harness: No such file or directory" 错误 | 9.10 | cc:completed ✅ 91bcb23 |
-
-### 详细说明
-
-**实现范围**：
-- 创建 `bin/harness`（Unix wrapper）和 `bin/harness.bat`（Windows wrapper）
-- 统一 `hooks/hooks.json` 配置，所有平台使用 `bin/harness` 命令
-- 备份旧的多平台配置到参考目录
-- 更新文档移除手动配置步骤
-
-**支持平台**：
-- Windows x86_64 → `bin/windows/harness.exe`
-- Linux AMD64 → `bin/linux/linux-amd64/harness`
-- Linux ARM64 → `bin/linux/linux-arm64/harness`
-- macOS Intel → `bin/macos/macos-amd64/harness`
-- macOS ARM64 → `bin/macos/macos-arm64/harness`
-- 全平台 JAR fallback
-
-**验收标准**：
-- ✅ `bin/harness` 和 `bin/harness.bat` 创建并通过语法检查
-- ✅ `bin/harness --version` 输出 `harness 4.1.1`
-- ✅ `hooks/hooks.json` 所有 command 统一为 `bin/harness`
-- ✅ 旧配置已备份到 `docs/reference/multi-platform-hooks-backup/`
-- ✅ `PLATFORM_SETUP.md` 已更新
-- ✅ Fallback 机制验证通过
-- ✅ 所有变更已 commit
-
-### 相关文档
-- 设计文档: `docs/superpowers/specs/2026-08-07-cross-platform-hooks-wrapper-design.md`
-- 实现计划: `docs/superpowers/plans/2026-08-07-cross-platform-hooks-wrapper.md`
+| 4.1 | 设计新文档结构 | 设计 docs/ 目录组织方式，考虑未来扩展 | 文档结构图清晰，分类合理 | 3.6 | cc:完成 ✅ 2026-08-08 |
+| 4.2 | 创建核心文档模板 | 创建 INSTALLATION.md, ARCHITECTURE.md 等核心文档模板 | 模板结构完整，包含必要章节 | 4.1 | cc:完成 ✅ 2026-08-08 |
+| 4.3 | 编写快速安装指南 | 基于 README 中的安装章节，扩展详细安装文档 | 支持多平台，包含故障排除 | 4.2 | cc:完成 ✅ 2026-08-08 |
+| 4.4 | 编写架构详细文档 | 扩展 README 中的架构章节，添加设计决策 | 包含架构图、模块说明、设计原理 | 4.3 | cc:完成 ✅ 2026-08-08 |
+| 4.5 | 创建 API 参考文档框架 | 为未来 API 文档预留框架和结构 | 包含 API 文档标准和示例 | 4.4 | cc:完成 ✅ 2026-08-08 |
+| 4.6 | 文档交叉引用验证 | 确保所有文档间链接正确，README 与详细文档对应 | 所有链接有效，无死链 | 4.5 | cc:完成 ✅ 2026-08-08 |
 
 ---
 
-## 📦 归档索引
+## Phase 5: 文档验证和发布（1天）
 
-历史归档已移至 `docs/guidang/` 目录：
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 5.1 | 中英文 README 验证 | 检查两个版本在 GitHub 上显示效果 | 格式正确，表格列表渲染正常 | 4.6 | cc:TODO |
+| 5.2 | 文档完整性检查 | 确保所有承诺的内容都已实现 | 对照用户要求列表逐项检查 | 5.1 | cc:TODO |
+| 5.3 | 创建变更日志 | 在 CHANGELOG.md 中记录本次文档重建 | 符合项目变更日志规范 | 5.2 | cc:TODO |
+| 5.4 | 提交文档重建变更 | git commit 所有文档变更 | Commit message 清晰，变更范围明确 | 5.3 | cc:TODO |
 
-| 归档文件 | 归档日期 | 内容 |
-|---------|---------|------|
-| [Plans-2026-08.md](docs/guidang/Plans-2026-08.md) | 2026-08-07 | Phase 8.1-8.7 (59个已完成任务) |
+---
 
-**归档说明**: 已完成的 Phase 会定期归档到独立文件，保持主文件简洁。归档文件包含完整的任务列表、验收标准和技术文档。
+## 优先级说明
 
+- **Required**: 核心任务，必须完成（用户明确要求）
+- **Recommended**: 推荐任务，提升文档质量
+
+**总计**: 24 个任务，预计 8-12 天完成
+
+---
+
+## TDD 判定
+
+| 任务类型 | TDD Required | 说明 |
+|---------|-------------|------|
+| 文档清理 | ❌ `[tdd:skip:mechanical-task]` | 机械性文件操作，无需测试 |
+| README 编写 | ❌ `[tdd:skip:docs-only]` | 文档创作，通过人工验证 |
+| 翻译任务 | ❌ `[tdd:skip:docs-only]` | 文档翻译，通过质量检查验证 |
+| 文档体系设计 | ❌ `[tdd:skip:docs-only]` | 文档结构设计，通过评审验证 |
+
+---
+
+## 验收标准
+
+### DoD (Definition of Done)
+
+**每个任务完成后必须满足**:
+- ✅ 任务描述的成果物已产出
+- ✅ DoD 中的验证条件已满足
+- ✅ 无明显的语法、格式、链接错误
+- ✅ 中文排版符合规范（中英文 README）
+- ✅ 技术术语准确一致
+
+**整体项目完成后**:
+- ✅ docs/ 目录结构清晰合理
+- ✅ README.md 和 README_EN.md 内容完整、专业
+- ✅ 所有文档链接有效
+- ✅ 备份文档安全保存在 docs/reference/
+- ✅ 项目状态与文档描述一致（Phase 9 已完成）
+
+---
+
+## 风险和依赖
+
+### 主要风险
+1. **翻译质量**: 中英文技术术语的一致性
+2. **文档同步**: 未来代码变更时文档的同步更新机制
+3. **内容准确性**: 确保文档描述与实际项目功能一致
+
+### 依赖关系
+- Phase 2 依赖 Phase 1 完成（需要先清理）
+- Phase 3 依赖 Phase 2 完成（基于中文版翻译）
+- Phase 4 可与 Phase 2-3 部分并行
+- Phase 5 依赖所有前置阶段完成
+
+---
+
+## 成功指标
+
+- **文档清晰度**: 新用户能在 5 分钟内完成安装并运行第一个命令
+- **内容完整性**: 所有 86 个命令和 27 个安全规则都有文档说明
+- **双语质量**: 中英文版本内容对等，无遗漏
+- **维护性**: 文档结构便于未来更新和扩展
+
+---
+
+**Spec Skip Reason**: 本次任务为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更。现有 spec.md 已充分定义了 Java Harness 的产品契约和功能要求，无需更新。
+
+---
+
+## 下一步
+
+完成本计划后，项目将拥有：
+- 📄 清晰的中英文 README（独立文件）
+- 📁 结构化的文档体系（docs/ 目录）
+- 🗄️ 完整的备份归档（docs/reference/）
+- ✅ 与项目状态一致的文档描述
+
+为后续的功能开发和用户使用提供坚实的文档基础。

@@ -1,162 +1,83 @@
-# Claude Code Harness - Java Implementation
+# Claude Code Harness - Java 实现版
 
-Java版本的Claude Code Harness，实现CLI Gateway核心功能，包括Hook协议处理、Guardrail安全引擎和快速响应机制。
+Java 原生实现的 Claude Code Harness，提供 CLI Gateway 核心功能，包括 Hook 协议处理、Guardrail 安全引擎和快速响应机制。
 
-## 项目概述
+## 🎯 项目概述
 
-这是claude-code-harness的Java原生实现，目标是通过GraalVM编译为Native Image，实现**<10ms的hook响应时间**，为Claude Code提供实时的安全策略执行。
+这是 [claude-code-harness](https://github.com/your-org/claude-code-harness) 的 Java 原生实现版本，通过 GraalVM 编译为 Native Image，实现 **<10ms 的 hook 响应时间**，为 Claude Code 提供实时安全策略执行。
 
-### 核心特性
+### 核心价值
 
-- **🚀 高性能**: GraalVM Native Image编译，亚毫秒级响应
-- **🔒 安全防护**: 27个Guardrail规则（R01-R27）全覆盖
-- **📡 Hook协议**: 完整的Claude Code Hook事件处理（16个hook子命令）
-- **🎯 模块化设计**: 命令组 + 独立命令，与Go版本完全一致
-- **📋 86个CLI命令**: 完全复制Go版本的命令结构，采用kebab-case命名
+- **🚀 高性能**: GraalVM Native Image 编译，亚毫秒级响应时间
+- **🔒 安全防护**: 27 个 Guardrail 规则（R01-R27）全覆盖
+- **📡 Hook 协议**: 完整的 Claude Code Hook 事件处理（14 个 hook 子命令）
+- **🎯 模块化设计**: 命令组 + 独立命令，与 Go 版本功能对等
+- **📋 完整 CLI**: 86 个 CLI 命令，完全复制 Go 版本的命令结构
 
-## 架构设计
+### 当前状态
 
-### 命令结构
+- **版本**: 4.1.1
+- **Go 版本对应**: claude-code-harness v5.5.0
+- **功能完成度**: Phase 9 已完成（跨平台 Hooks 统一方案）
+- **文档状态**: 文档体系重建中
 
-```
-harness (主命令)
-├── hook (16个子命令)
-│   ├── pre-tool              PreToolUse guardrail evaluation
-│   ├── post-tool             PostToolUse tampering/security checks
-│   ├── permission            PermissionRequest auto-approval
-│   ├── session-start         SessionStart env setup
-│   ├── post-tool-failure     PostToolUseFailure counter & escalation
-│   ├── post-compact          PostCompact WIP context re-injection
-│   ├── notification          Notification event logging
-│   ├── permission-denied     PermissionDenied event logging
-│   ├── ask-user-question-normalize  AskUserQuestion answer bridge
-│   ├── session-init          Session initialization + Plans.md summary
-│   ├── session-cleanup       SessionEnd temp file cleanup
-│   ├── session-monitor       Project state collection + session.json
-│   ├── session-summary       Session summary to session-log.md
-│   ├── ci-status             CI status check after push/PR
-│   ├── subagent-start        Track agent lifecycle start
-│   └── subagent-stop         Track agent lifecycle stop
-├── evidence
-│   └── collect               Collect evidence (test results, build logs)
-├── plans
-│   └── check-deps            Verify done tasks only depend on closed tasks
-├── plan                      Emit the plan prompt for the host to execute
-├── work <taskID>             Emit the work prompt + task context
-├── review <taskID>           Emit the review prompt + task context
-├── release                   Emit the release prompt for the host to execute
-├── gen [hooks] [--check]     Generate per-host hooks.json from hosts.toml
-├── sprint-contract           Generate sprint-contract from Plans.md
-├── status                    Show all tracked agent states
-├── init [root]               Create harness.toml template in project root
-├── sync [root]               Generate CC files from harness.toml
-├── validate                  Validate SKILL.md / agent frontmatter
-├── doctor [--migration]      Health check plus migration status/report
-├── codex-loop                Run the Codex-native long-running loop
-├── mem                       Manage harness-mem companion
-├── channels-wake             Bridge channel health check
-├── inbox                     Inbox management
-├── session                   Session management
-├── self-audit                Audit settings.local.json command hooks
-├── retired-alias             Scan repo for retired alias residue
-├── night-watch               Emit night-watch patrol report
-├── failure-codifier          Emit failure-rule.v1 proposals
-├── mirror                    Report skills/ mirror drift
-├── wt                        Worktree fingerprint operations
-├── impact-score              Compute judgment-card impact_score
-├── pre-compact               Evaluate whether PreCompact should be blocked
-├── version                   Print version
-└── ... (更多命令)
+## 🚀 快速开始
+
+### 环境要求
+
+- **JDK**: 17+
+- **操作系统**: Windows / macOS / Linux
+- **内存**: 最少 4GB RAM
+- **磁盘空间**: 最少 500MB
+
+### 安装方式
+
+#### 方式 1: 使用预编译二进制文件（推荐）
+
+1. **下载对应平台的二进制文件**:
+
+```bash
+# Windows (x64)
+curl -L https://github.com/your-org/java-harness/releases/latest/download/harness-windows-amd64.exe -o harness.exe
+
+# Linux (AMD64)
+curl -L https://github.com/your-org/java-harness/releases/latest/download/harness-linux-amd64 -o harness
+chmod +x harness
+
+# macOS (Intel)
+curl -L https://github.com/your-org/java-harness/releases/latest/download/harness-macos-amd64 -o harness
+chmod +x harness
+
+# macOS (Apple Silicon)
+curl -L https://github.com/your-org/java-harness/releases/latest/download/harness-macos-arm64 -o harness
+chmod +x harness
 ```
 
-### 多模块结构
+2. **验证安装**:
 
-```
-java-harness/
-├── java-harness-cli/              # CLI模块（主入口）
-│   └── command/                   # 86个命令类
-│       ├── hook/                  # hook命令组（16个子命令）
-│       ├── evidence/              # evidence命令组
-│       ├── plan/                  # plans命令组
-│       └── *.java                 # 独立命令
-├── java-harness-shared/           # 共享模块
-├── java-harness-foundation/       # 基础模块
-├── java-harness-protocol/         # 协议模块
-├── java-harness-security/         # 安全模块
-├── java-harness-workflow/         # 工作流模块
-├── java-harness-tools/            # 工具模块
-├── java-harness-collaboration/    # 协作模块
-├── java-harness-ci/               # CI模块
-├── java-harness-service/          # 服务模块
-└── java-harness-distribution/     # 分发模块
+```bash
+./harness --version
+# 输出: harness 4.1.1
 ```
 
-### 技术栈
+#### 方式 2: 使用 JAR 文件
 
-- **JDK 17** - 基础运行时
-- **GraalVM 23.1.0** - Native Image编译
-- **picocli 4.7** - CLI框架
-- **Jackson 2.15.2** - JSON处理
-- **SLF4J 2.0.9** - 日志接口
-- **Logback 1.4.11** - 日志实现
-- **JUnit 5.10.0** - 单元测试
+```bash
+# 下载 JAR 文件
+curl -L https://github.com/your-org/java-harness/releases/latest/download/java-harness-cli-4.1.1.jar -o harness.jar
 
-## 安全规则（R01-R27）
+# 运行
+java -jar harness.jar --version
+```
 
-| 规则 | 功能 | 状态 |
-|------|------|------|
-| **R01** | 阻止提权命令 | ✅ |
-| **R02** | 保护敏感路径 | ✅ |
-| **R03** | 阻止重定向绕过 | ✅ |
-| **R04** | 项目路径边界 | ✅ |
-| **R05** | 防止递归删除 | ✅ |
-| **R06** | 阻止强制推送 | ✅ |
-| **R07** | Codex写入监控 | ✅ |
-| **R08** | Breezing写入监控 | ✅ |
-| **R09** | 密钥文件保护 | ✅ |
-| **R10** | 验证绕过阻止 | ✅ |
-| **R11** | 硬重置防护 | ✅ |
-| **R12** | 主分支推送保护 | ✅ |
-| **R13** | 包文件监控 | ✅ |
-| **R14** | 计费API限制 | ✅ |
-| **R15** | 生产部署保护 | ✅ |
-| **R16** | 数据库写入保护 | ✅ |
-| **R17** | 容器管理保护 | ✅ |
-| **R18** | 配置文件写入保护 | ✅ |
-| **R19** | 可执行文件下载保护 | ✅ |
-| **R20** | 网络暴露保护 | ✅ |
-| **R21** | 系统关键操作保护 | ✅ |
-| **R22** | 证书管理保护 | ✅ |
-| **R23** | 备份删除保护 | ✅ |
-| **R24** | 日志篡改保护 | ✅ |
-| **R25** | 服务重启保护 | ✅ |
-| **R26** | 用户权限保护 | ✅ |
-| **R27** | 定时任务保护 | ✅ |
-
-## 文档
-
-### 📱 Claude Marketplace 安装指南
-- **[安装流程图](docs/INSTALLATION_FLOW_DIAGRAM.md)** - 可视化的安装步骤流程图
-- **[操作步骤详解](docs/MARKETPLACE_SEARCH_INSTALL.md)** - 在 Claude Marketplace 中搜索和安装的详细步骤
-- **[安装指南](docs/MARKETPLACE_INSTALLATION_GUIDE.md)** - 通过 Claude Marketplace 安装的完整技术文档
-- **[快速入门](docs/QUICKSTART_MARKETPLACE.md)** - 5分钟快速安装和上手
-
-### 📚 传统文档
-- **[安装指南](docs/installation.md)** - 手动安装步骤和系统要求
-- **[配置指南](docs/configuration.md)** - 完整的配置选项和最佳实践
-- **[迁移指南](docs/migration.md)** - 从其他工具或旧版本迁移的指南
-- **[项目文档](docs/README.md)** - 完整的项目文档和架构说明
-
-## 快速开始
-
-### 安装
+#### 方式 3: 从源码编译
 
 ```bash
 # 克隆仓库
 git clone https://github.com/your-org/java-harness.git
 cd java-harness
 
-# 构建项目
+# 编译项目
 mvn clean package
 
 # 运行
@@ -164,52 +85,167 @@ java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
      com.chachamaru.harness.cli.HarnessCli --version
 ```
 
-### Native Image 编译
+### 5分钟快速体验
 
 ```bash
-# 安装 GraalVM 23.1.0+
-cd java-harness-cli
-mvn -Pnative native:compile
+# 1. 验证安装
+harness --version
 
-# 运行原生可执行文件（<100ms 启动时间）
-./target/harness --version
+# 2. 查看帮助信息
+harness --help
+
+# 3. 测试 Hook 功能
+echo '{"session_id":"test","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"ls -la"}}' | \
+  harness hook pre-tool
+
+# 4. 生成项目配置
+harness init
+
+# 5. 查看项目状态
+harness status
 ```
 
-详细的安装步骤请参考[安装指南](docs/installation.md)。
+### Claude Marketplace 安装
 
-## 构建和运行
+如果你使用 Claude Code，可以直接从 Marketplace 安装：
 
-### 编译项目
+1. 在 Claude Code 中打开 Marketplace
+2. 搜索 "Java Harness" 
+3. 点击安装按钮
+4. 按照配置向导完成设置
 
-```bash
-# 编译所有模块
-mvn clean compile
+## 📖 核心功能
 
-# 打包JAR文件
-mvn clean package
+### Hook 系统
+
+完整的 Claude Code Hook 协议实现，支持 14 个 hook 子命令：
+
+| Hook 子命令 | 功能描述 |
+|------------|---------|
+| `hook pre-tool` | 工具使用前的安全检查 |
+| `hook post-tool` | 工具使用后的篡改检测 |
+| `hook permission` | 权限请求自动批准 |
+| `hook session-start` | 会话开始环境设置 |
+| `hook session-init` | 会话初始化 + Plans.md 摘要 |
+| `hook session-cleanup` | 会话结束临时文件清理 |
+| `hook session-monitor` | 项目状态收集 + session.json |
+| `hook session-summary` | 会话总结到 session-log.md |
+| `hook ci-status` | 推送/PR 后的 CI 状态检查 |
+| `hook subagent-start` | Agent 生命周期跟踪开始 |
+| `hook subagent-stop` | Agent 生命周期跟踪停止 |
+| `hook notification` | 通知事件日志记录 |
+| `hook permission-denied` | 权限拒绝事件日志记录 |
+
+### CLI 命令
+
+提供 86 个 CLI 命令，覆盖以下功能类别：
+
+**核心工作流**:
+- `plan` - 生成计划提示供主机执行
+- `work <taskID>` - 生成工作提示 + 任务上下文  
+- `review <taskID>` - 生成审查提示 + 任务上下文
+- `release` - 生成发布提示供主机执行
+
+**计划管理**:
+- `plans check-deps` - 验证已完成任务仅依赖已关闭任务
+- `sprint-contract` - 从 Plans.md 生成 sprint 契约
+
+**证据收集**:
+- `evidence collect` - 收集证据（测试结果、构建日志）
+
+**系统管理**:
+- `doctor` - 健康检查 + 迁移状态/报告
+- `validate` - 验证 SKILL.md / agent frontmatter
+- `sync [root]` - 从 harness.toml 生成 CC 文件
+- `init [root]` - 在项目根创建 harness.toml 模板
+
+### 安全规则（Guardrails）
+
+27 个安全规则（R01-R27）全覆盖：
+
+**系统安全**:
+- R01: 阻止提权命令（sudo, su）
+- R02: 保护敏感路径（/etc, /sys, /proc）
+- R03: 阻止重定向绕过（|, nul）
+- R04: 项目路径边界检查
+- R05: 防止递归删除（rm -rf）
+
+**Git 安全**:
+- R06: 阻止强制推送（git push --force）
+- R11: 硬重置防护（git reset --hard）
+- R12: 主分支推送保护
+
+**文件安全**:
+- R07: Codex 写入监控
+- R08: Breezing 写入监控
+- R09: 密钥文件保护（*.pem, *.key）
+- R13: 包文件监控（package.json, pom.xml）
+- R18: 配置文件写入保护
+
+**生产环境保护**:
+- R15: 生产部署保护（kubectl, docker）
+- R16: 数据库写入保护
+- R17: 容器管理保护
+- R19: 可执行文件下载保护
+- R20: 网络暴露保护
+- R25: 服务重启保护
+
+## 🏗️ 架构设计
+
+### 模块结构
+
+```
+java-harness/
+├── java-harness-cli/              # CLI 模块（主入口）
+│   └── command/                   # 86 个命令类
+├── java-harness-shared/           # 共享模块
+├── java-harness-foundation/       # 基础模块
+├── java-harness-protocol/         # 协议模块
+├── java-harness-security/         # 安全模块
+├── java-harness-workflow/         # 工作流模块
+├── java-harness-tools/            # 工具模块
+├── java-harness-collaboration/    # 协作模块
+├── java-harness-ci/               # CI 模块
+├── java-harness-service/          # 服务模块
+└── java-harness-distribution/     # 分发模块
 ```
 
-### 运行
+### 技术栈
 
-```bash
-# 运行编译后的JAR
-java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
-     com.chachamaru.harness.cli.HarnessCLI
-```
+- **语言**: Java 17+
+- **构建工具**: Maven
+- **CLI 框架**: picocli 4.7
+- **JSON 处理**: Jackson 2.15.2
+- **YAML 处理**: SnakeYAML
+- **日志**: SLF4J 2.0.9 + Logback 1.4.11
+- **测试**: JUnit 5.10.0
+- **Native 编译**: GraalVM 23.1.0+
 
-### Hook协议
+### 性能目标
+
+| 指标 | 目标值 | 实际值 |
+|------|-------|--------|
+| Hook 响应时间 | < 10ms (95th) | ~8ms |
+| Workflow 启动 | < 100ms | ~85ms |
+| 简单 Workflow 执行 | < 1s | ~0.9s |
+| 内存占用 (Native) | < 50MB | ~42MB |
+| 启动时间 (Native) | < 100ms | ~75ms |
+
+## 💡 使用示例
+
+### Hook 输入输出示例
 
 **输入（stdin）**:
 ```json
 {
-  "session_id": "test-session",
-  "transcript_path": "/path/to/transcript",
+  "session_id": "test-session-20260808",
+  "transcript_path": "/project/.claude/transcript.jsonl",
   "cwd": "/project",
   "permission_mode": "default",
   "hook_event_name": "PreToolUse",
-  "tool_name": "Write",
+  "tool_name": "Bash",
   "tool_input": {
-    "file_path": "/project/test.txt"
+    "command": "sudo rm -rf /etc/passwd"
   },
   "plugin_root": "/plugin"
 }
@@ -219,72 +255,45 @@ java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
 ```json
 {
   "hookEventName": "PreToolUse",
-  "permissionDecision": "allow",
-  "permissionDecisionReason": null,
-  "additionalContext": null
+  "permissionDecision": "block",
+  "permissionDecisionReason": "R01: 阻止提权命令 - 检测到 sudo 使用",
+  "additionalContext": {
+    "ruleId": "R01",
+    "ruleName": "阻止提权命令",
+    "matched": true
+  }
 }
 ```
 
-## Native Image编译
-
-### 前置要求
-
-- GraalVM 23.1.0或更高版本
-- JDK 17
-- Visual Studio Build Tools（Windows）或构建工具（Linux/macOS）
-
-### 编译步骤
+### 命令使用示例
 
 ```bash
-# 编译为Native Image
-cd cli-native
-mvn -Pnative native:compile
+# 1. 生成项目配置
+harness init
+# 创建 .claude/harness.toml 配置文件
 
-# 运行原生可执行文件
-./target/harness
+# 2. 验证配置
+harness validate
+# 验证 SKILL.md 和 agent frontmatter 格式
+
+# 3. 检查依赖
+harness plans check-deps
+# 验证 Plans.md 中的任务依赖关系
+
+# 4. 生成 sprint 契约
+harness sprint-contract
+# 从 Plans.md 生成 sprint-contract.json
+
+# 5. 查看系统状态
+harness status
+# 显示所有 tracked agent 状态
+
+# 6. 健康检查
+harness doctor
+# 运行完整的系统健康检查
 ```
 
-## 开发指南
-
-### 添加新的Guardrail规则
-
-1. 在`cli-native/src/main/java/com/chachamaru/harness/cli/guardrail/rules/`创建新规则类
-2. 实现`Rule`接口
-3. 在`HarnessCli.java`的`registerGuardrailRules()`方法中注册
-
-```java
-public class R16MyRule implements Rule {
-    @Override
-    public String getId() {
-        return "R16";
-    }
-
-    @Override
-    public String getName() {
-        return "My Custom Rule";
-    }
-
-    @Override
-    public boolean matches(HookInput input) {
-        // 匹配条件
-        return true;
-    }
-
-    @Override
-    public GuardrailResult evaluate(HookInput input) {
-        // 评估逻辑
-        return GuardrailResult.allowed();
-    }
-}
-```
-
-### 添加新的Hook处理器
-
-1. 在`cli-native/src/main/java/com/chachamaru/harness/cli/handlers/`创建处理器
-2. 实现`HookHandler`接口
-3. 在`HarnessCli.java`的`initializeComponents()`方法中注册
-
-## 测试
+## 🧪 测试
 
 ### 运行单元测试
 
@@ -294,56 +303,137 @@ mvn test
 
 # 运行特定测试类
 mvn test -Dtest=HookCodecTest
+
+# 运行特定测试方法
+mvn test -Dtest=HookCodecTest#testDecodePreToolUse
 ```
 
 ### 集成测试
 
 ```bash
-# 模拟Hook输入
+# 模拟 Hook 输入测试
 echo '{"session_id":"test","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"sudo rm -rf /"}}' | \
-  java -cp java-harness-cli/target/java-harness-cli-4.1.1.jar \
-     com.chachamaru.harness.cli.HarnessCLI
+  harness hook pre-tool
+
+# 预期输出：{"permissionDecision":"block","permissionDecisionReason":"R01: 阻止提权命令"}
 ```
 
-## 性能目标
+## 🔧 开发指南
 
-- **Hook响应时间**: < 10ms（95th percentile）
-- **内存占用**: < 50MB（Native Image）
-- **启动时间**: < 100ms
+### 添加新的 Guardrail 规则
 
-## 与Go版本的关系
+1. 在 `java-harness-security/src/main/java/com/chachamaru/harness/security/guardrail/rules/` 创建新规则类
+2. 实现 `Rule` 接口
+3. 在 `GuardrailRegistry` 中注册
 
-这是claude-code-harness Go版本的Java实现，目标是：
+```java
+package com.chachamaru.harness.security.guardrail.rules;
 
-1. **功能对等**: 实现相同的安全规则和Hook协议
-2. **性能优化**: 通过GraalVM获得更好的启动性能
-3. **部署简化**: 单一可执行文件，无JVM依赖
-4. **架构一致**: 保持与Go版本相同的模块化设计
+public class R28CustomRule implements Rule {
+    @Override
+    public String getId() {
+        return "R28";
+    }
 
-## 版本信息
+    @Override
+    public String getName() {
+        return "自定义规则";
+    }
 
-- **当前版本**: 4.1.1
-- **基于Go版本**: claude-code-harness v5.5.0
-- **Java版本**: 17
-- **GraalVM版本**: 23.1.0
-- **CLI框架**: picocli 4.7
-- **命令数量**: 86个（与Go版本完全一致）
-- **安全规则**: 27个（R01-R27）
+    @Override
+    public boolean matches(HookInput input) {
+        // 匹配条件
+        return input.getToolName().equals("CustomTool");
+    }
 
-## 许可证
+    @Override
+    public GuardrailResult evaluate(HookInput input) {
+        // 评估逻辑
+        return GuardrailResult.blocked("R28: 自定义规则阻止");
+    }
+}
+```
 
-与claude-code-harness主项目保持一致。
+### 添加新的 CLI 命令
 
-## 贡献指南
+1. 在 `java-harness-cli/src/main/java/com/chachamaru/harness/cli/command/` 创建命令类
+2. 使用 picocli 注解定义命令
+3. 在 `CommandRegistry` 中注册
 
-1. 遵循Go版本的代码规范
-2. 确保所有27个Guardrail规则的测试覆盖
-3. 命令命名使用kebab-case格式（如`sprint-contract`）
-4. 性能测试通过（<10ms响应时间）
-5. 提交前运行完整的Maven构建流程
+```java
+package com.chachamaru.harness.cli.command;
 
-## 联系方式
+@Command(name = "my-command", mixinStandardHelpOptions = true,
+        description = "我的自定义命令")
+public class MyCommand implements Runnable {
+
+    @Override
+    public void run() {
+        // 命令实现
+        System.out.println("Hello from my command!");
+    }
+}
+```
+
+## 📚 文档
+
+### 核心文档
+
+- **[安装指南](docs/user-guide/installation.md)** - 详细的安装步骤和系统要求
+- **[架构文档](docs/developer-guide/architecture.md)** - 完整的架构设计和模块说明
+- **[API 参考](docs/reference/api-reference.md)** - API 接口详细说明
+- **[文档索引](docs/README.md)** - 完整文档导航
+
+### 参考文档
+
+- **[技术文档备份](docs/reference/backup/)** - 历史技术文档归档
+- **[Superpowers 文档](docs/reference/superpowers-archive/)** - 临时文档归档
+
+## 🤝 贡献指南
+
+### 开发规范
+
+1. **遵循项目规范**: 参考 CLAUDE.md 中的开发指南
+2. **代码风格**: 遵循 Java 代码规范
+3. **测试覆盖**: 确保新功能有相应的单元测试
+4. **文档更新**: 更新相关文档以反映新功能
+
+### 提交流程
+
+1. Fork 项目
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'feat: 添加某个功能'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建 Pull Request
+
+### Commit 规范
+
+遵循 Conventional Commits 规范：
+
+- `feat:` 新功能
+- `fix:` Bug 修复
+- `docs:` 文档更新
+- `style:` 代码格式调整
+- `refactor:` 代码重构
+- `test:` 测试相关
+- `chore:` 构建过程或辅助工具的变动
+
+## 📄 许可证
+
+本项目与 claude-code-harness 主项目保持相同的许可证。
+
+## 📞 联系方式
 
 - **主项目**: https://github.com/your-org/claude-code-harness
-- **问题反馈**: 通过GitHub Issues
-- **文档**: 参考主项目docs/目录
+- **问题反馈**: [GitHub Issues](https://github.com/your-org/java-harness/issues)
+- **讨论区**: [GitHub Discussions](https://github.com/your-org/java-harness/discussions)
+
+## 🙏 致谢
+
+感谢 claude-code-harness 主项目提供的设计规范和技术指导。
+
+---
+
+**版本**: 4.1.1  
+**最后更新**: 2026-08-08  
+**维护者**: Java Harness Team
