@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0-java] - 2026-08-08 (Phase 7: 双平台支持)
+
+### Added
+- **🌐 双平台支持**: Java Harness 现在同时支持 Claude Code 和 Codex CLI 平台
+  - 实现平台自动检测机制（`PlatformDetector`）
+  - 创建配置兼容层（`ConfigCompatLayer`）统一配置解析
+  - 支持平台特定的配置文件路径（`.claude/config.toml` 和 `.codex/config.toml`）
+  - 实现统一的 TOML 解析器（`TomlParser`）用于配置文件
+- **📦 配置文件系统**:
+  - 更新 `plugin.json` 添加双平台支持信息
+  - 创建 `marketplace.json` 用于 Claude Marketplace 发布
+  - 创建 `.codex-plugin/plugin.json` 专用于 Codex 平台
+- **🧪 集成测试**: 添加22个端到端集成测试验证双平台功能
+  - `ConfigCompatLayerTest`: 11个配置兼容层测试
+  - `DualPlatformIntegrationTest`: 11个双平台集成测试
+  - 测试覆盖率达到目标要求（100%通过率）
+- **📖 文档更新**:
+  - 更新 README.md 添加双平台安装指南
+  - 添加配置说明章节和配置优先级说明
+  - 创建平台特定的配置示例
+- **🔧 配置优先级链**:
+  - 平台特定配置 > 标准harness.toml > 平台默认值
+  - 自动回退机制确保配置健壮性
+
+### Changed
+- **平台检测逻辑**: 从单一平台支持升级为双平台自动检测
+- **配置解析**: 从单一配置路径升级为多路径优先级加载
+- **文档结构**: 添加双平台支持说明和配置指南
+- **JVM 参数修正**: 修复 pom.xml 中的 `CodeCacheSize` 参数为 `ReservedCodeCacheSize`
+
+### Beta Features
+- **🚧 Codex CLI 平台支持**（实验性）:
+  - 平台检测：✅ 支持
+  - 配置兼容：✅ 支持
+  - 技能执行：🚧 部分支持
+  - 高级工作流：🚧 有限支持
+  - 建议优先使用 Claude Code 获得完整功能体验
+
+### Technical Details
+- **新增模块**:
+  - `java-harness-collaboration`: 平台检测和配置兼容层
+  - `com.chachamaru.harness.collaboration.platform`: 平台枚举和检测器
+  - `com.chachamaru.harness.collaboration.config`: 配置兼容层和解析器
+- **配置文件**:
+  - `plugin.json`: 添加 `platforms` 字段支持双平台
+  - `.codex-plugin/plugin.json`: Codex 专用配置
+  - `marketplace.json`: Marketplace 发布配置
+- **环境变量**:
+  - `CLAUDE_CODE_HARNESS`: Claude Code 环境标识
+  - `CODEX_CLI`: Codex CLI 环境标识
+
+### Migration Notes
+- **从 Claude Code 迁移到 Codex**:
+  - 复制 `.claude/config.toml` 到 `.codex/config.toml`
+  - 设置 `CODEX_CLI=1` 环境变量
+  - 验证配置：`harness config validate`
+- **配置文件兼容**:
+  - 现有 `harness.toml` 文件继续有效
+  - 平台特定配置会覆盖通用配置
+
+### Documentation
+- 完整的双平台安装指南
+- 配置文件说明和优先级文档
+- 平台特定配置示例
+- Beta 功能限制说明
+
 ## [4.2.0] - 2026-08-08
 
 ### Added

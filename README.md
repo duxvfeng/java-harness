@@ -13,6 +13,27 @@ Java 原生实现的 Claude Code Harness，提供 CLI Gateway 核心功能，包
 - **📡 Hook 协议**: 完整的 Claude Code Hook 事件处理（14 个 hook 子命令）
 - **🎯 模块化设计**: 命令组 + 独立命令，与 Go 版本功能对等
 - **📋 完整 CLI**: 86 个 CLI 命令，完全复制 Go 版本的命令结构
+- **🌐 双平台**: 支持 Claude Code 和 Codex CLI 双平台（Beta）
+
+### 双平台支持
+
+**🎉 Phase 7 新功能**: Java Harness 现在支持双平台运行！
+
+| 平台 | 状态 | 功能支持 | 安装方式 |
+|------|------|----------|----------|
+| **Claude Code** | ✅ 稳定 | 完整功能（21个技能 + 86个命令） | Marketplace / 手动 |
+| **Codex CLI** | 🚧 Beta | 基础功能（配置兼容 + 核心技能） | 手动配置 |
+
+**双平台特性**:
+- ✅ **平台自动检测**: 自动识别当前运行环境
+- ✅ **配置兼容层**: 统一的 `harness.toml` 配置文件
+- ✅ **无缝切换**: 同一代码库支持两个平台
+- ✅ **功能等价**: 核心功能在两个平台上保持一致
+
+**安装限制**:
+- Codex 平台支持为 **Beta 功能**，部分高级技能尚在迁移中
+- 需要手动配置 `.codex/config.toml` 文件
+- 建议优先使用 Claude Code 获得完整功能体验
 
 ### 当前状态
 
@@ -107,6 +128,8 @@ harness status
 
 ### Claude Marketplace 安装
 
+#### Claude Code 平台安装（推荐）
+
 如果你使用 Claude Code，可以通过命令行方式从 Gitee 仓库安装：
 
 ```bash
@@ -122,6 +145,152 @@ harness status
 - 第二步执行插件安装，自动下载并配置所需组件
 - 安装完成后，重启 Claude Code 即可使用
 - 如需更新插件，重新执行上述命令即可
+
+#### Codex CLI 平台安装（Beta）
+
+Codex 平台支持为 Beta 功能，需要手动配置：
+
+```bash
+# 1. 克隆仓库
+git clone https://gitee.com/duxvfeng/java-harness.git
+cd java-harness
+
+# 2. 配置 Codex 环境
+mkdir -p .codex
+cat > .codex/config.toml << EOF
+[harness]
+version = "5.0.0-java"
+backend = "codex"
+
+[plan]
+enable = true
+EOF
+
+# 3. 设置环境变量
+export CODEX_CLI=1
+
+# 4. 验证安装
+java -jar java-harness-cli/target/java-harness-cli-5.0.0-java.jar --version
+```
+
+**⚠️ Beta 限制**：
+- Codex 平台支持为 **实验性功能**
+- 部分高级技能可能不可用
+- 建议优先使用 Claude Code 获得完整体验
+- 遇到问题请提 Issue 反馈
+
+## ⚙️ 配置说明
+
+### 配置文件路径
+
+Java Harness 使用统一的 TOML 配置文件，不同平台有各自的配置路径：
+
+| 平台 | 配置文件路径 | 优先级 |
+|------|-------------|--------|
+| **Claude Code** | `.claude/config.toml` | 最高 |
+| **Codex** | `.codex/config.toml` | 最高 |
+| **通用** | `harness.toml` | 默认 |
+
+### 配置优先级
+
+配置加载优先级（从高到低）：
+1. 平台特定配置（`.claude/config.toml` 或 `.codex/config.toml`）
+2. 标准配置文件（`harness.toml`）
+3. 平台默认值
+
+### 基础配置示例
+
+创建 `harness.toml` 文件：
+
+```toml
+[harness]
+version = "5.0.0-java"
+backend = "claude"  # 或 "codex"，或 "auto" 自动检测
+project_root = "."
+
+[plan]
+enable = true
+auto_save = true
+backup_count = 5
+
+[work]
+enable = true
+default_effort = "medium"  # low, medium, high, max
+auto_review = true
+
+[review]
+enable = true
+strict_mode = false
+max_review_rounds = 3
+
+[release]
+enable = true
+auto_version = true
+changelog_enabled = true
+
+[sync]
+enable = true
+auto_sync = false
+sync_on_start = false
+
+[hooks]
+enable = true
+pre_tool_use = true
+post_tool_use = true
+permission_request = true
+
+[state]
+persist = true
+session_file = ".claude/state/session.jsonl"
+work_file = ".claude/state/work.jsonl"
+
+[logging]
+level = "INFO"  # TRACE, DEBUG, INFO, WARN, ERROR
+file = ".claude/logs/harness.log"
+```
+
+### 平台特定配置
+
+#### Claude Code 平台
+
+`.claude/config.toml`:
+
+```toml
+[harness]
+backend = "claude"
+version = "5.0.0-java"
+
+[work]
+default_effort = "high"
+```
+
+#### Codex 平台
+
+`.codex/config.toml`:
+
+```toml
+[harness]
+backend = "codex"
+version = "5.0.0-java"
+
+[work]
+default_effort = "max"
+```
+
+### 配置验证
+
+验证配置文件是否正确：
+
+```bash
+# 验证配置文件语法
+harness config validate
+
+# 查看当前配置
+harness config show
+
+# 查看配置路径
+harness config path
+```
 
 ## 📖 核心功能
 
