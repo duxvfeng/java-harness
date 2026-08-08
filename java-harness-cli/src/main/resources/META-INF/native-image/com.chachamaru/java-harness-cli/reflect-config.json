@@ -1,5 +1,14 @@
 [
   {
+    "name": "com.chachamaru.harness.cli.command.HarnessVersionProvider",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "com.chachamaru.harness.cli.hook.HookInput",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

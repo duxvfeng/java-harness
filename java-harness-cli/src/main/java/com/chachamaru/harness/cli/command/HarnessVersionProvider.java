@@ -11,6 +11,11 @@ import picocli.CommandLine;
  */
 public class HarnessVersionProvider implements CommandLine.IVersionProvider {
 
+    /** Default constructor required by Picocli and GraalVM Native Image reflection. */
+    public HarnessVersionProvider() {
+        // Default constructor - required for reflection instantiation
+    }
+
     @Override
     public String[] getVersion() {
         return new String[] { VersionInfo.getVersion() };
