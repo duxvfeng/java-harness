@@ -113,7 +113,7 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 7.1 | Codex 支持技术调研和架构设计 | 完成技术调研、架构设计、风险评估 | 技术调研报告、架构设计文档、风险评估 | - | cc:TODO |
+| 7.1 | Codex 支持技术调研和架构设计 | 完成技术调研、架构设计、风险评估 | 技术调研报告、架构设计文档、风险评估 | - | cc:完成 ✅ 2026-08-08 |
 | 7.2 | Codex 适配器层实现 | 实现 AIToolAdapter 接口和 CodexAdapter 类 | 接口定义完成，CodexAdapter 实现并通过单元测试 | 7.1 | cc:TODO |
 | 7.3 | Codex Backend 增强 | 增强 CodexBackend 状态管理和配置支持 | CodexBackend 支持完整的状态管理和配置 | 7.2 | cc:TODO |
 | 7.4 | Codex 技能桥接实现 | 实现 CodexSkillBridge 技能转换和加载 | 能够加载和转换 .codex/skills/ 中的技能文件 | 7.3 | cc:TODO |
