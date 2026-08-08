@@ -72,6 +72,14 @@
 
 ---
 
+## Phase 6: 文档优化（按需添加）
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 6.1 | 调整 README 中的 Claude Marketplace 安装方式 | 将原 Marketplace 搜索安装方式更新为命令行安装方式：`/plugins marketplace add https://gitee.com/duxvfeng/java-harness.git` + `/plugin install` | 中英文 README.md 和 README_EN.md 中的 Claude Marketplace 安装章节已更新为新的命令行方式，包含完整的安装步骤说明 | - | cc:TODO |
+
+---
+
 ## 优先级说明
 
 - **Required**: 核心任务，必须完成（用户明确要求）
