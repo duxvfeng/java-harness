@@ -89,30 +89,32 @@ jobs:
             mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
           fi
 
-      - name: 📋 复制构建产物
+      - name: 📋 复制构建产物（扁平化结构）
         shell: bash
         run: |
+          mkdir -p bin
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            TARGET_DIR="bin/windows"
+            # Windows: harness-windows-amd64.exe
+            TARGET_FILE="bin/harness-windows-amd64.exe"
             SOURCE_FILE="java-harness-cli/target/harness.exe"
           else
-            TARGET_DIR="bin/${{ matrix.platform }}-${{ matrix.arch }}"
+            # Unix: harness-{platform}-{arch}
+            TARGET_FILE="bin/harness-${{ matrix.platform }}-${{ matrix.arch }}"
             SOURCE_FILE="java-harness-cli/target/harness"
           fi
-          mkdir -p "$TARGET_DIR"
-          cp "$SOURCE_FILE" "$TARGET_DIR/"
+          cp "$SOURCE_FILE" "$TARGET_FILE"
           if [ "${{ matrix.platform }}" != "windows" ]; then
-            chmod +x "$TARGET_DIR/harness"
+            chmod +x "$TARGET_FILE"
           fi
-          echo "✅ 产物已复制到 $TARGET_DIR"
+          echo "✅ 产物已复制到 $TARGET_FILE"
 
       - name: 🧪 测试可执行文件
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            BIN="bin/windows/harness.exe"
+            BIN="bin/harness-windows-amd64.exe"
           else
-            BIN="bin/${{ matrix.platform }}-${{ matrix.arch }}/harness"
+            BIN="bin/harness-${{ matrix.platform }}-${{ matrix.arch }}"
           fi
           if [ ! -f "$BIN" ]; then
             echo "❌ 二进制文件不存在: $BIN"
@@ -126,7 +128,7 @@ jobs:
         with:
           name: harness-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            bin/${{ matrix.platform == 'windows' && 'windows' || format('{0}-{1}', matrix.platform, matrix.arch) }}/
+            ${{ matrix.platform == 'windows' && 'bin/harness-windows-amd64.exe' || format('bin/harness-{0}-{1}', matrix.platform, matrix.arch) }}
           retention-days: 7
           if-no-files-found: error
 

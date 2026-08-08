@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Java implementation of Claude Code Harness with Hook protocol and Guardrail support",
-    "version": "4.1.1"
+    "version": "4.2.0"
   },
   "plugins": [
     {
       "name": "java-harness",
-      "version": "4.1.1",
+      "version": "4.2.0",
       "description": "Full Java implementation of Claude Code Harness - Plan → Work → Review → Release workflow",
       "author": {
         "name": "dxf",
@@ -22,11 +22,11 @@
         "url": "https://gitee.com/duxvfeng/java-harness.git"
       },
       "binaries": {
-        "windows": "bin/windows/harness.exe",
-        "linux-amd64": "bin/linux/linux-amd64/harness",
-        "linux-arm64": "bin/linux/linux-arm64/harness",
-        "macos-amd64": "bin/macos/macos-amd64/harness",
-        "macos-arm64": "bin/macos/macos-arm64/harness"
+        "windows": "bin/harness",
+        "linux-amd64": "bin/harness",
+        "linux-arm64": "bin/harness",
+        "macos-amd64": "bin/harness",
+        "macos-arm64": "bin/harness"
       }
     }
   ]
