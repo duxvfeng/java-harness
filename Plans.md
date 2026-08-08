@@ -80,12 +80,57 @@
 
 ---
 
+## Phase 7: GPT Codex 支持（可选扩展）
+
+### 事前确认章节
+
+**Phase 7 涉及新产品集成和外部工具访问，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: secret-read（读取 Codex 配置和状态）
+  - **理由**: Task 7.3-7.5 需要读取 `$HOME/.codex/` 和项目 `.codex/` 目录的配置文件
+  - **scope**: Phase 7 / Task 7.3-7.5
+
+- **事项**: external-send（调用 Codex CLI）
+  - **理由**: Task 7.3-7.7 需要调用 `codex` 命令进行功能验证和测试
+  - **scope**: Phase 7 / Task 7.3-7.7
+
+- **事项**: secret-read（读取 OpenAI API 密钥）
+  - **理由**: Task 7.6 需要验证 Codex 的安全规则涉及 API 密钥保护
+  - **scope**: Phase 7 / Task 7.6
+
+- **事项**: external-send（网络请求到 OpenAI API）
+  - **理由**: Task 7.7 集成测试需要验证 Codex 的实际 API 调用
+  - **scope**: Phase 7 / Task 7.7
+
+#### 说明
+- 以上事项仅在 Phase 7 实施时生效，Phase 1-6 的文档任务不涉及
+- 所有 Codex 配置读取仅为功能验证需要，不会记录或传输密钥内容
+- 网络请求仅用于集成测试，不会在实际产品代码中进行未经授权的 API 调用
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 7.1 | Codex 支持技术调研和架构设计 | 完成技术调研、架构设计、风险评估 | 技术调研报告、架构设计文档、风险评估 | - | cc:TODO |
+| 7.2 | Codex 适配器层实现 | 实现 AIToolAdapter 接口和 CodexAdapter 类 | 接口定义完成，CodexAdapter 实现并通过单元测试 | 7.1 | cc:TODO |
+| 7.3 | Codex Backend 增强 | 增强 CodexBackend 状态管理和配置支持 | CodexBackend 支持完整的状态管理和配置 | 7.2 | cc:TODO |
+| 7.4 | Codex 技能桥接实现 | 实现 CodexSkillBridge 技能转换和加载 | 能够加载和转换 .codex/skills/ 中的技能文件 | 7.3 | cc:TODO |
+| 7.5 | Codex Setup 和配置管理 | 实现 CodexSetup 和 CodexConfig 类 | setup-codex.sh 功能在 Java 中实现，支持 TOML 配置 | 7.4 | cc:TODO |
+| 7.6 | Codex 安全规则集成 | 添加 Codex 特定的 Guardrail 规则 | 新规则通过安全测试，文档化安全模型差异 | 7.5 | cc:TODO |
+| 7.7 | Codex 集成测试和文档 | 编写端到端测试和用户文档 | 测试覆盖率达到 80%，文档完整 | 7.6 | cc:TODO |
+| 7.8 | Beta 发布和反馈收集 | 作为 Beta 功能发布，收集用户反馈 | Beta 发布完成，反馈收集和分析报告 | 7.7 | cc:TODO |
+
+---
+
 ## 优先级说明
 
 - **Required**: 核心任务，必须完成（用户明确要求）
 - **Recommended**: 推荐任务，提升文档质量
+- **Optional**: 可选任务（Phase 7 为可选扩展功能）
 
-**总计**: 24 个任务，预计 8-12 天完成
+**总计**: 32 个任务（24 个核心 + 8 个可选），预计 8-12 天完成核心任务，+11 周完成可选扩展
 
 ---
 
@@ -97,6 +142,13 @@
 | README 编写 | ❌ `[tdd:skip:docs-only]` | 文档创作，通过人工验证 |
 | 翻译任务 | ❌ `[tdd:skip:docs-only]` | 文档翻译，通过质量检查验证 |
 | 文档体系设计 | ❌ `[tdd:skip:docs-only]` | 文档结构设计，通过评审验证 |
+| Codex 技术调研 | ❌ `[tdd:skip:research-task]` | 研究性任务，通过评审验证 |
+| Codex 适配器实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| Codex Backend 增强 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| Codex 技能桥接 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| Codex Setup 实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
+| Codex 安全规则 | ✅ `[tdd:required]` | 安全相关代码，必须先写失败测试 |
+| Codex 集成测试 | ❌ `[tdd:skip:test-task]` | 测试编写任务本身 |
 
 ---
 
@@ -144,7 +196,7 @@
 
 ---
 
-**Spec Skip Reason**: 本次任务为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更。现有 spec.md 已充分定义了 Java Harness 的产品契约和功能要求，无需更新。
+**Spec Skip Reason**: Phase 1-6 为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更，现有 spec.md 已充分定义。Phase 7 为可选的 Codex 支持，涉及新产品集成，需要更新 spec.md 添加 Codex 集成的产品契约。
 
 ---
 
