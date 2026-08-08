@@ -107,12 +107,21 @@ harness status
 
 ### Claude Marketplace 安装
 
-如果你使用 Claude Code，可以直接从 Marketplace 安装：
+如果你使用 Claude Code，可以通过命令行方式从 Gitee 仓库安装：
 
-1. 在 Claude Code 中打开 Marketplace
-2. 搜索 "Java Harness" 
-3. 点击安装按钮
-4. 按照配置向导完成设置
+```bash
+# 1. 添加插件源
+/plugins marketplace add https://gitee.com/duxvfeng/java-harness.git
+
+# 2. 安装插件
+/plugin install
+```
+
+**安装说明**：
+- 第一步将 Java Harness 添加到 Claude Code 的插件市场源
+- 第二步执行插件安装，自动下载并配置所需组件
+- 安装完成后，重启 Claude Code 即可使用
+- 如需更新插件，重新执行上述命令即可
 
 ## 📖 核心功能
 
