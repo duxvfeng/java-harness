@@ -413,11 +413,61 @@ Lead (this agent)
 └── Reviewer (code-reviewer agent) — 审查担当
 ```
 
-Phase A（准备: Plans.md 读入·依赖解决·plan-preapproval 应用·effort 得分·sprint-contract 生成）→
+Phase A（准备: 智能分支检测·Plans.md 读入·依赖解决·plan-preapproval 应用·effort 得分·sprint-contract 生成）→
 Phase B（各任务: Worker spawn → 必要时 Advisor → self_review 门控 → 审查循环 → APPROVE 时向 trunk cherry-pick）→
 Phase C（整合: commit log 集计·丰富完成报告·Plans.md 最终确认）的 3 段构成。
 完整版 pseudocode（包含 B-1-B-7 的逐次顺序）参见
 [references/execution-modes.md#breezing-phase-detail](${CLAUDE_SKILL_DIR}/references/execution-modes.md)。
+
+### 智能分支隔离检测（Phase A 集成）
+
+**Purpose**: 在任务执行开始前自动检测分支状态并应用适当的隔离策略
+
+**触发时机**: Phase A 准备阶段，在 Plans.md 读入之后，任务执行之前
+
+**检测逻辑**:
+1. 自动检测当前分支类型（main/feature/worktree）
+2. 根据分支类型和配置文件确定隔离策略（force/ask/skip）
+3. 处理用户交互决策
+4. 记录决策到状态文件
+
+**策略类型**:
+- `force`: 强制隔离（主分支保护）- 自动创建隔离分支，无需用户确认
+- `ask`: 可选隔离（功能分支）- 提示用户选择是否隔离
+- `skip`: 跳过隔离（已隔离状态）- 当前已在 worktree 中，无需额外隔离
+
+**优先级**:
+1. 显式 `--isolate-branch` 标志优先级最高
+2. 智能检测次之（根据分支类型和配置）
+3. 配置文件可覆盖默认策略
+
+**配置支持**:
+```json
+// .claude/settings.json
+{
+  "branchIsolation": {
+    "mainBranch": "force",     // 主分支策略：force/ask/skip
+    "featureBranch": "ask"     // 功能分支策略：force/ask/skip
+  }
+}
+```
+
+**状态文件**: `.claude/state/branch-isolation-decision.json`
+- 记录所有分支隔离决策历史
+- 包含时间戳、分支名称、策略类型、用户选择
+- 支持审计和调试
+
+**执行脚本**:
+```bash
+# 智能检测（推荐 - 自动根据分支类型决定）
+bash scripts/branch-isolation/handle-isolation.sh --auto
+
+# 强制特定策略
+bash scripts/branch-isolation/handle-isolation.sh --strategy force
+
+# 仅检测不执行
+bash scripts/branch-isolation/detect-branch.sh --strategy
+```
 
 ### Active task scope
 

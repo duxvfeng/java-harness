@@ -249,6 +249,27 @@ level = "INFO"  # TRACE, DEBUG, INFO, WARN, ERROR
 file = ".claude/logs/harness.log"
 ```
 
+#### 分支隔离配置 🆕
+
+在 `.claude/settings.json` 中配置智能分支隔离行为：
+
+```json
+{
+  "branchIsolation": {
+    "mainBranch": "force",
+    "featureBranch": "ask"
+  }
+}
+```
+
+**配置说明**:
+- `mainBranch`: 主分支策略（force/ask/skip）
+- `featureBranch`: 功能分支策略（force/ask/skip）
+
+**推荐配置**:
+- 主分支使用 `force`（强制保护）
+- 功能分支使用 `ask`（灵活决策）
+
 ### 平台特定配置
 
 #### Claude Code 平台
@@ -367,6 +388,48 @@ harness config path
 - R19: 可执行文件下载保护
 - R20: 网络暴露保护
 - R25: 服务重启保护
+
+### 智能分支隔离检测 🆕
+
+**Phase 10 新功能**: 自动分支保护系统，防止主分支意外提交！
+
+Java Harness 现在支持智能分支隔离检测，自动检测当前分支状态并应用适当的隔离策略：
+
+**三大策略**:
+- `force` - 强制隔离（主分支自动保护）
+- `ask` - 用户选择（功能分支灵活决策）
+- `skip` - 跳过隔离（已隔离环境无需重复）
+
+**核心特性**:
+- ✅ **自动检测**: 智能识别分支类型（main/feature/worktree）
+- ✅ **智能配置**: 支持不同分支类型的自定义策略
+- ✅ **用户友好**: 清晰的交互提示和错误处理
+- ✅ **状态跟踪**: 记录所有决策用于审计和调试
+- ✅ **完整诊断**: Git 环境健康检查和故障排除建议
+
+**快速开始**:
+```bash
+# 自动检测并应用适当策略
+bash scripts/branch-isolation/handle-isolation.sh --auto
+
+# 检查当前分支状态
+bash scripts/branch-isolation/detect-branch.sh --info
+
+# 运行环境诊断
+bash scripts/branch-isolation/git-error-handler.sh
+```
+
+**配置示例** (`.claude/settings.json`):
+```json
+{
+  "branchIsolation": {
+    "mainBranch": "force",      // 主分支强制隔离
+    "featureBranch": "ask"      // 功能分支询问用户
+  }
+}
+```
+
+📖 **完整文档**: 参见 [BRANCH-ISOLATION.md](docs/BRANCH-ISOLATION.md)
 
 ## 🏗️ 架构设计
 
