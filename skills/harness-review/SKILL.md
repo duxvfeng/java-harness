@@ -1,11 +1,11 @@
 ---
 name: harness-review
-description: "HAR: Multi-angle code, plan, scope review. Security/quality check. Trigger: review, code review, plan review, scope analysis. Do NOT load for: implementation, new features, bugfix, setup, release."
-description-en: "HAR: Multi-angle code, plan, scope review. Security/quality check. Trigger: review, code review, plan review, scope analysis. Do NOT load for: implementation, new features, bugfix, setup, release."
-description-zh: "HAR：多角度代码、计划和范围审查。安全和质量检查。当用户提到审查、代码审查、计划审查、范围分析时启动。不适用于：实现、新功能、修复、设置、发布。"
+description: "HAR: Multi-angle code review with auto language detection and standards application. Supports: Java (Alibaba), Python (PEP 8), Vue (Style Guide), Go (Effective Go). Auto-detects .java/.py/.vue/.go files and applies language-specific standards. Security/quality check."
+description-en: "HAR: Multi-angle code review with auto language detection. Supports: Java (Alibaba), Python (PEP 8), Vue (Style Guide), Go (Effective Go). Auto-detects .java/.py/.vue/.go files and applies language-specific standards."
+description-zh: "HAR：多角度代码审查，自动检测语言并应用相应标准。支持：Java（阿里巴巴规范）、Python（PEP 8）、Vue（风格指南）、Go（Effective Go）。自动检测 .java/.py/.vue/.go 文件并应用语言特定标准。安全和质量检查。"
 kind: workflow
 purpose: "Review code, plans, scope, and evidence before acceptance"
-trigger: "review, 审查, code review, plan review, scope analysis"
+trigger: "review, 审查, code review, java review, python review, vue review, go review, plan review, scope analysis, Java审查, Python审查, Vue审查, Go审查"
 shape: evaluate
 role: evaluator
 pair: harness-work
@@ -80,6 +80,68 @@ commit / push / release 既定不执行。
 | `scope` | `scope` | `references/scope-review.md`, `references/governance.md` |
 | `--cursor` or resolver result `cursor` for no-arg / `code` review only | `code+cursor-second-opinion` | `references/code-review.md`, `references/governance.md`, `references/cursor-review.md`, `references/dual-review.md` |
 | `full` | `full` | `references/code-review.md`, `references/team-debate.md`, `references/dual-review.md` |
+
+## Multilingual Code Standards Integration
+
+この skill は多言語コード標準サポートを含み、検出されたプログラミング言語に基づいて適切なコードレビュー標準を自動適用します。
+
+### Supported Languages and Standards
+
+| Language | Standards Source | File Extensions | Trigger Mode |
+|-----------|-----------------|-----------------|--------------|
+| **Java** | Alibaba Java Development Guide (黄山版) | `.java` | Automatic via `alibaba-java-development-guide` skill |
+| **Python** | PEP 8 + Python Best Practices | `.py`, `.pyi` | Reference-based review |
+| **Vue** | Vue Style Guide | `.vue` | Reference-based review |
+| **Go** | Effective Go + Go Code Review Comments | `.go` | Reference-based review |
+
+### Language Detection Process
+
+1. **Extension-based Detection**: File extensions automatically route to appropriate standards
+2. **Content Analysis**: Fallback content analysis for ambiguous files
+3. **Multi-language Files**: Special handling for `.vue`, `.md` with code blocks, etc.
+
+### Integration Architecture
+
+詳細なアーキテクチャは `references/code-standards/architecture.md` を参照してください。
+
+- **Language Detection Layer**: 自動言語検出
+- **Standards Mapping System**: 言語→標準マッピング
+- **Rule Application Framework**: ルール適用エンジン
+- **Configuration Structure**: `.claude/config/code-standards.config.json`
+
+### Java Code Review Integration
+
+Java ファイルのレビュー時、`alibaba-java-development-guide` skill が自動的に起動します：
+
+- **7 Major Dimensions**: 命名規約、例外処理、ロギング、単体テスト、セキュリティ、データベース、設計標準
+- **Severity Levels**: 【强制】【推荐】【参考】
+- **Automatic Trigger**: Java 関連キーワードで自動起動
+
+詳細は `references/code-standards/java-alibaba-guide.md` を参照してください。
+
+### Configuration
+
+多言語標準の設定は `.claude/config/code-standards.config.json` で管理されます：
+
+```json
+{
+  "languageMapping": {
+    "java": {
+      "standards": ["alibaba-java-development-guide"],
+      "extensions": [".java"],
+      "defaultSeverity": "major",
+      "reviewScope": "full"
+    }
+  }
+}
+```
+
+### Usage Examples
+
+- **Java Code**: Automatically applies Alibaba Java standards
+- **Python Code**: Applies PEP 8 standards from reference documents
+- **Vue Components**: Applies Vue style guide for component structure
+- **Go Code**: Applies Effective Go standards
 
 `quick` 和 `codex-closeout` 是轻量级路径。
 用于快速检查小的 dirty change、single commit、PR branch 的 closeout。

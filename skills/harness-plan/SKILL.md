@@ -1,20 +1,13 @@
 ---
 name: harness-plan
-description: "HAR: Research-backed, team-validated task planning, Plans.md management, progress sync. Trigger: create a plan, add tasks, update Plans.md, mark complete, check progress. Do NOT load for: implementation, review, release."
-description-en: "HAR: Research-backed, team-validated task planning, Plans.md management, progress sync. Trigger: create a plan, add tasks, update Plans.md, mark complete, check progress. Do NOT load for: implementation, review, release."
-description-zh: "HAR：带有调查、评分、记忆检查和 TeamAgent/子代理验证的任务计划、Plans.md 管理和进度同步。当用户提到创建计划、添加任务、更新 Plans.md、标记完成、检查进度时启动。不适用于：实现、审查、发布。"
-kind: workflow
-purpose: "Maintain co-required planning output for the spec.md product contract and Plans.md task contract"
-trigger: "create a plan, add tasks, update Plans.md, check progress"
-shape: workflow
-role: generator
-pair: harness-sync
-owner: harness-core
-since: "2026-05-05"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "WebSearch", "Task"]
-argument-hint: "[create|add|update|sync|sync --no-retro|--ci]"
-user-invocable: true
-effort: medium
+description: "HAR: Research-backed, team-validated task planning with brainstorming integration, Plans.md management, progress sync. Uses creative exploration for complex features. Trigger: create a plan, add tasks, update Plans.md, mark complete, check progress."
+description-zh: "HAR：带有创意探索的任务计划、Plans.md 管理和进度同步。在规划复杂功能时使用 brainstorming 进行创造性思考。当用户提到创建计划、添加任务、更新 Plans.md、标记完成、检查进度时启动。"
+trigger: "create a plan, add tasks, update Plans.md, check progress, brainstorming, creative planning, explore options"
+
+# Brainstorming Integration
+brainstorming_enabled: true
+integration_mode: "auto-trigger"
+creative_exploration: true
 ---
 
 # Harness Plan
@@ -133,15 +126,20 @@ See [references/create.md](${CLAUDE_SKILL_DIR}/references/create.md)
 
 **流程**:
 1. 确认对话上下文（从最近的讨论中提取 或 新的需求收集）
-2. 询问要做什么（最多 3 个问题）
-3. **计划质量检查**（最新信息、现有规格、记忆、TeamAgent / 子代理多视点评审、评分）
-4. 技术调研（WebSearch）
-5. 功能列表提取
-6. **spec.md / Plans.md 双正本检查**（Spec delta 或 Spec skip reason + Plans.md task）
-7. 优先级矩阵（Required / Recommended / Optional / Reject）
-8. TDD 采用判断（测试设计）
-9. Plans.md 生成（带 `cc:TODO` 标记）
-10. **事前确认章节生成**（plan-time pre-approval）
+2. **创意探索（Brainstorming 集成）** - 对于复杂功能或新特性，启动 brainstorming 进行创意探索
+   - 触发条件：新功能设计、架构决策、复杂问题解决、创新需求
+   - 调用 `brainstorming` skill 进行多角度思考
+   - 生成创意选项、潜在解决方案、风险评估
+   - 为后续计划提供多样化的思路和选择
+3. 询问要做什么（最多 3 个问题）- 可在 brainstorming 结果基础上进行更精准的需求收集
+4. **计划质量检查**（最新信息、现有规格、记忆、TeamAgent / 子代理多视点评审、评分）
+5. 技术调研（WebSearch）
+6. 功能列表提取
+7. **spec.md / Plans.md 双正本检查**（Spec delta 或 Spec skip reason + Plans.md task）
+8. 优先级矩阵（Required / Recommended / Optional / Reject）
+9. TDD 采用判断（测试设计）
+10. Plans.md 生成（带 `cc:TODO` 标记）
+11. **事前确认章节生成**（plan-time pre-approval）
 11. 下一步行动指引
 
 ### create — 事前确认章节（plan-time pre-approval）
@@ -212,6 +210,56 @@ co-required planning output 意味着必须输出两者，precedence 仍维持 `
 - docs-only / mechanical task 也要在 task context / sprint contract 中保留 `Spec skip reason`
 - 不要将 missing search result、unavailable memory、未读文件断定为 absent。`not_observed != absent`
 - 不让用户从零开始写 spec。agent 根据现有 spec 和输入创建最小 delta，仅在模糊时输出判断分支
+
+### Brainstorming 集成（创意探索）
+
+**目的**: 在计划制定初期进行创意探索，为复杂功能和新特性提供多样化的思路和解决方案。
+
+**触发条件**:
+- 新功能设计：需要从多个角度思考功能实现方式
+- 架构决策：涉及技术选型、系统架构变化
+- 复杂问题解决：需要创新解决方案的技术挑战
+- 创新需求：用户明确提出需要创意和探索的需求
+
+**Brainstorming 流程**:
+1. **问题定义**: 明确需要 brainstorming 的核心问题或挑战
+2. **调用 skill**: 使用 `Skill` 工具调用 `brainstorming` skill
+3. **创意生成**: 生成多个解决方案、技术选项、实现路径
+4. **选项评估**: 评估各创意的可行性、风险、资源需求
+5. **整合结果**: 将 brainstorming 结果整合到后续计划流程
+
+**输出整合**:
+- Brainstorming 结果作为步骤 3"询问要做什么"的输入
+- 创意选项可作为优先级矩阵的候选方案
+- 选定的创意路径体现在 Plans.md 任务分解中
+- 被拒绝的创意可作为 Optional 任务或记录备查
+
+**质量保证**:
+- Brainstorming 不替代技术调研和 TeamAgent 评审
+- 创意方案仍需通过质量检查和验证流程
+- 保持与现有规格和架构的一致性
+- 确保创意可实现且符合项目目标
+
+**示例场景**:
+```
+用户: "我们需要设计一个实时的协作编辑功能"
+
+计划流程:
+1. 确认对话上下文：实时协作编辑需求
+2. 创意探索：
+   - 调用 brainstorming skill
+   - 探索 OT vs CRDT 算法选择
+   - 考虑 WebSocket vs WebRTC 通信
+   - 评估冲突解决策略
+3. 基于创意结果询问具体需求
+4. 继续标准计划质量检查...
+```
+
+**注意事项**:
+- 仅为真正需要创意的场景调用 brainstorming
+- 避免过度工程化，保持实用性
+- Brainstorming 结果需与现有架构兼容
+- 时间控制：创意探索不应阻碍计划进程
 
 参照:
 

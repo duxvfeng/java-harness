@@ -148,108 +148,86 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 8.1 | 创建 .codex-plugin/ 目录结构 `[tdd:skip:mechanical-task]` | 创建完整的 .codex-plugin/ 目录，包含必要的子目录结构 | 目录存在，结构与 Go 项目对等，权限正确 | - | cc:完成 ✅ 2026-08-08 |
-| 8.2 | 实现 Codex plugin.json `[tdd:skip:config-task]` | 参考 Go 项目创建完整的 .codex-plugin/plugin.json，包含 interface 定义和技能配置 | plugin.json 文件存在，包含 name、version、skills、interface 完整定义，通过 JSON 验证 | 8.1 | cc:完成 ✅ 2026-08-08 |
-| 8.3 | 从设计文档生成实际配置文件 `[tdd:skip:config-task]` | 将 dual-platform-config.md 中的 TOML 配置创建为实际的 harness.toml 文件 | harness.toml 文件存在，包含 [platform.claude]、[platform.codex]、[compatibility] 完整配置，TOML 语法正确 | 8.2 | cc:完成 ✅ 2026-08-08 |
-| 8.4 | 创建双平台安装脚本 `[tdd:skip:scripts-task]` | 实现 install-claude.sh 和 install-codex.sh 脚本，包含权限设置和验证逻辑 | 两个脚本文件存在，可执行权限设置正确，包含基本验证逻辑 | 8.3 | cc:完成 ✅ 2026-08-08 |
-| 8.5 | Codex 集成测试 `[tdd:skip:test-task]` | 在实际环境中验证 .codex-plugin/ 的完整性和技能加载能力 | 技能目录可读，plugin.json 格式验证通过，技能加载测试通过 | 8.4 | cc:完成 ✅ 2026-08-08 |
-| 8.6 | 更新文档反映实际实现 `[tdd:skip:docs-only]` | 更新 README-DUAL-PLATFORM.md 和相关文档，确保描述与实际实现一致 | 文档中的安装命令可执行，配置示例与实际文件对等，无过时描述 | 8.5 | cc:完成 ✅ 2026-08-08 |
+| 8.1 | 创建 Codex 插件目录结构 | 创建 .codex-plugin/ 目录和相关子目录结构 | 目录结构符合 Codex 插件规范，权限正确 | - | cc:TODO |
+| 8.2 | 生成 Codex plugin.json | 参考 Go 项目，生成符合 Codex 规范的 plugin.json 配置文件 | plugin.json 包含必需字段，格式正确，Codex 能识别 | 8.1 | cc:TODO |
+| 8.3 | 创建 Codex 技能映射 | 将现有 Java Harness 技能映射到 Codex 执行模式 | 技能映射文档完整，包含调用路径和参数 | 8.2 | cc:TODO |
+| 8.4 | 编写 Codex 集成文档 | 说明如何在 Codex 环境中使用 Java Harness 技能 | 文档包含安装、配置、使用示例，用户能按文档成功使用 | 8.3 | cc:TODO |
+| 8.5 | Codex 环境测试验证 | 在 Codex 环境中测试关键技能功能 | 主要功能在 Codex 中正常工作，测试通过 | 8.4 | cc:TODO |
 
 ---
 
-## 优先级说明
+## Phase 9: 多语言代码规范和 Brainstorming 集成（技能层面增强）🆕
 
-- **Required**: 核心任务，必须完成（用户明确要求）
-- **Recommended**: 推荐任务，提升文档质量
-- **Optional**: 可选任务（Phase 7 为可选扩展功能，Phase 8 为补充实现）
+### 📋 需求说明
 
-**总计**: 39 个任务（24 个核心 + 9 个可选 + 6 个补充实现），预计 8-12 天完成核心任务，+1-2 天完成补充实现
+本 Phase 主要涉及**技能配置和参考文档**的修改，不涉及核心代码库变更：
+- 修改 `skills/harness-review/` 中的配置和参考文档
+- 修改 `skills/harness-plan/` 和 `skills/harness-plan-brief/` 的技能配置
+- 添加新的参考文档和配置文件
 
-**Phase 8 状态**: ✅ 已完成 (2026-08-08)
+### 事前确认章节
 
----
+**Phase 9 涉及技能文件修改和外部资源集成，需要在计划批准时预先确认以下事项：**
 
-## TDD 判定
+#### 计划时批准事项
 
-| 任务类型 | TDD Required | 说明 |
-|---------|-------------|------|
-| 文档清理 | ❌ `[tdd:skip:mechanical-task]` | 机械性文件操作，无需测试 |
-| README 编写 | ❌ `[tdd:skip:docs-only]` | 文档创作，通过人工验证 |
-| 翻译任务 | ❌ `[tdd:skip:docs-only]` | 文档翻译，通过质量检查验证 |
-| 文档体系设计 | ❌ `[tdd:skip:docs-only]` | 文档结构设计，通过评审验证 |
-| 双平台架构验证 | ❌ `[tdd:skip:research-task]` | 研究性任务，通过评审验证 |
-| 平台检测机制实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| 统一技能接口实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| 后端选择策略实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| 配置兼容层实现 | ✅ `[tdd:required]` | 核心代码实现，必须先写失败测试 |
-| 双平台配置文件更新 | ❌ `[tdd:skip:config-task]` | 配置文件更新，通过验证测试 |
-| 双平台集成测试 | ❌ `[tdd:skip:test-task]` | 测试编写任务本身 |
-| 双平台文档发布 | ❌ `[tdd:skip:docs-only]` | 文档编写，通过质量检查验证 |
-| Beta 发布和反馈收集 | ❌ `[tdd:skip:release-task]` | 发布任务，通过发布检查验证 |
-| **Codex 实现完善 (Phase 8)** | | |
-| 创建目录结构 | ❌ `[tdd:skip:mechanical-task]` | 目录创建，通过验证检查 |
-| Codex plugin.json | ❌ `[tdd:skip:config-task]` | 配置文件创建，通过格式验证 |
-| 生成实际配置文件 | ❌ `[tdd:skip:config-task]` | 配置文件生成，通过语法验证 |
-| 双平台安装脚本 | ❌ `[tdd:skip:scripts-task]` | 脚本创建，通过执行验证 |
-| Codex 集成测试 | ❌ `[tdd:skip:test-task]` | 集成测试验证 |
-| 更新文档 | ❌ `[tdd:skip:docs-only]` | 文档更新，通过人工验证 |
+- **事项**: 修改 skills 目录文件
+  - **理由**: Task 9.1-9.7 需要修改技能配置文件和参考文档
+  - **scope**: Phase 9 / Task 9.1-9.7
+
+- **事项**: 集成外部 Claude Skills（alibaba-java-development-guide, brainstorming）
+  - **理由**: Task 9.2 和 9.6 需要引用现有的 Claude Skills 框架技能
+  - **scope**: Phase 9 / Task 9.2, 9.6
+
+- **事项**: 创建 GitHub 规范参考文档
+  - **理由**: Task 9.3-9.5 需要创建 Python/Vue/Go 代码规范参考文档
+  - **scope**: Phase 9 / Task 9.3-9.5
+
+#### 说明
+- 所有修改仅限于 `skills/` 目录下的配置和文档文件
+- 不修改任何核心 Java 代码实现
+- 外部技能通过现有的 Claude Skills 框架集成
+- GitHub 规范仅作为参考文档，不包含实际规范内容副本
 
 ---
 
-## 验收标准
-
-### DoD (Definition of Done)
-
-**每个任务完成后必须满足**:
-- ✅ 任务描述的成果物已产出
-- ✅ DoD 中的验证条件已满足
-- ✅ 无明显的语法、格式、链接错误
-- ✅ 中文排版符合规范（中英文 README）
-- ✅ 技术术语准确一致
-
-**整体项目完成后**:
-- ✅ docs/ 目录结构清晰合理
-- ✅ README.md 和 README_EN.md 内容完整、专业
-- ✅ 所有文档链接有效
-- ✅ 备份文档安全保存在 docs/reference/
-- ✅ 项目状态与文档描述一致（Phase 9 已完成）
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 9.1 | 设计多语言代码规范架构 | 设计语言检测、规范路由、规则应用的整体架构 | 架构设计文档完成，包含语言检测逻辑和规范映射表 | - | cc:完成 ✅ 2026-08-09 |
+| 9.2 | 集成 Alibaba Java 规范 `[tdd:skip:config-integration]` | 在 harness-review 中集成 alibaba-java-development-guide 技能 | Java 代码审查能够应用阿里巴巴规范，配置正确 | 9.1 | cc:完成 ✅ 2026-08-09 |
+| 9.3 | 添加 Python 代码规范支持 `[tdd:skip:docs-only]` | 创建 Python 代码规范参考文档（基于 GitHub PEP 8） | Python 规范参考文档创建，包含主要规则和检查点 | 9.1 | cc:完成 ✅ 2026-08-09 |
+| 9.4 | 添加 Vue 代码规范支持 `[tdd:skip:docs-only]` | 创建 Vue 代码规范参考文档（基于 GitHub Vue 风格指南） | Vue 规范参考文档创建，包含组件命名和结构规则 | 9.1 | cc:完成 ✅ 2026-08-09 |
+| 9.5 | 添加 Go 代码规范支持 `[tdd:skip:docs-only]` | 创建 Go 代码规范参考文档（基于 Effective Go） | Go 规范参考文档创建，包含命名和错误处理规则 | 9.1 | cc:完成 ✅ 2026-08-09 |
+| 9.6 | 在 harness-plan 中集成 brainstorming `[tdd:skip:config-integration]` | 修改 harness-plan 技能配置，支持 brainstorming 前置触发 | 规划时能够自动调用 brainstorming 进行创意探索 | - | cc:完成 ✅ 2026-08-09 |
+| 9.7 | 在 harness-plan-brief 中集成 brainstorming `[tdd:skip:config-integration]` | 修改 harness-plan-brief 技能配置，支持 brainstorming 增强 | 生成 Plan Brief 时能够使用 brainstorming 提升质量 | 9.6 | cc:完成 ✅ 2026-08-09 |
+| 9.8 | 更新 harness-review 技能路由配置 `[tdd:skip:config-integration]` | 修改 skills/harness-review/SKILL.md 添加多语言代码规范路由 | SKILL.md 包含语言检测和规范路由描述，无需额外配置文件 | 9.2 | cc:完成 ✅ 2026-08-09 |
+| 9.9 | 多语言规范测试验证 | 测试不同语言代码的审查流程，验证规范应用正确 | 各语言代码审查能够正确应用相应规范，测试通过 | 9.8 | cc:完成 ✅ 2026-08-09 |
+| 9.10 | 更新技能使用文档 | 更新 CLAUDE.md 和相关文档，说明多语言规范功能 | 文档包含使用示例、配置说明、最佳实践 | 9.9 | cc:完成 ✅ 2026-08-09 |
 
 ---
 
-## 风险和依赖
+## 实施说明
 
-### 主要风险
-1. **翻译质量**: 中英文技术术语的一致性
-2. **文档同步**: 未来代码变更时文档的同步更新机制
-3. **内容准确性**: 确保文档描述与实际项目功能一致
+### 🎯 主要特点
 
-### 依赖关系
-- Phase 2 依赖 Phase 1 完成（需要先清理）
-- Phase 3 依赖 Phase 2 完成（基于中文版翻译）
-- Phase 4 可与 Phase 2-3 部分并行
-- Phase 5 依赖所有前置阶段完成
+1. **纯技能层面工作**：所有任务仅涉及 `skills/` 目录下的文件修改
+2. **无代码变更**：不修改任何核心 Java 实现代码
+3. **SKILL.md 路由**：通过技能文件描述实现功能，无需额外配置文件
+4. **向后兼容**：不影响现有功能的正常运行
 
----
+### 📊 工作范围
 
-## 成功指标
+- **修改文件**：`skills/harness-review/`, `skills/harness-plan/`, `skills/harness-plan-brief/`
+- **新增文件**：规范参考文档 `references/code-standards/`
+- **删除文件**：`.claude/config/` 目录（采用 SKILL.md 路由方案后不需要）
+- **测试验证**：功能验证和文档验证
 
-- **文档清晰度**: 新用户能在 5 分钟内完成安装并运行第一个命令
-- **内容完整性**: 所有 86 个命令和 27 个安全规则都有文档说明
-- **双语质量**: 中英文版本内容对等，无遗漏
-- **维护性**: 文档结构便于未来更新和扩展
+### 🔄 集成方式
 
----
-
-**Spec Skip Reason**: Phase 1-6 为纯文档重建和整理，不涉及产品行为、API、数据模型、权限或功能变更，现有 spec.md 已充分定义。Phase 7 为可选的双平台适配，涉及新产品集成和平台兼容性，需要更新 spec.md 添加双平台集成的产品契约。
+- **Java 规范**：集成现有 Claude Skills（alibaba-java-development-guide）
+- **其他语言**：创建参考文档，基于 GitHub 官方规范
+- **Brainstorming**：通过技能配置集成现有 brainstorming 技能
 
 ---
 
-## 下一步
-
-完成本计划后，项目将拥有：
-- 📄 清晰的中英文 README（独立文件）
-- 📁 结构化的文档体系（docs/ 目录）
-- 🗄️ 完整的备份归档（docs/reference/）
-- ✅ 与项目状态一致的文档描述
-
-为后续的功能开发和用户使用提供坚实的文档基础。
+**注意**: Phase 9 为纯配置和文档工作，不涉及代码实现，可以快速完成验证。

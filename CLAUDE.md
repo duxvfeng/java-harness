@@ -41,3 +41,151 @@ Skills 位于 `.claude/skills/` 目录，每个 skill 有独立的 `SKILL.md` �
 
 如果你认为哪怕只有 1% 的可能性某个 skill 适用于你正在做的事情，你必须调用该 skill 检查。
 <!-- superpowers-zh:end -->
+
+---
+
+# Multilingual Code Standards Support 🆕
+
+本项目现已支持多语言代码规范，可在代码审查时自动检测编程语言并应用相应的标准。
+
+## 支持的语言和标准
+
+| 语言 | 标准来源 | 文件扩展名 | 默认严重级别 | 审查范围 |
+|------|----------|------------|-------------|----------|
+| **Java** | Alibaba Java Development Guide (黄山版) | `.java` | major | 完整 |
+| **Python** | PEP 8 + Python Best Practices | `.py`, `.pyi` | moderate | 完整 |
+| **Vue** | Vue Style Guide | `.vue` | moderate | 组件 |
+| **Go** | Effective Go + Go Code Review Comments | `.go` | major | 完整 |
+
+## 主要特性
+
+### 自动语言检测
+- 基于文件扩展名的主要检测方法
+- 基于内容模式的备用检测方法
+- 多语言文件的特殊处理（如 Vue 组件）
+
+### 标准路由
+- 根据检测到的语言自动应用相应标准
+- 与外部技能集成（如 Alibaba Java Development Guide）
+- 可配置的标准映射和优先级
+
+### 规则应用框架
+- 严重级别分类（critical, major, moderate, minor, info）
+- 可配置的规则类别（命名、格式、安全、性能等）
+- 豁免处理和审计跟踪
+
+## 使用方式
+
+### 基础代码审查
+```bash
+# 审查当前更改的文件
+/harness-review
+
+# 审查特定文件
+/harness-review path/to/file.java
+/harness-review path/to/file.py
+```
+
+### 自动标准应用
+代码审查会自动：
+1. 检测文件的语言类型
+2. 应用相应的代码标准
+3. 生成语言特定的审查结果
+4. 提供修复建议和最佳实践
+
+### 配置自定义标准
+编辑 `.claude/config/code-standards.config.json` 来自定义标准应用：
+
+```json
+{
+  "languageMapping": {
+    "java": {
+      "standards": ["alibaba-java-development-guide"],
+      "extensions": [".java"],
+      "defaultSeverity": "major",
+      "reviewScope": "full"
+    }
+  }
+}
+```
+
+## 参考文档
+
+详细的语言标准和指南：
+
+- **架构设计**: `skills/harness-review/references/code-standards/architecture.md`
+- **Java 标准**: `skills/harness-review/references/code-standards/java-alibaba-guide.md`
+- **Python 标准**: `skills/harness-review/references/code-standards/python-pep8.md`
+- **Vue 标准**: `skills/harness-review/references/code-standards/vue-style-guide.md`
+- **Go 标准**: `skills/harness-review/references/code-standards/go-effective-go.md`
+
+## Brainstorming 集成
+
+规划技能现已集成创意探索功能：
+
+### Harness Plan
+- 在计划制定初期自动触发创意探索
+- 为复杂功能提供多样化的实现方案
+- 支持架构决策和技术选型的多角度思考
+
+### Harness Plan Brief
+- 生成计划概要时使用创意探索增强选项
+- 为非工程师提供更全面的决策依据
+- 提前识别潜在的技术和业务风险
+
+## 验证和测试
+
+运行验证脚本检查系统配置：
+
+```bash
+bash tests/code-standards/validate.sh
+```
+
+完整的测试计划：`tests/code-standards/test-plan.md`
+
+## 最佳实践
+
+### 代码审查
+1. **依赖自动化**: 让系统自动检测语言和应用标准
+2. **关注严重级别**: 优先处理 critical 和 major 级别的问题
+3. **理解标准**: 参考语言特定的标准文档了解规则背后的原因
+4. **配置豁免**: 对于原型和实验性代码，可以适当豁免某些规则
+
+### 规划和设计
+1. **利用创意探索**: 在规划复杂功能时充分利用 brainstorming 集成
+2. **多角度思考**: 通过创意探索获得多样化的实现方案
+3. **风险评估**: 提前识别技术和业务风险
+4. **决策依据**: 使用创意结果作为决策的依据
+
+### 配置管理
+1. **版本控制**: 将配置文件纳入版本控制
+2. **团队同步**: 确保团队成员使用相同的配置
+3. **渐进式采用**: 逐步采用更严格的标准
+4. **定期更新**: 定期更新标准以保持最新
+
+## 故障排除
+
+### 语言检测问题
+- 检查文件扩展名是否在配置中
+- 验证内容模式是否正确配置
+- 确认配置文件路径正确
+
+### 标准应用问题
+- 验证外部技能集成是否启用
+- 检查参考文档是否存在
+- 确认配置文件是有效的 JSON
+
+### 性能问题
+- 检查大文件处理是否正常
+- 验证缓存是否工作
+- 监控内存使用情况
+
+## 未来扩展
+
+计划中的功能增强：
+- 更多编程语言支持
+- ML 驱动的模式检测
+- 跨语言一致性检查
+- 与静态分析工具集成
+
+---

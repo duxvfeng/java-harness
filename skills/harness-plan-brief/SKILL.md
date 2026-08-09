@@ -145,9 +145,18 @@ for each project in MEMBERS_JSON:
 - HTML 渲染时使用 `bash scripts/render-html.sh ... --with-redaction`
 - 通过词典 + NER + final scan 的 3 阶段防止固有名词泄露
 
-### Step 3: 构建 context JSON
+### Step 3: 构建 context JSON（Brainstorming 增强版）
 
-使用 `scripts/plan-brief-compile.sh`，从 mem search 结果构建符合
+**3.1 创意探索阶段**（新增）
+对于复杂的计划请求，首先使用 `brainstorming` skill 进行创意探索：
+
+- **触发条件**：新功能设计、架构决策、复杂问题解决
+- **调用方式**：使用 `Skill` 工具调用 `brainstorming` skill
+- **探索内容**：生成多样化的解决方案、技术选项、实现路径
+- **输出整合**：将 brainstorming 结果整合到 `options` 生成中
+
+**3.2 标准内容构建**
+使用 `scripts/plan-brief-compile.sh`，从 mem search 结果和 brainstorming 结果构建符合
 `plan-brief-context.v1` schema 的 JSON。
 
 Phase 105.3 以后，Plan Brief 的 `confidence` 是向后兼容的字段名，
@@ -159,16 +168,34 @@ Phase 105.3 以后，Plan Brief 的 `confidence` 是向后兼容的字段名，
 过去类似案件的成功率、相关 Decision / Pattern 件数作为 context-only 依据显示，
 不向 readiness 点数另轴加算。这是为了避免被误读为「AI 的理解度」「成功概率」。
 
-`options` / `risks` / `acceptance_criteria` 始终生成至少 1 件。
-即使 mem search 为空，也至少填充以下内容。
+**3.3 增强的内容生成**
+基于 brainstorming 结果生成更丰富的内容：
 
-- `options`: 推荐案至少 1 件。必要时添加替代案，附带 pros / cons
-- `risks`: 本次计划特有风险至少 1 件 (readness 误读、scope creep、未观测数据等)
-- `acceptance_criteria`: 可机器验证或目视确认的条件至少 1 件
+- `options`: 
+  - 包含 brainstorming 生成的创意选项
+  - 推荐案至少 1-2 件（传统 + 创意）
+  - 必要时添加替代案，附带 pros / cons
+  
+- `risks`: 
+  - 本次计划特有风险（readiness 误读、scope creep、未观测数据）
+  - brainstorming 识别的潜在风险
+  - 至少 1-2 件风险项
 
-例:
+- `acceptance_criteria`: 
+  - 可机器验证或目视确认的条件
+  - brainstorming 建议的验收标准
+  - 至少 1-2 件验收条件
 
+**3.4 Brainstorming 整合示例**
 ```bash
+# 先调用 brainstorming（如需要）
+if needs_brainstorming "$USER_REQUEST"; then
+  brainstorming_result=$(invoke_brainstorming_skill "$USER_REQUEST")
+  options_from_brainstorming=$(extract_options "$brainstorming_result")
+  risks_from_brainstorming=$(extract_risks "$brainstorming_result")
+fi
+
+# 然后构建包含 brainstorming 结果的 context
 jq -n \
   --arg req "$USER_REQUEST" \
   --arg proj "$PROJECT_NAME" \
@@ -176,10 +203,10 @@ jq -n \
   '{
     schema: "plan-brief-context.v1",
     user_request: $req,
-    my_understanding: "(尚未着手)",
-    options: [{name:"Option A: 最小验证前进", summary:"先确认 DoD 和依赖再实现", pros:["影响小"], cons:["大的重新设计需要另外任务化"]}],
-    risks: [{kind:"readiness-misread", severity:"warn", description:"将 plan_readiness 误读为 AI 理解度的风险", mitigation:"在 evidence 中明确记载仅为 DoD 明确度 + 依赖解决率的指标"}],
-    acceptance_criteria: [{id:"AC-1", description:"Plan Brief context 包含非空的 options / risks / acceptance_criteria", verifiable_by:"tests/test-plan-brief-compile.sh"}],
+    my_understanding: "(基于 brainstorming 的理解)",
+    options: ($recommended_options + $brainstorming_options),
+    risks: ($standard_risks + $brainstorming_risks),
+    acceptance_criteria: ($basic_criteria + $creative_criteria),
     confidence: 0,
     confidence_evidence: ["plan_readiness DoD 明确度: 0/60", "plan_readiness 依赖解决率: 0/40"],
     tdd_required: "no",
@@ -218,6 +245,32 @@ bash scripts/plan-brief-open.sh "$HTML_OUT"
 
 确认「按此理解是否可以前进到实现」。
 批准后的 memory write 是其他技能 (Phase 65.1.4 的 `plan-brief-record-decision.sh`) 的职责。
+
+## Brainstorming 在 Plan Brief 中的作用
+
+**价值主张**:
+- **创意多样性**: 为非工程师提供多个实现方案选项
+- **风险识别**: 提前识别潜在的技术和业务风险
+- **质量提升**: 通过创意探索提升 Plan Brief 的质量和深度
+- **决策支持**: 为委托方提供更全面的决策依据
+
+**应用场景**:
+- 新功能设计时的方案探索
+- 技术选型时的多角度评估
+- 复杂问题解决时的创意激发
+- 需求澄清时的创意补充
+
+**与标准流程的整合**:
+1. Brainstorming 在 Step 3.1 作为增强步骤
+2. 不替代现有的 memory search 和 context 编译
+3. 结果整合到 `options`、`risks`、`acceptance_criteria` 中
+4. 保持 Plan Brief 的非工程师友好特性
+
+**质量控制**:
+- Brainstorming 结果需与项目实际情况结合
+- 创意方案需要可行性评估
+- 避免过度复杂化，保持实用性
+- 确保与现有架构和约束的兼容性
 
 ## 失败时的行为
 
