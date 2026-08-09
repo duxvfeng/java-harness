@@ -1,6 +1,7 @@
 package com.chachamaru.harness.handler;
 
 import com.chachamaru.harness.hook.HookDispatcher;
+import com.chachamaru.harness.handler.session.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +38,13 @@ public class CommandRegistry {
 
         // Hook dispatcher (essential)
         handlers.put("hook", new HookDispatcher());
+
+        // Session management commands
+        handlers.put("harness-save-session", new SaveSessionCommand());
+        handlers.put("harness-restore-session", new RestoreSessionCommand());
+        handlers.put("harness-list-sessions", new ListSessionsCommand());
+        handlers.put("harness-show-session", new ShowSessionCommand());
+        handlers.put("harness-cleanup-sessions", new CleanupSessionsCommand());
     }
 
     /**
