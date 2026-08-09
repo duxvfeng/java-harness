@@ -7,12 +7,19 @@
 ```
 docs/
 ├── README.md                       # 文档导航和索引
+├── superpowers/                    # Superpowers 技能框架文档
+│   ├── reports/                    # Phase 完成报告
+│   │   ├── PHASE_7_COMPLETION_REPORT.md  # Phase 7 双平台支持
+│   │   └── PHASE_11_COMPLETION_REPORT.md # Phase 11 会话管理系统
+│   ├── plans/                      # 实现计划
+│   └── specs/                      # 技术规格
 ├── reference/                      # 参考文档（已归档）
 │   ├── backup/                    # 历史技术文档备份
 │   ├── multi-platform-hooks-backup/  # 多平台 Hooks 配置备份
 │   └── superpowers-archive/       # Superpowers 临时文档归档
 ├── user-guide/                     # 用户指南
 │   ├── installation.md            # 详细安装指南
+│   ├── session-management.md     # 会话管理指南
 │   ├── quick-start.md             # 快速入门指南
 │   ├── configuration.md           # 配置指南
 │   └── troubleshooting.md         # 故障排除指南
@@ -62,6 +69,21 @@ docs/
 - **backup/**: 历史技术文档（BUILD_INSTRUCTIONS.md 等）
 - **multi-platform-hooks-backup/**: 多平台 Hooks 配置备份
 - **superpowers-archive/**: Superpowers 技能框架相关文档
+
+### Phase 完成报告 (superpowers/reports/)
+记录各阶段（Phase）的完成情况和技术总结。
+
+- **PHASE_7_COMPLETION_REPORT.md**: 双平台支持实现报告
+- **PHASE_11_COMPLETION_REPORT.md**: 会话管理系统实现报告
+
+这些报告包含：
+- 📋 执行摘要和核心成果
+- 🎯 任务完成情况跟踪
+- 💻 技术实现细节
+- 🧪 测试验证结果
+- 📊 代码统计数据
+- 📖 文档更新记录
+- 🎉 质量保证总结
 
 ## 🎯 文档设计原则
 
@@ -118,6 +140,7 @@ docs/
 
 ---
 
-**文档结构版本**: 1.0  
-**最后更新**: 2026-08-08  
-**维护者**: Java Harness Team
+**文档结构版本**: 1.1  
+**最后更新**: 2026-08-09  
+**维护者**: Java Harness Team  
+**最近更新**: 添加Phase 11会话管理系统完成报告，更新会话管理用户指南

@@ -1,0 +1,52 @@
+# 自定义工作流示例
+phase: custom-phase
+description: "我的自定义工作流程"
+
+steps:
+  # Step 1: 自定义准备步骤
+  - id: my-preparation
+    skill: custom-skill
+    input:
+      files:
+        - README.md
+        - CUSTOM_CONFIG.md
+      context_from:
+        - repo_tree
+        - user_prompt
+    mode: required
+
+  # Step 2: 条件执行步骤
+  - id: conditional-step
+    skill: another-skill
+    condition: "user_choice == 'yes'"
+    input:
+      variables:
+        - user_choice
+      context_from:
+        - previous_step_output
+    mode: optional
+
+  # Step 3: 并行执行步骤
+  - id: parallel-check-1
+    skill: review-security
+    input:
+      files: "{{changed_files}}"
+      context_from:
+        - code_content
+    mode: required
+    parallel: true
+
+  # Step 4: 循环执行步骤
+  - id: process-items
+    skill: batch-processor
+    input:
+      variables:
+        - items_list
+    loop: "items_list"
+    mode: required
+
+on_success:
+  message: "✅ 自定义工作流完成！"
+
+on_error:
+  message: "❌ 自定义工作流失败"
