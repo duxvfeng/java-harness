@@ -121,6 +121,84 @@
 
 ---
 
+## Phase 10: 智能分支隔离检测（核心功能增强）🆕
+
+### 📋 需求说明
+
+本 Phase 为 `harness-work` 添加智能分支检测功能，根据当前分支状态自动决定是否启用隔离：
+- **主分支保护**：在 master/main 分支上自动启用隔离
+- **Feature 分支灵活性**：在 feature 分支上可选隔离
+- **智能跳过**：已隔离状态自动检测并跳过
+
+### 事前确认章节
+
+**Phase 10 涉及 Git 操作和状态文件创建，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: Git 状态读取（分支检测）
+  - **理由**: Task 10.1-10.4 需要读取当前分支状态和 worktree 信息
+  - **scope**: Phase 10 / Task 10.1-10.4
+
+- **事项**: 文件系统写入（状态文件和配置）
+  - **理由**: Task 10.4, 10.6, 10.7 需要创建 `.claude/state/` 和配置文件
+  - **scope**: Phase 10 / Task 10.4, 10.6, 10.7
+
+- **事项**: Git worktree 操作（分支隔离）
+  - **理由**: Task 10.3 集成点需要支持创建和管理 worktree
+  - **scope**: Phase 10 / Task 10.3
+
+#### 说明
+- 所有 Git 操作仅限于分支检测，不修改现有代码
+- 状态文件记录用户决策和隔离状态，不包含敏感信息
+- worktree 创建仅在用户同意或主分支强制保护时执行
+- 与现有 `--isolate-branch` 功能向后兼容
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 10.1 | 实现分支检测核心函数 `[tdd:required]` | 实现 `detect_branch_isolation_strategy()` 函数，支持主分支/feature分支/worktree检测 | 函数能正确识别分支状态并返回策略，单元测试覆盖所有场景 | - | cc:TODO |
+| 10.2 | 实现用户交互逻辑 `[tdd:required]` | 实现 `handle_branch_isolation()` 函数，处理强制隔离/可选隔离/已隔离三种策略 | 用户交互流程清晰，能正确处理用户选择和取消 | 10.1 | cc:TODO |
+| 10.3 | 集成到 harness-work Phase A `[tdd:required]` | 修改 harness-work SKILL.md，在准备阶段添加智能分支检测步骤 | Phase A 流程包含分支检测，与现有执行模式兼容 | 10.2 | cc:TODO |
+| 10.4 | 实现状态文件管理 `[tdd:required]` | 创建 `.claude/state/branch-isolation-decision.json` 记录用户决策和隔离状态 | 状态文件格式正确，包含所有必需字段 | 10.3 | cc:TODO |
+| 10.5 | 添加配置支持 `[tdd:required]` | 在 `.claude/settings.json` 中添加 `branchIsolation` 配置项 | 配置项完整，支持策略配置和覆盖 | 10.4 | cc:TODO |
+| 10.6 | 实现配置读取和解析 `[tdd:required]` | 实现配置文件读取逻辑，支持默认值和环境变量覆盖 | 能正确读取配置并应用策略，配置优先级正确 | 10.5 | cc:TODO |
+| 10.7 | 实现策略配置逻辑 `[tdd:required]` | 实现主分支/feature分支策略配置，支持 force/ask/skip 三种模式 | 策略配置生效，用户可自定义行为 | 10.6 | cc:TODO |
+| 10.8 | 实现 Git 检测失败处理 `[tdd:required]` | 添加 Git 命令失败的错误处理和用户提示 | Git 检测失败时提供清晰的错误信息和解决建议 | 10.3 | cc:TODO |
+| 10.9 | 实现 Worktree 创建失败处理 `[tdd:required]` | 添加 worktree 创建失败的错误处理和回退机制 | Worktree 创建失败时提供具体错误信息和替代方案 | 10.3 | cc:TODO |
+| 10.10 | 实现用户取消处理 `[tdd:required]` | 处理用户取消隔离的场景，记录决定并中止或继续 | 用户取消时正确记录决策，执行流程符合预期 | 10.2 | cc:TODO |
+| 10.11 | 编写单元测试 `[tdd:required]` | 为检测函数、交互逻辑、配置解析编写单元测试 | 测试覆盖率达到 80%，所有核心逻辑有测试 | 10.10 | cc:TODO |
+| 10.12 | 编写集成测试 `[tdd:required]` | 测试主分支/feature分支/已隔离三种场景的端到端流程 | 集成测试覆盖所有用户场景，测试通过 | 10.11 | cc:TODO |
+| 10.13 | 更新用户文档 `[tdd:skip:docs-only]` | 更新 README.md 和相关文档，说明智能分支隔离功能 | 文档包含使用示例、配置说明、场景说明 | 10.12 | cc:TODO |
+
+---
+
+## 实施说明
+
+### 🎯 主要特点
+
+1. **智能检测**：根据分支状态自动决策，无需手动指定
+2. **主分支保护**：防止意外在主分支上工作造成不稳定
+3. **灵活性**：feature 分支允许用户选择隔离策略
+4. **向后兼容**：保留显式 `--isolate-branch` 标志的优先级
+5. **配置驱动**：支持通过配置文件自定义默认行为
+
+### 📊 工作范围
+
+- **修改文件**：`skills/harness-work/SKILL.md`, `skills/harness-work/references/execution-modes.md`
+- **新增文件**：状态文件 `.claude/state/branch-isolation-decision.json`
+- **配置文件**：`.claude/settings.json` 添加 `branchIsolation` 配置项
+- **测试验证**：单元测试、集成测试、跨平台测试
+
+### 🔄 与现有功能集成
+
+- **与 `--isolate-branch` 兼容**：显式标志优先级最高
+- **与 `using-git-worktrees` 兼容**：遵循现有 worktree 管理最佳实践
+- **与分支隔离模式兼容**：扩展现有 branch-isolation 功能
+
+---
+
 ## Phase 8: Codex 实现完善（补充实现）
 
 基于与 Go 项目对比分析发现的差距，将 Phase 7 的完整设计转化为实际可运行的 Codex 支持。
@@ -227,7 +305,3 @@
 - **Java 规范**：集成现有 Claude Skills（alibaba-java-development-guide）
 - **其他语言**：创建参考文档，基于 GitHub 官方规范
 - **Brainstorming**：通过技能配置集成现有 brainstorming 技能
-
----
-
-**注意**: Phase 9 为纯配置和文档工作，不涉及代码实现，可以快速完成验证。
