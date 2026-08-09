@@ -4,9 +4,12 @@ import com.chachamaru.harness.session.model.SessionMetadata;
 import com.chachamaru.harness.session.model.SessionSummary;
 import com.chachamaru.harness.session.model.RestoreSuggestion;
 import com.chachamaru.harness.session.storage.SessionStorage;
+import com.chachamaru.harness.session.storage.FileSystemStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -31,6 +34,22 @@ public class SessionRestoreManager {
         this.storage = storage;
         this.config = config;
         logger.info("SessionRestoreManager initialized");
+    }
+
+    /**
+     * 创建默认的SessionRestoreManager实例
+     * 使用默认的文件系统存储和配置
+     */
+    public static SessionRestoreManager createDefault() {
+        Path storageRoot = Paths.get(System.getProperty("user.dir"))
+                               .resolve(".claude")
+                               .resolve("state")
+                               .resolve("session-saves");
+
+        SessionStorage storage = new FileSystemStorage(storageRoot, 100 * 1024 * 1024); // 100MB
+        RestoreConfig config = RestoreConfig.getDefault();
+
+        return new SessionRestoreManager(storage, config);
     }
 
     /**
