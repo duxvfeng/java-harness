@@ -305,3 +305,137 @@
 - **Java 规范**：集成现有 Claude Skills（alibaba-java-development-guide）
 - **其他语言**：创建参考文档，基于 GitHub 官方规范
 - **Brainstorming**：通过技能配置集成现有 brainstorming 技能
+
+---
+
+## Phase 11: 会话保存和恢复系统（Context 满问题解决）🆕
+
+### 📋 需求说明
+
+本 Phase 为 Java Harness 添加会话持久化和恢复功能，解决大型任务中 context 满的问题：
+- **Token 自动检测**：当对话接近 token 限制时（80%/90%）自动触发保存
+- **完整状态保存**：保存对话历史、任务状态、文件修改、Git 状态到本地存储
+- **智能恢复提示**：新会话启动时自动显示恢复选项和 AI 决策
+- **技能命令接口**：提供手动保存、恢复和管理的命令接口
+- **存储管理**：自动清理、压缩存储、健康检查
+
+### 事前确认章节
+
+**Phase 11 涉及文件系统写入和配置修改，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: 文件系统写入（创建会话保存目录和文件）
+  - **理由**: Task 11.1-11.13 需要创建 `.claude/state/session-saves/` 目录和相关文件
+  - **scope**: Phase 11 / Task 11.1-11.13
+
+- **事项**: 读取对话历史和状态信息
+  - **理由**: Task 11.4-11.7 需要读取对话历史、任务状态、Git 状态用于保存
+  - **scope**: Phase 11 / Task 11.4-11.7
+
+- **事项**: 环境变量读取（Token 检测）
+  - **理由**: Task 11.4 需要读取 `CLAUDE_TOKEN_COUNT` 等环境变量进行 token 检测
+  - **scope**: Phase 11 / Task 11.4
+
+#### 说明
+- 所有文件操作仅限于项目 `.claude/state/` 目录内
+- Token 检测仅用于判断保存时机，不读取敏感对话内容
+- 会话数据存储在本地项目目录，不上传到外部服务
+- 配置修改仅限 `harness.toml` 和技能文件
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 11.1 | 创建会话数据模型 `[tdd:required]` | 实现 SessionMetadata, SessionSummary, SessionSaveResult, TokenUsageInfo, RestoreSuggestion 数据类 | 所有数据类包含必要字段，JSON 序列化正常，单元测试通过 | - | cc:完成 ✅ 2026-08-09 |
+| 11.2 | 实现存储层 `[tdd:required]` | 创建 SessionStorage 接口和 FileSystemStorage 实现，支持保存、加载、列表、删除、清理、健康检查 | 存储功能完整，文件结构正确，压缩功能正常，测试通过 | 11.1 | cc:完成 ✅ 2026-08-09 |
+| 11.3 | 实现 SessionSaveManager `[tdd:required]` | 创建核心保存管理器，支持自动保存、手动保存、并发控制、间隔限制、空间检查 | 保存管理逻辑正确，并发控制有效，空间检查正常，测试通过 | 11.2 | cc:完成 ✅ 2026-08-09 |
+| 11.4 | 实现 Token 监控器 `[tdd:required]` | 创建 TokenMonitor 类，支持环境变量检测、降级策略、阈值判断 | Token 检测准确，降级策略有效，阈值判断正确，测试通过 | 11.3 | cc:完成 ✅ 2026-08-09 |
+| 11.5 | 实现 session-monitor Hook 扩展 `[tdd:required]` | 扩展现有 session-monitor hook，添加 token 自动检测和保存触发逻辑 | Hook 扩展正常工作，自动保存触发准确，与现有功能兼容，测试通过 | 11.4 | cc:TODO |
+| 11.6 | 实现配置管理 `[tdd:required]` | 创建 SessionConfigLoader，支持 harness.toml 配置、环境变量、默认值 | 配置加载正确，优先级正确，默认值合理，测试通过 | 11.5 | cc:完成 ✅ 2026-08-09 |
+| 11.7 | 实现 SessionRestoreManager `[tdd:required]` | 创建恢复管理器，支持恢复检测、摘要生成、AI 决策、完整性验证 | 恢复逻辑正确，摘要生成准确，AI 决策合理，测试通过 | 11.6 | cc:完成 ✅ 2026-08-09 |
+| 11.8 | 实现 session-init Hook 扩展 `[tdd:required]` | 扩展现有 session-init hook，添加恢复提示生成和显示逻辑 | Hook 扩展正常工作，恢复提示显示正确，与现有功能兼容，测试通过 | 11.7 | cc:TODO |
+| 11.9 | 创建会话管理技能 `[tdd:skip:docs-only]` | 创建 skills/harness-session/SKILL.md 和参考文档，定义技能命令接口 | 技能定义完整，命令格式正确，参考文档详细，符合技能规范 | 11.8 | cc:TODO |
+| 11.10 | 注册会话管理命令 `[tdd:required]` | 在 CommandRegistry 中注册会话管理命令，实现 save, restore, list, show, cleanup 命令 | 命令注册正确，功能完整，参数解析正常，测试通过 | 11.9 | cc:TODO |
+| 11.11 | 端到端集成测试 `[tdd:required]` | 编写完整的端到端测试，验证保存、恢复、清理的完整流程 | 端到端测试覆盖所有场景，性能指标达标，测试通过 | 11.10 | cc:TODO |
+| 11.12 | 编写用户指南 `[tdd:skip:docs-only]` | 创建 docs/user-guide/session-management.md，包含快速开始、配置说明、故障排除 | 用户指南完整，示例清楚，故障排除有效，文档验证通过 | 11.11 | cc:TODO |
+| 11.13 | 系统集成和验收测试 `[tdd:required]` | 运行完整测试套件，功能验证清单，性能验证，兼容性测试 | 所有测试通过，功能完整性达标，性能指标满足，兼容性正常 | 11.12 | cc:TODO |
+
+---
+
+## 实施说明
+
+### 🎯 主要特点
+
+1. **轻量级 Hook 集成**：扩展现有 Hook 系统，无需修改核心架构
+2. **Token 智能检测**：基于 token 使用率自动触发保存，避免 context 满
+3. **完整状态保存**：保存对话历史、任务状态、文件修改、Git 状态
+4. **智能恢复提示**：新会话启动时自动显示恢复选项和 AI 决策
+5. **技能命令接口**：提供 `/harness-*` 格式的命令，符合项目规范
+6. **存储优化**：GZIP 压缩、自动清理、健康检查，节省存储空间
+
+### 📊 工作范围
+
+- **新增文件**：
+  - `skills/harness-session/SKILL.md` 及参考文档
+  - `java-harness-workflow/src/main/java/com/chachamaru/harness/session/` 完整包结构
+  - `java-harness-workflow/src/main/java/com/chachamaru/harness/hook/extensions/` Hook 扩展
+  - `docs/user-guide/session-management.md` 用户指南
+  
+- **修改文件**：
+  - `java-harness-workflow/src/main/java/com/chachamaru/harness/hook/HookRegistry.java`
+  - `java-harness-cli/src/main/java/com/chachamaru/harness/cli/CommandRegistry.java`
+  - `skills/routing-rules.md` 路由规则
+  - `harness.toml.bak` 配置模板
+
+### 🔧 技术架构
+
+- **存储位置**：`.claude/state/session-saves/<timestamp>/`
+- **Hook 集成**：session-monitor (token 检测), session-init (恢复提示)
+- **命令接口**：`/harness-save-session`, `/harness-restore-session`, `/harness-list-sessions` 等
+- **配置方式**：`harness.toml` 中的 `[session.*]` 节
+
+### 🚀 性能目标
+
+- 保存时间：**< 3 秒**（典型会话）
+- 恢复时间：**< 5 秒**（典型会话）
+- 压缩率：**> 70%**（文本内容）
+- 存储占用：**< 10MB/会话**（压缩后）
+- 可靠性：保存成功率 > 99%，恢复成功率 > 98%
+
+### 🔄 与现有系统集成
+
+- **与 Hook 系统集成**：扩展现有 session-monitor 和 session-init hooks
+- **与技能系统集成**：新增 harness-session 技能，遵循技能命名规范
+- **与配置系统集成**：扩展 harness.toml 配置文件
+- **向后兼容**：不影响现有功能的正常运行
+
+---
+
+## 实现计划总览
+
+### 完成状态
+- **已完成 Phases**: 1-7, 9 (文档重建 + 双平台支持 + 多语言规范)
+- **进行中**: Phase 8 (Codex 实现完善)
+- **待开始**: Phase 10 (智能分支隔离检测), Phase 11 (会话保存和恢复系统)
+
+### 优先级建议
+1. **Phase 11** (会话保存和恢复系统) - 高优先级，解决用户实际问题
+2. **Phase 10** (智能分支隔离检测) - 中优先级，改进用户体验
+3. **Phase 8** (Codex 实现完善) - 低优先级，可选功能
+
+### 预估工作量
+- **Phase 8**: 2-3 天 (配置生成和集成测试)
+- **Phase 10**: 4-5 天 (分支检测、用户交互、集成测试)
+- **Phase 11**: 5-7 天 (完整会话管理系统，包含 13 个任务)
+
+---
+
+## 下一步行动
+
+**推荐执行顺序**:
+1. 完成 **Phase 11** (会话保存和恢复系统) - 解决最紧迫的 context 满问题
+2. 完成 **Phase 10** (智能分支隔离检测) - 改进分支安全性
+3. 可选完成 **Phase 8** (Codex 实现完善) - 扩展平台支持
+
+**启动方式**: 使用 `/harness-work` 或 `/breezing` 开始实施 Phase 11
