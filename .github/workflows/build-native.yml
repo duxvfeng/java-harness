@@ -168,6 +168,11 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
+          # 显示当前分支信息
+          echo "📍 当前分支: ${GITHUB_REF_NAME}"
+          echo "📍 完整引用: ${GITHUB_REF}"
+          git branch -a
+
           # 添加 bin/ 目录
           git add bin/
 
@@ -175,6 +180,9 @@ jobs:
           if git diff --staged --quiet; then
             echo "✅ 没有新的变更，无需提交"
           else
+            echo "📝 检测到变更，准备提交..."
+            git status
+
             # 提交变更
             git commit -m "chore: update native binaries from CI build #${{ github.run_number }}
 
@@ -182,8 +190,9 @@ jobs:
             📦 Build: ${{ github.run_number }}
             🔗 Commit: ${{ github.sha }}"
 
+            echo "📤 推送到 ${{ github.ref_name }} 分支..."
             # 推送到当前分支
-            git push
+            git push origin HEAD:${{ github.ref_name }}
             echo "✅ 已将二进制文件提交到 bin/ 目录"
           fi
 
