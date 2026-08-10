@@ -45,3 +45,169 @@ work_file = ".claude/state/work.jsonl"
 [logging]
 level = "INFO"  # Options: TRACE, DEBUG, INFO, WARN, ERROR
 file = ".claude/logs/harness.log"
+
+# ============================================
+# 端到端检测配置 (E2E Detection Configuration)
+# ============================================
+[e2e_detection]
+enabled = true  # 启用端到端检测
+mode = "strict"  # 模式: strict | lenient
+timeout = 120  # 单次测试超时时间（秒）
+retry_on_failure = true  # 检测失败时是否重试
+max_retries = 3  # 最大重试次数
+
+# 自动修复配置
+[e2e_detection.auto_fix]
+enabled = true  # 启用自动修复
+max_iterations = 3  # 最大修复迭代次数
+fix_timeout = 60  # 单次修复超时（秒）
+commit_on_fix = true  # 修复后是否自动提交
+
+# 自动修复类型
+[e2e_detection.auto_fix.types]
+dependency_update = true  # 依赖包更新
+gitignore_add = true  # 敏感文件保护
+code_fix = false  # 代码自动修复
+test_generation = false  # 测试自动生成
+
+# ============================================
+# 测试类型配置
+# ============================================
+
+# 前端功能测试 - 🎭 默认使用 Playwright
+[e2e_detection.test_types.frontend]
+enabled = true  # 启用前端测试
+framework = "playwright"  # 测试框架: playwright | cypress | selenium
+
+# Playwright 专用配置
+[e2e_detection.test_types.frontend.playwright]
+timeout = 30000  # 测试超时（毫秒）
+expect_timeout = 5000  # 断言超时（毫秒）
+headless = true  # 无头模式
+viewport_width = 1280  # 视口宽度
+viewport_height = 720  # 视口高度
+browsers = ["chromium", "firefox", "webkit"]  # 浏览器列表
+workers = null  # 并行工作进程数（null = 自动）
+retries = 1  # 失败重试次数
+
+# Playwright 功能特性
+[e2e_detection.test_types.frontend.playwright.features]
+auto_wait = true  # 自动等待机制
+video_recording = "retain-on-failure"  # 失败时录制视频
+screenshot = "only-on-failure"  # 失败时截图
+trace = "retain-on-failure"  # 失败时保存追踪
+
+# 后端API测试
+[e2e_detection.test_types.backend]
+enabled = true  # 启用后端测试
+framework = "auto"  # 自动检测框架
+test_paths = ["backend/tests/", "src/test/api/", "test/"]  # 测试路径
+
+# 集成测试
+[e2e_detection.test_types.integration]
+enabled = true  # 启用集成测试
+test_scenarios = ["user_login", "data_flow", "error_handling"]  # 测试场景
+
+# 性能测试（默认关闭）
+[e2e_detection.test_types.performance]
+enabled = false  # 启用性能测试
+response_time_max = 2000  # 最大响应时间（毫秒）
+concurrent_users = 10  # 并发用户数
+
+# 安全测试
+[e2e_detection.test_types.security]
+enabled = true  # 启用安全测试
+scan_vulnerabilities = true  # 扫描安全漏洞
+check_dependencies = true  # 检查依赖安全性
+scan_secrets = true  # 扫描敏感信息
+
+# ============================================
+# 阈值配置
+# ============================================
+[e2e_detection.thresholds]
+response_time = { warning = 1500, critical = 2000 }  # 响应时间阈值（毫秒）
+memory_usage = { warning = 0.7, critical = 0.8 }  # 内存使用率阈值
+cpu_usage = { warning = 0.8, critical = 0.9 }  # CPU使用率阈值
+concurrent_users = { min = 10, recommended = 50 }  # 并发用户数支持
+error_rate = { warning = 0.01, critical = 0.05 }  # 错误率阈值
+
+# Playwright 特定阈值
+[e2e_detection.thresholds.playwright_metrics]
+test_timeout = 30000  # 测试超时（毫秒）
+action_timeout = 5000  # 操作超时（毫秒）
+navigation_timeout = 30000  # 导航超时（毫秒）
+max_flaky_tests = 0  # 最大不稳定测试数
+
+# ============================================
+# 触发器配置
+# ============================================
+[e2e_detection.triggers]
+auto_trigger_on_review_pass = true  # 审查通过时自动触发
+require_clean_workspace = true  # 要求干净工作空间
+skip_on_draft_pr = true  # 跳过草稿 PR
+skip_on_wip_branch = true  # 跳过 WIP 分支
+
+# 分支模式匹配
+[e2e_detection.triggers.branch_patterns]
+include = ["feature/*", "bugfix/*", "hotfix/*"]  # 包含的分支模式
+exclude = ["draft/*", "wip/*", "experimental/*"]  # 排除的分支模式
+
+# ============================================
+# 报告配置
+# ============================================
+[e2e_detection.reporting]
+generate_report = true  # 生成报告
+report_format = "markdown"  # 报告格式: markdown | json | html | console
+include_details = true  # 包含详细信息
+save_artifacts = true  # 保存测试产物
+artifacts_location = ".claude/artifacts/e2e-detection/"  # 产物保存位置
+
+# Playwright 报告配置
+[e2e_detection.reporting.playwright_reports]
+html_report = true  # HTML 报告
+trace_files = "retain-on-failure"  # 追踪文件策略
+screenshots = "only-on-failure"  # 截图策略
+video_files = "retain-on-failure"  # 视频策略
+
+# ============================================
+# 系统集成配置
+# ============================================
+[e2e_detection.integration]
+# 与 harness-work 集成
+[e2e_detection.integration.harness_work]
+enabled = true  # 启用集成
+trigger_point = "after_review"  # 触发点: after_review | before_complete
+blocking = true  # 是否阻塞完成流程
+
+# 与 harness-review 集成
+[e2e_detection.integration.harness_review]
+enabled = true  # 启用集成
+send_feedback = true  # 发送反馈
+
+# CI 集成（默认关闭）
+[e2e_detection.integration.ci_integration]
+enabled = false  # 启用 CI 集成
+platform = "github"  # 平台: github | gitlab | bitbucket
+comment_on_pr = true  # 在 PR 中评论
+
+# ============================================
+# 高级配置
+# ============================================
+[e2e_detection.advanced]
+parallel_execution = true  # 并行执行
+max_parallel_workers = 3  # 最大并行工作进程数
+cache_test_results = true  # 缓存测试结果
+cache_ttl = 3600  # 缓存有效期（秒）
+cleanup_after_test = true  # 测试后清理
+fail_fast = false  # 快速失败模式
+continue_on_failure = true  # 失败时继续
+debug_mode = false  # 调试模式
+log_level = "info"  # 日志级别
+
+# Playwright 高级配置
+[e2e_detection.advanced.playwright_advanced]
+dev_tools = false  # 是否使用 DevTools
+screenshot_on_failure = true  # 失败时截图
+video_on_failure = true  # 失败时录制视频
+trace_on_failure = true  # 失败时保存追踪
+browsers_order = ["chromium", "firefox", "webkit"]  # 浏览器优先级
