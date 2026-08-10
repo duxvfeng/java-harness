@@ -173,12 +173,16 @@ jobs:
           echo "📍 完整引用: ${GITHUB_REF}"
           git branch -a
 
-          # 添加 bin/ 目录
-          git add bin/
+          # 添加 bin/ 目录（强制添加被 .gitignore 忽略的文件）
+          git add -f bin/
 
           # 检查是否有变更
           if git diff --staged --quiet; then
-            echo "✅ 没有新的变更，无需提交"
+            echo "⚠️ 警告：没有检测到新的变更"
+            echo "📋 Git 状态："
+            git status
+            echo "📋 暂存区内容："
+            git diff --staged --name-only
           else
             echo "📝 检测到变更，准备提交..."
             git status
