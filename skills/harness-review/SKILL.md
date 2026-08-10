@@ -414,6 +414,11 @@ Findings:
 Next Actions:
 - ...
 
+**⚠️ 端到端检测提示 (v2.2.0+)**:
+- 审查通过（APPROVE）后将自动触发端到端检测
+- 如需禁用，设置 `e2e_detection.enabled = false` 或环境变量 `HARNESS_E2E_ENABLED=false`
+- 检测失败时将自动回到 harness-work 继续修改
+
 Details:
 ```json
 {
@@ -444,6 +449,76 @@ Details:
 }
 ```
 ~~~
+
+## 端到端检测触发 (v2.2.0+)
+
+### 审查通过后的自动流程
+
+当代码审查通过（verdict == "APPROVE"）时，系统会自动触发端到端检测：
+
+```python
+# 在 harness-work 中的集成点
+if review_result.verdict == "APPROVE":
+    # 加载端到端检测配置
+    e2e_config = load_e2e_detection_config()
+    
+    if e2e_config.enabled:
+        # 自动触发端到端检测
+        detection_result = run_e2e_detection(e2e_config)
+        
+        # 处理检测结果
+        if detection_result.status == "PASS":
+            # 继续正常流程
+            continue_flow()
+        elif detection_result.status == "FAIL":
+            # 回到 harness-work 继续修改
+            escalate_to_harness_work(detection_result)
+```
+
+### 配置检查
+
+审查通过前，系统会检查以下配置：
+
+- ✅ 端到端检测是否启用（`e2e_detection.enabled`）
+- ✅ 是否在支持的分支上
+- ✅ 工作空间是否干净
+- ✅ 是否为草稿 PR 或 WIP 分支
+
+### 临时禁用
+
+如果需要临时禁用端到端检测：
+
+```bash
+# 设置环境变量
+export HARNESS_E2E_ENABLED=false
+
+# 或在 harness.toml 中设置
+[e2e_detection]
+enabled = false
+```
+
+### 检测失败处理
+
+端到端检测失败时的处理流程：
+
+1. **自动修复尝试**（如果配置启用）：
+   - 依赖更新
+   - 敏感文件保护
+   - 代码修复
+
+2. **回到 harness-work**：
+   - 自动修复失败时
+   - 达到最大重试次数时
+
+3. **升级到用户**：
+   - 检测出错时
+   - 配置错误时
+
+### 相关文档
+
+- **完整流程**: `skills/harness-work/SKILL.md#端到端检测集成`
+- **架构设计**: `docs/architecture/e2e-detection-architecture.md`
+- **配置参考**: `java-harness-cli/harness.toml`
 
 ## Codex Environment
 
