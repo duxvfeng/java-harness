@@ -1,12 +1,12 @@
 # Code Review Flow
 
-## ひとことで
+## 一句话总结
 
-差分を集め、実装・仕様・Plans・デグレ・テストを見て、止めるべき問題だけを止める。
+收集差异，查看实现、规格、Plans、退化、测试，只阻止应该阻止的问题。
 
 ## Step 1: collect diff
 
-確認するもの:
+确认事项:
 
 ```bash
 git status --short
@@ -15,8 +15,8 @@ git diff "${BASE_REF:-HEAD}"
 git ls-files --others --exclude-standard
 ```
 
-untracked files は `git diff` に出ない。
-必ず scope に含める。
+untracked files 不会出现在 `git diff` 中。
+必须包含在 scope 中。
 
 ## Step 2: static scans
 
@@ -40,59 +40,59 @@ bash scripts/review-weak-supervision-report.sh
 - `test.skip`
 - `expect(true).toBe(true)`
 
-候補が見つかっただけで major にしない。
-diff 文脈で「出荷事故や誤設定に直結するか」で severity を判定する。
-ただし minor と判定したものも黙って捨てず観察として記録する（下の Finding coverage 参照）。
+仅发现候补不视为 major。
+在 diff 语境中根据"是否直接导致出库事故或错误配置"来判定 severity。
+但判定为 minor 的也不默默认丢弃，而是作为观察记录（参见下文的 Finding coverage）。
 
 ## Step 3: eight review lenses
 
-| 観点 | 見るもの |
+| 视点 | 查看内容 |
 |---|---|
 | Security | SQL injection, cross-site scripting, secret leak, permission bypass |
 | Performance | N+1, needless heavy IO, blocking work |
 | Quality | duplicate logic, unclear boundary, fragile parsing |
 | Accessibility | labels, focus, contrast, keyboard path |
 | AI Residuals | fake success, skipped tests, mock-only implementation |
-| Spec Alignment | root `spec.md` product contract と sub-spec (`spec_path`) との矛盾 |
-| Plans Alignment | `Plans.md` の task / DoD / Depends / `[lane:*]` / stage gate との一致 |
-| Regression Safety | 既存挙動・mirror・CLI/skill UX のデグレ |
+| Spec Alignment | root `spec.md` product contract 与 sub-spec (`spec_path`) 之间的矛盾 |
+| Plans Alignment | `Plans.md` 的 task / DoD / Depends / `[lane:*]` / stage gate 的一致性 |
+| Regression Safety | 既存行为·mirror·CLI/skill UX 的退化 |
 
 ## TDD compliance
 
-`[tdd:required]` task では `tdd_red_log`、literal failing test output、または明示 `skip_tdd_reason` を確認する。
-docs-only や refactor-only のように TDD が過剰な場合は、`[tdd:skip:<reason>]` を記録すればよい。
-証跡なしで `APPROVE` しない。
+`[tdd:required]` 任务需要确认 `tdd_red_log`、literal failing test output 或显式 `skip_tdd_reason`。
+像 docs-only 或 refactor-only 这样 TDD 过度的情况下，记录 `[tdd:skip:<reason>]` 即可。
+没有证据不 `APPROVE`。
 
 ## Unknown data contract
 
-`not_observed != absent` — 未観測データを「存在しない」「問題なし」と断定しない。
-file / API / CI / memory / fixture が見えない場合は `unknown` / `not observed` と報告する。
+`not_observed != absent` — 不将未观测数据断定为"不存在""没问题"。
+file / API / CI / memory / fixture 看不到时报告为 `unknown` / `not observed`。
 
 ## Evidence pack
 
-`APPROVE` 前に evidence pack を確認する: accepted findings、rejected findings、focused tests、`release-preflight` warnings の処理方針、residual risk。
+`APPROVE` 前确认 evidence pack：accepted findings、rejected findings、focused tests、`release-preflight` warnings 的处理方针、residual risk。
 
 ## Finding coverage（Opus 4.8）
 
-finding 段階と verdict 段階を分ける。
+区分 finding 阶段和 verdict 阶段。
 
-- finding 段階は **網羅優先**。確信が低い指摘や minor も含め、見つけた issue は全て severity と確信度つきで記録する（`review-result.v1` の `observations[]` / `recommendations[]` に残す）。
-- gate するのは verdict 段階だけ（critical / major で `REQUEST_CHANGES`、minor のみ `APPROVE`）。
-- 「出荷事故や誤設定に直結するか」は **severity の判定**であって、**記録するかの判定ではない**。minor と判断しても黙って捨てない。
+- finding 阶段 **优先网罗**。包括确信度低的指出和 minor，发现的 issue 都要附带 severity 和确信度记录（保留在 `review-result.v1` 的 `observations[]` / `recommendations[]` 中）。
+- 只在 verdict 阶段 gate（critical / major 时 `REQUEST_CHANGES`、仅 minor 时 `APPROVE`）。
+- "是否直接导致出库事故或错误配置"是 **severity 的判定**，而不是**是否记录的判定**。即使判断为 minor 也不默默认丢弃。
 
-Opus 4.8 は「low-severity は報告するな」を忠実に守り、調査はしても報告を絞って recall を落とす癖がある。
-finding を絞るのは verdict 段階の責務であり、調査段階で findings を捨てない。
+Opus 4.8 忠实地遵守"不要报告 low-severity"，即使调查也会缩小报告范围导致 recall 下降。
+缩小 finding 是 verdict 阶段的职责，调查阶段不丢弃 findings。
 
 ## Verdict
 
-1. critical / major がある → `REQUEST_CHANGES`
-2. root `spec.md` / `Plans.md` lane-stage / デグレ gate が fail → `REQUEST_CHANGES`
-3. TDD evidence 欠落、unknown data を断定、evidence pack 空 → `REQUEST_CHANGES`
-4. 意思決定が必要 → `decision_needed`
-5. minor / recommendation のみ → `APPROVE`
-6. 証拠が足りない → `REQUEST_CHANGES` または `decision_needed`
+1. 有 critical / major → `REQUEST_CHANGES`
+2. root `spec.md` / `Plans.md` lane-stage / 退化 gate 为 fail → `REQUEST_CHANGES`
+3. TDD evidence 缺失、断定 unknown data、evidence pack 为空 → `REQUEST_CHANGES`
+4. 需要意思决定 → `decision_needed`
+5. 仅有 minor / recommendation → `APPROVE`
+6. 证据不足 → `REQUEST_CHANGES` 或 `decision_needed`
 
-## 修正後再レビュー
+## 修正后再审查
 
-`REQUEST_CHANGES` の後は、修正後再レビューを必ず行う。
-同じ issue を 2 回連続で落とした場合は TeamAgent Debate を強制する。
+`REQUEST_CHANGES` 后必须进行修正后再审查。
+连续 2 次遗漏相同 issue 时强制 TeamAgent Debate。

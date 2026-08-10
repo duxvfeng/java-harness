@@ -1,40 +1,40 @@
 # Quick / Codex Closeout
 
-## ひとことで
+## 一句话总结
 
-小さな変更は、対象を固定し、Codex の助言を実コードで確認し、clean ならそこで止める。
+小的变更是固定目标，用实际代码确认 Codex 的建议，clean 就在那里停止。
 
 ## target selection decision tree
 
-1. working tree が dirty
-   - 推奨: 未コミット変更のみ
+1. working tree 为 dirty
+   - 推荐: 仅未提交变更
    - base: `HEAD`
-   - untracked を含める
-2. PR branch / feature branch に commits がある
-   - 推奨: `upstream..HEAD` または `origin/main..HEAD`
-   - working tree も dirty なら AskUserQuestion で「未コミット変更のみ / 全部 / commit のみ」を選ぶ
-3. clean tree で branch 差分がない
-   - 推奨: 直近 1 commit
-   - 必要なら直近 5 commits
-4. user が `--base` / `--commit` を指定
-   - 明示指定を優先
+   - 包含 untracked
+2. PR branch / feature branch 有 commits
+   - 推荐: `upstream..HEAD` 或 `origin/main..HEAD`
+   - working tree 也为 dirty 则用 AskUserQuestion 选择"仅未提交变更 / 全部 / 仅 commit"
+3. clean tree 且没有 branch 差分
+   - 推荐: 最近 1 commit
+   - 必要时最近 5 commits
+4. 用户指定 `--base` / `--commit`
+   - 优先显式指定
 
 ## Advisory rule
 
-Codex の指摘は advisory。
-つまり「参考意見」であり、事実そのものではない。
+Codex 的指出内容是 advisory。
+即"参考意见"，不是事实本身。
 
-必ず次を行う。
+必须执行以下操作。
 
-- 指摘箇所を実コードで読む
-- diff とテストで再現性を確認する
-- accepted findings / rejected findings に分ける
-- rejected には「なぜ採用しないか」を書く
+- 用实际代码阅读指出的问题
+- 用 diff 和测试确认可再现性
+- 分为 accepted findings / rejected findings
+- 在 rejected 中写入"为何不采用"
 
 ## Stop-on-clean
 
 stop-on-clean:
-clean result が出た後に、見栄えのためだけの追加 review をしない。
+出现 clean result 后，不为外观进行额外的 review。
 
 例:
 
@@ -42,14 +42,14 @@ clean result が出た後に、見栄えのためだけの追加 review をし�
 - focused tests: pass
 - manual spot check: pass
 
-この状態なら止める。
-追加の重い review は、release 前、security-sensitive、仕様正本変更、またはユーザー明示時だけ行う。
+如果处于这种状态则停止。
+额外的重度 review 仅在 release 前、security-sensitive、规格正本变更或用户明确指示时进行。
 
 ## Helper contract
 
-`scripts/harness-review-closeout.sh` は lightweight closeout の実行計画を固定する helper。
+`scripts/harness-review-closeout.sh` 是固定 lightweight closeout 执行计划的 helper。
 
-対応する入力:
+对应的输入：
 
 - `--dry-run`
 - `--parallel-tests`
@@ -67,11 +67,11 @@ bash scripts/harness-review-closeout.sh --base origin/main --parallel-tests --te
 bash scripts/harness-review-closeout.sh --commit HEAD --json
 ```
 
-Codex が利用できない場合:
+Codex 不可用时:
 
-- full manual pass に fallback
-- failure を success と扱わない
-- final report に `codex_available:false` を残す
+- fallback 到 full manual pass
+- 不将 failure 视为 success
+- 在 final report 中保留 `codex_available:false`
 
 ## Final report
 
@@ -84,7 +84,7 @@ Codex が利用できない場合:
 - clean result
 - fallback reason
 
-JSON では最低限こう残す。
+JSON 中至少保留以下内容。
 
 ```json
 {

@@ -12,7 +12,7 @@ pair: harness-work
 owner: harness-core
 since: "2026-05-05"
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "Monitor", "AskUserQuestion"]
-argument-hint: "[code|plan|scope|--quick|--codex-closeout|--dual|--team-debate|--security|--ui-rubric]"
+argument-hint: "[code|plan|scope|--quick|--codex-closeout|--dual|--team-debate|--security|--ui-rubric|--auto]"
 context: fork
 effort: high
 user-invocable: true
@@ -56,6 +56,7 @@ commit / push / release 既定不执行。
 | `/harness-review --quick` | `quick` | 轻松 closeout 小的 dirty change |
 | `/harness-review --codex-closeout` | `codex-closeout` | 用 Codex 助告 + focused tests closeout |
 | `/harness-review --dual` | `dual` | Claude + Codex second opinion |
+| `/harness-review --auto` | `auto` | **自动调用模式** - 供 harness-work 等自动流程调用，输出机器可读的 JSON 结果 |
 | `--pre-review cursor` | `code+pre-review` | brain verdict 前的 fresh-context composer advisory pre-review（read-only） |
 | `/harness-review --cursor` | `code+cursor-second-opinion` | core review gates + cursor second-opinion（brain 一次审查必需） |
 | `HARNESS_IMPL_BACKEND=cursor harness-review` | `code+cursor-second-opinion` | default ON 时也向 core review gates 自动加算 cursor second-opinion。primary verdict 固定为 brain |
@@ -73,6 +74,7 @@ commit / push / release 既定不执行。
 | `--quick` | `quick` | `references/codex-closeout.md`, `references/code-review.md` |
 | `--codex-closeout` | `codex-closeout` | `references/codex-closeout.md` |
 | `--dual` | `dual` | `references/dual-review.md`, `references/team-debate.md` |
+| `--auto` | `auto` | `references/auto-review.md`, `references/code-review.md`, `references/code-standards/*.md` |
 | `--team-debate` | `team-debate` | `references/team-debate.md`, `references/governance.md` |
 | `--security` | `security` | `references/security-profile.md`, `references/governance.md` |
 | `--ui-rubric` | `ui-rubric` | `references/ui-rubric.md` |
@@ -83,7 +85,7 @@ commit / push / release 既定不执行。
 
 ## Multilingual Code Standards Integration
 
-この skill は多言語コード標準サポートを含み、検出されたプログラミング言語に基づいて適切なコードレビュー標準を自動適用します。
+此技能包含多语言代码标准支持，会根据检测到的编程语言自动应用相应的代码审查标准。
 
 ### Supported Languages and Standards
 
@@ -102,26 +104,26 @@ commit / push / release 既定不执行。
 
 ### Integration Architecture
 
-詳細なアーキテクチャは `references/code-standards/architecture.md` を参照してください。
+详细的架构信息请参考 `references/code-standards/architecture.md`。
 
-- **Language Detection Layer**: 自動言語検出
-- **Standards Mapping System**: 言語→標準マッピング
-- **Rule Application Framework**: ルール適用エンジン
+- **Language Detection Layer**: 自动语言检测
+- **Standards Mapping System**: 语言→标准映射
+- **Rule Application Framework**: 规则应用引擎
 - **Configuration Structure**: `.claude/config/code-standards.config.json`
 
 ### Java Code Review Integration
 
-Java ファイルのレビュー時、`alibaba-java-development-guide` skill が自動的に起動します：
+审查 Java 文件时，会自动启动 `alibaba-java-development-guide` 技能：
 
-- **7 Major Dimensions**: 命名規約、例外処理、ロギング、単体テスト、セキュリティ、データベース、設計標準
+- **7 Major Dimensions**: 命名规范、异常处理、日志、单元测试、安全、数据库、设计标准
 - **Severity Levels**: 【强制】【推荐】【参考】
-- **Automatic Trigger**: Java 関連キーワードで自動起動
+- **Automatic Trigger**: Java 相关关键词自动启动
 
-詳細は `references/code-standards/java-alibaba-guide.md` を参照してください。
+详细信息请参考 `references/code-standards/java-alibaba-guide.md`。
 
 ### Configuration
 
-多言語標準の設定は `.claude/config/code-standards.config.json` で管理されます：
+多语言标准的配置在 `.claude/config/code-standards.config.json` 中管理：
 
 ```json
 {
@@ -147,9 +149,63 @@ Java ファイルのレビュー時、`alibaba-java-development-guide` skill が
 用于快速检查小的 dirty change、single commit、PR branch 的 closeout。
 并非放弃质量 gate。
 
+### Auto Mode (`--auto`)
+
+**Purpose:** 专为自动调用设计，供 harness-work 等自动化流程使用
+
+**特点:**
+- 📊 **机器可读输出**: JSON 格式，便于程序解析
+- ⚡ **性能优化**: 针对自动化场景优化速度
+- 🎯 **专注 verdict**: 快速判定 APPROVE/REQUEST_CHANGES
+- 🔧 **简化交互**: 无需用户确认，纯自动化执行
+
+**调用方式:**
+```bash
+/harness-review --auto --base-ref <commit> --output <json_file> --mode <strict|lenient>
+```
+
+**参数说明:**
+- `--base-ref`: 基准 commit，用于计算 diff
+- `--output`: 输出文件路径（JSON 格式）
+- `--mode`: 审查严格度（默认: strict）
+
+**输出格式:**
+```json
+{
+  "verdict": "APPROVE|REQUEST_CHANGES",
+  "findings": [
+    {
+      "severity": "critical|major|minor|recommendation",
+      "file": "path/to/file",
+      "line": 123,
+      "rule": "rule-id",
+      "message": "问题描述",
+      "suggestion": "修复建议"
+    }
+  ],
+  "summary": "审查总结",
+  "review_time": "2024-08-10T10:30:00Z",
+  "performance": {
+    "duration_ms": 1234,
+    "files_reviewed": 5
+  }
+}
+```
+
+**Verdict 规则:**
+- `critical` 或 `major` 任何发现 → `REQUEST_CHANGES`
+- 只有 `minor` 或 `recommendation` → `APPROVE`
+- 无发现 → `APPROVE`
+
+**与人工模式的区别:**
+- ❌ 不输出最后的人工可读总结
+- ❌ 不要求用户按 Enter 继续
+- ✅ 纯 JSON 输出到指定文件
+- ✅ 专注快速 verdict 判定
+
 ### Cursor Default ON
 
-mode 判定時、明示 mode words (`plan`, `scope`, `full`) と明示フラグを先に確定する。no-arg / `code` review の場合だけ helper root を解決して resolver を 1 回だけ実行し、resolver 不在時は `claude` とみなす。
+在判定模式时，先确定显式的模式词（`plan`、`scope`、`full`）和显式标志。只有在无参数/`code`审查的情况下才解析helper root并执行一次resolver，resolver不存在时视为`claude`。
 
 ```bash
 HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"; if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then probe="$(cd "${CLAUDE_SKILL_DIR}" && pwd)"; while [ "$probe" != "/" ] && [ ! -d "$probe/scripts" ]; do probe="$(cd "$probe/.." && pwd)"; done; [ -d "$probe/scripts" ] && HARNESS_PLUGIN_ROOT="$probe"; fi
@@ -218,40 +274,40 @@ REVIEW_AUTOSTART: target={resolved_target}, base_ref={resolved_base_ref}, type={
 
 ## Minimal Flow
 
-1. mode を決める
-2. 上記の Review Target Detection で対象と base ref を決める
-3. 必要な reference だけ読む
-4. 差分、untracked files、関連テスト、仕様正本、`Plans.md` を確認する
-5. `APPROVE` / `REQUEST_CHANGES` / `decision_needed` を返す
-6. `REQUEST_CHANGES` の場合は critical / major の修正方針と修正後再レビュー条件を示す
+1. 确定模式
+2. 通过上述的Review Target Detection确定目标和基准引用
+3. 只读取必要的reference
+4. 确认差异、untracked files、相关测试、规格正本、`Plans.md`
+5. 返回 `APPROVE` / `REQUEST_CHANGES` / `decision_needed`
+6. 如果是 `REQUEST_CHANGES`，则显示 critical / major 的修正方针和修正后再审查条件
 
 ## Review Governance Contract
 
-詳細は `references/governance.md`。
-ここでは最低限の合格ラインだけ固定する。
+详细信息请参考 `references/governance.md`。
+此处只固定最低的合格线。
 
-### 明確な合格ライン
+### 明确的合格线
 
-`APPROVE` は次のすべてを満たす時だけ返す（詳細は `references/governance.md`）。
+`APPROVE` 仅在满足以下所有条件时返回（详细信息请参考 `references/governance.md`）。
 
-- critical / major が 0 件
-- root `spec.md` alignment（product contract と矛盾しない；仕様正本 alignment check 必須）
-- `Plans.md` alignment（task / DoD / Depends、`[lane:*]`、stage gate が contract と一致）
-- TDD evidence（`[tdd:required]` は `tdd_red_log` / failing output / `skip_tdd_reason`）
-- unknown data contract（`not_observed != absent` — 不批准无证据的「无问题」「无数据」）
-- regression safety（现有行为・测试・UX・CLI・设置・docs・mirror 无退化）
+- critical / major 为 0 件
+- root `spec.md` alignment（与 product contract 不矛盾；规格正本 alignment check 必须执行）
+- `Plans.md` alignment（task / DoD / Depends、`[lane:*]`、stage gate 与 contract 一致）
+- TDD evidence（`[tdd:required]` 需要 `tdd_red_log` / failing output / `skip_tdd_reason`）
+- unknown data contract（`not_observed != absent` — 不批准无证据的"无问题""无数据"）
+- regression safety（现有行为·测试·UX·CLI·设置·docs·mirror 无退化）
   - If you grep the same symbol twice in the same session, switch to harness_ast_search.
   - For a bugfix where homologous implementations appear across multiple modules, run harness_ast_search to find all implementations before editing.
   - Only when changed files include .ts or .tsx, the DoD requires zero new harness_lsp_diagnostics errors; if the harness MCP is not connected or the changed file types are not eligible, treat diagnostics as not-configured and non-blocking.
-- evidence pack（accepted / rejected findings、focused tests、release-preflight warnings 処理）
-- TeamAgent Debate 未解消 disagreement なし
+- evidence pack（accepted / rejected findings、focused tests、release-preflight warnings 处理）
+- TeamAgent Debate 无未解决的 disagreement
 
-`APPROVE` は commit / push / PR 作成命令ではない（read-only boundary）。
+`APPROVE` 不是 commit / push / PR 创建命令（read-only boundary）。
 
 ### TeamAgent Debate
 
-詳細は `references/team-debate.md`。
-TeamAgent Debate は、異なる見解を read-only で衝突させる review pass。
+详细信息请参考 `references/team-debate.md`。
+TeamAgent Debate 是让不同见解在 read-only 状态下冲突的 review pass。
 
 | Agent | 主要问题 |
 |---|---|
@@ -264,8 +320,8 @@ TeamAgent Debate は、異なる見解を read-only で衝突させる review pa
 
 ## Code Review Summary
 
-詳細は `references/code-review.md`。
-通常 code review は次を見る。
+详细信息请参考 `references/code-review.md`。
+通常 code review 检查以下内容：
 
 - Security
 - Performance
@@ -277,7 +333,7 @@ TeamAgent Debate は、異なる見解を read-only で衝突させる review pa
 - Regression Safety
 - TDD compliance
 
-root `spec.md` alignment、Plans lane/stage、TDD evidence、unknown data contract、evidence pack の詳細は `references/governance.md` と `references/code-review.md`。
+root `spec.md` alignment、Plans lane/stage、TDD evidence、unknown data contract、evidence pack 的详细信息请参考 `references/governance.md` 和 `references/code-review.md`。
 
 `AI Residuals` 优先使用 `scripts/review-ai-residuals.sh` 和 `scripts/review-weak-supervision-report.sh`。
 也要看 untracked 时用 `--include-untracked`。
@@ -286,7 +342,7 @@ finding 阶段优先网罗性。判定为 minor 的指摘也留在 `observations
 
 ## Quick / Codex Closeout Summary
 
-詳細は `references/codex-closeout.md`。
+详细信息请参考 `references/codex-closeout.md`。
 
 轻量级路径原则：
 
@@ -306,13 +362,13 @@ bash scripts/harness-review-closeout.sh --commit HEAD
 
 ## Plan Review Summary
 
-詳細は `references/plan-review.md`。
+详细信息请参考 `references/plan-review.md`。
 Plan Review 查看 `Plans.md` 的 DoD / Depends / Status 和实现顺序。
 需要规格正本的任务没有 `spec_path` 时，作为 `decision_needed` 停止。
 
 ## Scope Review Summary
 
-詳細は `references/scope-review.md`。
+详细信息请参考 `references/scope-review.md`。
 Scope Review 查看要求・差分・测试・docs 的边界是否膨胀。
 需要范围变更时，不靠推测推进，回到 `AskUserQuestion` 或 plan 更新。
 
@@ -330,8 +386,8 @@ Scope Review 查看要求・差分・测试・docs 的边界是否膨胀。
 ## PR Host Boundary
 
 GitHub-first。
-PR host 上の review 事実は GitHub を正とし、local diff は補助証拠として扱う。
-ただし local uncommitted review は GitHub に push しない。
+PR host 上的 review 事实以 GitHub 为正，local diff 作为辅助证据处理。
+但 local uncommitted review 不会 push 到 GitHub。
 
 ## Output Contract
 
@@ -400,5 +456,5 @@ Codex 环境下可用工具不同，但合格线、规格正本、`Plans.md`、�
 ## Related Skills
 
 - `harness-work`: `REQUEST_CHANGES` 後の修正実行
-- `harness-plan`: plan / scope / spec の更新
-- `harness-release`: review 済み work の commit / release
+- `harness-plan`: plan / scope / spec 的更新
+- `harness-release`: review 完毕的 work 的 commit / release

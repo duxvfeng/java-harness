@@ -21,6 +21,89 @@ and validation.
 8. Generate and approve a sprint contract before implementation when the task
    needs reviewable DoD checks.
 
+## Auto Review Integration Function (v2.1.0+)
+
+以下函数用于调用 harness-review 的 --auto 模式：
+
+```python
+def call_harness_review_auto(base_ref: str, worktree_path: str, mode: str = "strict") -> dict:
+    """
+    调用 harness-review --auto 模式进行自动代码审查
+
+    Args:
+        base_ref: 基准 commit SHA 或分支名
+        worktree_path: 工作树路径
+        mode: 审查模式 (strict|lenient)
+
+    Returns:
+        包含审查结果的字典
+    """
+    import subprocess
+    import json
+    import os
+
+    # 确定脚本路径（项目统一的 scripts/ 目录）
+    auto_review_script = os.path.join(
+        HARNESS_PLUGIN_ROOT,
+        "scripts", "review", "auto-review.sh"
+    )
+
+    # 准备输出文件
+    output_file = f"/tmp/harness-review-{os.getpid()}.json"
+
+    # 构建命令
+    cmd = [
+        auto_review_script,
+        "--auto",
+        "--base-ref", base_ref,
+        "--output", output_file,
+        "--mode", mode
+    ]
+
+    try:
+        # 执行审查
+        result = subprocess.run(
+            cmd,
+            cwd=worktree_path,
+            timeout=30,
+            capture_output=True,
+            text=True
+        )
+
+        # 读取结果
+        if os.path.exists(output_file):
+            with open(output_file, 'r') as f:
+                review_result = json.load(f)
+
+            # 清理临时文件
+            os.remove(output_file)
+
+            return {
+                "success": True,
+                "result": review_result,
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+        else:
+            return {
+                "success": False,
+                "error": "输出文件不存在",
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "审查超时（超过 30 秒）"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+```
+
 ## Solo
 
 Use for one task. The parent session implements directly, validates, runs the
@@ -156,24 +239,67 @@ for task in execution_order:
         SendMessage(to=worker_id, message=f"self_review 中有未确认 rule: {[u['rule'] for u in unverified]}。请用实际命令输出或 literal 测试结果填充 evidence，verified=true 后 amend")
         worker_result = wait_for_response(worker_id)
 
-    # review (see review-loop.md for verdict priority/thresholds)
-    diff_text = git("-C", worker_result.worktreePath, "show", worker_result.commit)
-    verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+    # review (使用 harness-review --auto 模式)
+    # 职责分离：harness-work 专注于任务实现，harness-review 专注于代码审查
+    verdict_result = call_harness_review_auto(
+        base_ref=BASE_REF,
+        worktree_path=worker_result.worktreePath,
+        mode="strict"
+    )
+
+    if not verdict_result["success"]:
+        # 如果自动审查失败，降级到基础检查
+        logger.warning(f"harness-review --auto 失败: {verdict_result.get('error')}")
+        verdict = "REQUEST_CHANGES"  # 保守策略
+        findings = []
+    else:
+        verdict = verdict_result["result"]["verdict"]
+        findings = verdict_result["result"].get("findings", [])
+
+    # 支持 reviewer_profile 的额外检查
     profile = jq(contract_path, ".review.reviewer_profile")
     if profile == "runtime":
-        review_input = run-contract-review-checks.sh output; DOWNGRADE_TO_STATIC falls back to the static verdict
+        review_input = run-contract-review-checks.sh output
+        # 合并 runtime 检查结果
+        runtime_findings = parse_review_check_output(review_input)
+        findings.extend(runtime_findings)
+        # 重新计算 verdict
+        if any(f["severity"] in ["critical", "major"] for f in findings):
+            verdict = "REQUEST_CHANGES"
     if profile == "browser":
-        browser artifact -> browser-review-runner.sh; REQUEST_CHANGES/APPROVE override the static verdict, PENDING_BROWSER keeps it
+        browser artifact -> browser-review-runner.sh
+        browser_verdict = parse_browser_review_result()
+        if browser_verdict in ["REQUEST_CHANGES", "APPROVE"]:
+            verdict = browser_verdict  # 覆盖静态判定
+        elif browser_verdict == "PENDING_BROWSER":
+            verdict = "REQUEST_CHANGES"  # 保守处理
+
     write-review-result.sh normalizes the artifact
 
     review_count = 0
     MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
     latest_commit = worker_result.commit
     while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
-        SendMessage(to=worker_id, message="指摘内容: {issues}\n修正して amend してください")
+        SendMessage(to=worker_id, message="指出的问题: {issues}\n请修正后 amend 提交")
         updated_result = wait_for_response(worker_id)
         latest_commit = updated_result.commit
-        verdict = codex_exec_review(...) or reviewer_agent_review(...)
+
+        # 重新调用 harness-review --auto 进行审查
+        verdict_result = call_harness_review_auto(
+            base_ref=BASE_REF,
+            worktree_path=worker_result.worktreePath,
+            mode="strict"
+        )
+
+        if verdict_result["success"]:
+            verdict = verdict_result["result"]["verdict"]
+            findings = verdict_result["result"].get("findings", [])
+        else:
+            # 如果自动审查失败，保守处理
+            logger.warning(f"harness-review --auto 重试失败: {verdict_result.get('error')}")
+            verdict = "REQUEST_CHANGES"
+            findings = []
+
         review_count++
 
     if verdict == "APPROVE":
