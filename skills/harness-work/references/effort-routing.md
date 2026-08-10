@@ -7,7 +7,6 @@
 Opus 4.8 中 thinking 默认为 off，effort 是推理深度的主要杠杆（比过去的任何 Opus effort 影响都更大）。
 观测到"浅推理"时不在 prompt 中回避而是提高 effort。
 强化复杂任务废止了向 spawn prompt 注入 free-text marker（旧 `ultrathink`）的方式，统一为从复杂度分数选择 Worker spawn 的 effort tier 的方式。
-这与 `docs/model-routing-policy.md`（不从 free-text 推测 effort）和 `.claude/rules/claude-5-prompt-standard.md`「维持的纪律 5」（`xhigh` 由调用方选择）一致。
 
 ## 多要素评分
 

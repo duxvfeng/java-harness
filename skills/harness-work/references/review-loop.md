@@ -37,7 +37,6 @@ Capture `BASE_REF=$(git rev-parse HEAD)` before implementation starts, then diff
 ```bash
 BASE_REF=$(git rev-parse HEAD)
 # ... implementation complete ...
-bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}"
 REVIEW_EXIT=$?
 ```
 

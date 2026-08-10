@@ -13,7 +13,6 @@ Cursor を Harness の実装バックエンドとして使う時のガバナン�
 
 raw `cursor-agent` の直接呼び出しは禁止。以下の経路でのみ呼び出す:
 
-1. **`scripts/cursor-companion.sh`** — Harness スキル・エージェント内からの唯一の呼び出し経路
 2. ユーザーは `~/.claude/settings.json` の `deny` に `Bash(cursor-agent:*)` を**手動で追加**することを推奨
    - Harness / AI は settings.json を編集できない (deny + self-audit ガードで自己書き換えを防止)
    - 多層防御として、wrapper を経由しない raw 呼び出しを permission 層でも遮断する
@@ -54,7 +53,6 @@ Cursor 公式ドキュメントは "Never use" と明記している。Harness �
 
 ## Read mode delegation (lean path)
 
-`scripts/cursor-companion.sh task "<prompt>"` は **引数なしで default `--mode ask` (hard read-only stop)** になる。`--write` を渡さない限り cursor 側はファイル書込・コマンド実行ができない。これにより重い containment を skip できる。
 
 ### read mode で省略できるもの
 
@@ -78,7 +76,6 @@ Cursor 公式ドキュメントは "Never use" と明記している。Harness �
 ### Topology (read mode)
 
 ```
-Lead (Claude) ──[cursor-companion.sh task "<prompt>"]──> cursor-agent (--mode ask, locked)
        │
        └──[3-5 行要約]──> User
 ```
@@ -159,13 +156,11 @@ cursor-agent の出力は Lead がレビューするまで **untrusted** とし�
 ## エラーハンドリング
 
 cursor-agent はエラー時に stdout の JSON を**出力しない** (exit 1, stderr テキストのみ)。
-wrapper (`scripts/cursor-companion.sh`) は必ず **exit code を検査**してから出力を解釈する。
 
 ## Headless 実行に必須の flag
 
 cursor-agent を headless (`-p`) で動かすには `--trust` が必須 (未指定だと「untrusted
 directory」で拒否され何も実行できない)。`--trust` は **workspace の信頼付与のみ**で、
-`--force` / `--yolo` (= Run Everything: コマンド自動実行) とは別物。`cursor-companion.sh`
 は `--trust` を常に付け、`--force` / `--yolo` は決して付けない。
 
 `--workspace <dir>` は cursor-agent への **CWD ヒント**であり、書込境界ではない。
@@ -174,7 +169,6 @@ fingerprint 比較 (`bin/harness wt fingerprint`)、(3) Lead diff review + cherr
 
 ## Sandbox 要件 (CC 外側 sandbox を有効のまま使う場合)
 
-`cursor-companion.sh` を CC sandbox 有効のまま動かすには、`~/.claude/settings.json` の
 sandbox に **2 つ**の許可が要る (実測で確定):
 
 1. **network**: `network.allowedDomains` に `*.cursor.sh` (`api2.cursor.sh` /
@@ -205,7 +199,6 @@ primary verdict (`APPROVE | REQUEST_CHANGES`) は brain のみが出す。
 
 ## Topology (非 claude backend では Worker 介在なし)
 
-backend が `cursor` (または `codex`) のとき、Lead は Worker agent (`claude-code-harness:worker`) を spawn しない。**Lead が直接 `cursor-companion.sh task --write --workspace <isolated-wt>` を呼ぶ**。Worker 層介在は backend=`claude` のときだけ。
 
 理由: 非 claude backend では `worker-report.v1` も `self_review` 配列も生成されないため、Worker を間に挟むと agent 契約 (self_review 5 件) のゲートが空回りする。Lead が直接 companion を呼んで diff レビュー → cherry-pick が正しい配線。
 

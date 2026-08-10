@@ -122,8 +122,6 @@ Harness 的集成执行技能。
 | backend | 实现承担者 | 委托命令 |
 |---------|------------|------------|
 | `claude`（默认） | Task subagent（`agents/worker.md`） | 用 Agent tool spawn worker |
-| `codex` | Codex CLI | `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "<prompt>"` |
-| `cursor` | cursor-agent（model `composer-2.5-fast`） | `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task --write --workspace <worktree> "<prompt>"` |
 
 Codex 调用的治理详情（禁止事项、verdict 映射等）
 参见 [references/codex-cli-only.md](${CLAUDE_SKILL_DIR}/references/codex-cli-only.md)。
@@ -131,7 +129,6 @@ Codex 调用的治理详情（禁止事项、verdict 映射等）
 run 开始时用 resolver 仅解析一次。不得直接读取 `HARNESS_IMPL_BACKEND` env 来决定后端:
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"
 ```
 
 precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex`） > env > project file > user file > 默认 `claude`。项目设置覆盖用户范围。
@@ -147,8 +144,6 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 后端是 **role-scoped**: 遵循已解决后端的仅是实现（worker）角色。Reviewer / Advisor 总是固定为 brain（`--host claude`）（不向 primary reviewer routing cursor/codex）。唯一例外是 **fresh-context advisory pre-review**: 不与会话状态共享生成 diff 的 session 的 cursor `review` tier 可以输出 advisory findings，primary verdict（`APPROVE | REQUEST_CHANGES`）仅由 brain 输出。
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role reviewer --field model
 ```
 
 后端为 `codex` / `cursor` 时，Lead 不会 spawn Worker agent，而是直接调用 companion（无 Worker 介入的拓扑）。跳过 self_review 门控，Lead 的 diff 审查成为唯一的质量门控。在委托前输出 cursor backend banner，在 cherry-pick 前通过两道 contract grep 门控（`test-support-claim-wording.sh` / `check-consistency.sh` / `validate-plugin.sh`）。Mode 1 的 Producer → Sub-Lead → Composer 层级、review→iterate 循环详情参见
@@ -268,7 +263,6 @@ Solo / Parallel / Breezing 从相同的 resolver result 选择实现 executor。
 resolver_backend_arg = ""
 if explicit_backend_value in ["claude", "codex", "cursor"]:
     resolver_backend_arg = "--backend {explicit_backend_value}"
-backend = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh\" {resolver_backend_arg}")
 if explicit_flag == "--cursor":
     backend = "cursor"
 if explicit_flag == "--codex":
@@ -282,10 +276,8 @@ if topology in ["solo", "parallel"] and backend in ["cursor", "codex"]:
     bash("mkdir -p .claude/worktrees && git worktree add -b {worktree_branch} {worktree_path} {BASE_REF}")
     companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
     if backend == "cursor":
-        companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"{companion_prompt}\"")
     else:
         companion_state_file = "{worktree_path}/.claude/state/codex-primary-environment.json"
-        companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"{companion_prompt}\"")
     latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
     if backend == "cursor" and git("-C", worktree_path, "status", "--porcelain") != "":
         git("-C", worktree_path, "add", "-A")
@@ -309,10 +301,8 @@ def enter_non_claude_companion_review_loop(worker_result):
     while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
         previous_commit = latest_commit
         if backend == "cursor":
-            companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
         else:
             companion_state_file = "{worker_result.worktreePath}/.claude/state/codex-primary-environment.json"
-            companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
         latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
         if backend == "cursor" and git("-C", worker_result.worktreePath, "status", "--porcelain") != "":
             git("-C", worker_result.worktreePath, "add", "-A")
@@ -358,14 +348,12 @@ WT_ID="codex-$(date +%Y%m%d-%H%M%S)-$$"
 WORKTREE_PATH=".claude/worktrees/${WT_ID}"
 git worktree add -b "codex-work/${WT_ID}" "$WORKTREE_PATH" "$BASE_REF"
 HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH" \
   "任务内容。请在此 worktree 中创建 exactly one git commit 后再完成。"
 
 # 通过 stdin（面向较大的 prompt）
 CODEX_PROMPT=$(mktemp /tmp/codex-prompt-XXXXXX.md)
 # 写出任务内容
 cat "$CODEX_PROMPT" | HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH"
 rm -f "$CODEX_PROMPT"
 
 # Lead review 后批准后取入 range
@@ -389,7 +377,6 @@ bootstrap route。Cursor 保持 `candidate` — 禁止 supported claim。
 - **Multitask / background agents**: 仅限 smoke target。不主张 Claude Agent Teams parity
 
 ```bash
-bash scripts/model-routing.sh --host cursor --role worker --format json
 bash tests/test-cursor-adapter-candidate.sh
 ```
 
@@ -528,6 +515,212 @@ CI 失败时:
 优先级（Codex exec → 内部 Reviewer agent fallback）、APPROVE / REQUEST_CHANGES 判定基准（仅 critical/major 影响 verdict）、
 verdict 映射、修正循环（`MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3`）的完整版参见
 [references/review-loop.md](${CLAUDE_SKILL_DIR}/references/review-loop.md)。
+
+## 智能模型选择（Smart Model Selection）
+
+**功能**: 根据任务复杂度自动选择最优的 AI 大模型，提高成本效益和性能表现。
+
+### 核心价值
+
+- **成本优化**: 简单任务使用快速/便宜模型，复杂任务使用强大模型
+- **性能优化**: 根据任务需求匹配合适的模型能力
+- **可靠性**: 完整的降级机制，确保系统总能找到可用模型
+- **灵活性**: 配置驱动，支持运行时策略调整
+
+### 工作原理
+
+#### 1. 复杂度评分
+
+基于以下因素计算任务复杂度分数：
+
+| 要素 | 条件 | 分数 |
+|------|------|--------|
+| 文件数 | 变更对象 4 个文件以上 | +1 |
+| 目录 | 包含 core/、guardrails/、security/ | +1 |
+| 关键字 | 包含 architecture、security、design、migration | +1 |
+| 失败历史 | agent memory 中有同任务的失败记录 | +2 |
+| 显式指定 | PM 模板中记载 `effort: high` / `effort: xhigh` | +3（自动采用） |
+
+#### 2. 模型等级映射
+
+| 复杂度分数 | 模型等级 | 主要模型 | 环境变量 |
+|------------|----------|---------|---------|
+| 0-2 | FAST (低复杂度) | FABLE | `ANTHROPIC_DEFAULT_FABLE_MODEL` |
+| 3-4 | BALANCED (中等复杂度) | HAIKU | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+| 5-6 | QUALITY (高复杂度) | SONNET | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| ≥7 | POWERFUL (超高复杂度) | OPUS | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+
+#### 3. 降级机制
+
+每个模型等级都有独立的降级链，按顺序尝试直到找到可用模型：
+
+```
+1. 主要模型 (如 env:ANTHROPIC_DEFAULT_HAIKU_MODEL)
+2. 默认模型 (env:ANTHROPIC_MODEL)
+3. 安全模型 (glm-4.7 硬编码兜底)
+```
+
+### 配置方式
+
+#### 默认配置（自动启用）
+
+系统会自动加载默认配置，无需手动设置。默认配置包含完整的四个等级配置和合理的降级链。
+
+#### 项目配置（可选）
+
+**.claude/settings.json** (优先级最高):
+```json
+{
+  "modelSelection": {
+    "enabled": true,
+    "strategy": "effortBased",
+    "fallback": {
+      "priority": ["tierModel", "defaultModel", "safeModel"],
+      "maxAttempts": 3,
+      "timeoutMs": 5000,
+      "validateApiCall": false
+    },
+    "tierMapping": {
+      "fast": {
+        "scoreRange": [0, 2],
+        "modelEnv": "ANTHROPIC_DEFAULT_FABLE_MODEL",
+        "fallbackModels": [
+          "env:ANTHROPIC_DEFAULT_FABLE_MODEL",
+          "env:ANTHROPIC_MODEL",
+          "glm-4.7"
+        ]
+      },
+      "balanced": {
+        "scoreRange": [3, 4],
+        "modelEnv": "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        "fallbackModels": [
+          "env:ANTHROPIC_DEFAULT_HAIKU_MODEL",
+          "env:ANTHROPIC_MODEL",
+          "glm-4.7"
+        ]
+      },
+      "quality": {
+        "scoreRange": [5, 6],
+        "modelEnv": "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "fallbackModels": [
+          "env:ANTHROPIC_DEFAULT_SONNET_MODEL",
+          "env:ANTHROPIC_MODEL",
+          "glm-4.7"
+        ]
+      },
+      "powerful": {
+        "scoreRange": [7, 999],
+        "modelEnv": "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "fallbackModels": [
+          "env:ANTHROPIC_DEFAULT_OPUS_MODEL",
+          "env:ANTHROPIC_MODEL",
+          "glm-4.7"
+        ]
+      }
+    }
+  }
+}
+```
+
+**harness.toml** (项目配置):
+```toml
+[model_selection]
+enable_smart_selection = true
+strategy = "effort_based"
+
+[model_selection.fallback]
+priority = ["tier_model", "default_model", "safe_model"]
+max_attempts = 3
+timeout_ms = 5000
+validate_api_call = false
+
+[model_selection.tiers.fast]
+min_score = 0
+max_score = 2
+model_env = "ANTHROPIC_DEFAULT_FABLE_MODEL"
+fallback_models = [
+  "env:ANTHROPIC_DEFAULT_FABLE_MODEL",
+  "env:ANTHROPIC_MODEL",
+  "glm-4.7"
+]
+```
+
+### 与 Effort Routing 集成
+
+智能模型选择与现有的 Effort Routing 系统无缝集成：
+
+1. **复杂度评分**: 使用现有的多要素评分机制
+2. **Effort Tier 决定**: 根据分数和 code-risk 决定 effort tier
+3. **模型选择**: 集成 SmartModelSelector 返回选择的模型
+
+**集成示例**:
+```java
+EffortRouter router = new EffortRouter();
+TaskContext context = new TaskContext(5, 2, true, false);
+WorkerSpawnConfig config = router.determineWorkerConfig(context);
+// config.getEffortTier() 返回 "xhigh"
+// config.getSelectedModel() 返回选择的模型
+```
+
+### 使用示例
+
+#### 基本使用
+
+```bash
+# 自动启用智能模型选择（默认）
+/harness-work 3
+
+# 系统会自动：
+# 1. 计算任务复杂度分数
+# 2. 根据分数选择模型等级
+# 3. 执行降级链找到可用模型
+# 4. 返回 WorkerSpawnConfig
+```
+
+#### 环境变量配置
+
+```bash
+# 设置默认模型（可选）
+export ANTHROPIC_MODEL="glm-4.7"
+
+# 设置等级特定模型
+export ANTHROPIC_DEFAULT_FABLE_MODEL="claude-fable-5-20250514"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-3.5-haiku-20241022"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-sonnet-4-20250514"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-20250514"
+```
+
+### 性能目标
+
+- **单次选择时间**: < 100ms（典型任务）
+- **并发支持**: 支持 10+ 并发线程
+- **内存占用**: < 10MB（配置和缓存）
+- **可用性**: 选择成功率 > 98%（完整降级机制）
+
+### 监控和日志
+
+智能模型选择会输出详细日志，便于调试和监控：
+
+- 模型选择日志：记录分数、等级、选择的模型
+- 降级链日志：记录降级过程和失败原因
+- 性能日志：记录选择耗时和并发统计
+
+### 故障排除
+
+**问题**: 所有模型都不可用
+- **解决**: 检查环境变量配置，确保至少有一个兜底模型（glm-4.7）
+
+**问题**: 选择的模型不符合预期
+- **解决**: 检查任务复杂度评分，确认选择的等级正确
+
+**问题**: 降级链总是失败
+- **解决**: 检查网络连接和模型可用性，调整超时设置
+
+### 相关文档
+
+- **设计文档**: `docs/superpowers/specs/2026-08-10-smart-model-selection-design.md`
+- **实施计划**: `docs/superpowers/plans/2026-08-10-smart-model-selection.md`
+- **参考文档**: `skills/harness-work/references/effort-routing.md`
 
 ## Completion Report Output Contract
 

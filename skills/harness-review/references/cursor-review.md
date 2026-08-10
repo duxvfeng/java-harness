@@ -8,7 +8,6 @@
 - **cursor 不升格为 primary reviewer**。Opus reviewer 始终并行，primary verdict 从 Opus 获取。cursor 输出作为 advisory 存储在 `dual_review.cursor_verdict` 中。
 - 理由: `harness-work` 的"实现的后端不得审查自己的输出"不变则（避免用 cursor backend 写的代码让 cursor backend 审查的配置）。
 - cursor 为 read-only delegate，因此 worktree 隔离 / Lead diff review / cherry-pick / `worker-report.v1` **不需要**。
-- default ON 判定不是直接读取 `HARNESS_IMPL_BACKEND` env，而是必定用 `bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role reviewer` 的结果进行。为不遗漏 project `env.local` / user-scope default / call-site default。
 
 ## 委托前 mandatory banner
 
@@ -29,10 +28,8 @@ if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then
   done
   [ -d "$probe/scripts" ] && HARNESS_PLUGIN_ROOT="$probe"
 fi
-bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task "<review prompt>"
 ```
 
-- **绝对不要加** `--write`（cursor-companion.sh 未指定 `--write` 时 default `--mode ask` = 硬 read-only 停止）
 - 也**不要加** `--workspace`（read mode 时 companion guard 不触发为 optional，不需要）
 - 也不要加 `--force` / `--yolo`（Cursor 官方 "Never use"）
 

@@ -1,16 +1,16 @@
 # Sync Project Specs Reference
 
-**作業完了後に「Plans.md ちゃんと更新されてるかな？」と不安な時に実行します。**
+**在作业完成后对「Plans.md 是否正确更新了？」感到不安时执行。**
 
 ## When to Use
 
 | Situation | Command to Use |
 |-----------|----------------|
-| "How far along? What's next?" | `/sync-status` (use this first) |
-| "Worked on it but forgot if I updated Plans.md" | **This command** |
-| "Started from old template, format might be outdated" | **This command** |
+| "进展如何？接下来是什么？" | `/sync-status` (先使用这个) |
+| "已经工作了但忘了是否更新了 Plans.md" | **本命令** |
+| "从旧模板开始，格式可能过时" | **本命令** |
 
-> Tip: Usually `/sync-status` is sufficient. Use this for "just in case" or "format migration".
+> Tip: 通常 `/sync-status` 就足够了。本命令用于「以防万一」或「格式迁移」。
 
 ---
 
@@ -38,15 +38,15 @@ Aligns project specs/docs (e.g., `Plans.md`, `AGENTS.md`, `.claude/rules/*`) wit
 
 ## Sync Content (Minimal Diff Policy)
 
-### 1. Marker Normalization
+### 1. 标记标准化
 
-- **Standard**: `pm:依頼中`, `pm:確認済`
-- **Compatible**: `cursor:依頼中`, `cursor:確認済` (treated as synonyms)
+- **标准**: `pm:依頼中`, `pm:確認済`
+- **兼容**: `cursor:依頼中`, `cursor:確認済` (视为同义词)
 
-### 2. State Transition Documentation
+### 2. 状态转换文档
 
 ```
-pm:依頼中 → cc:WIP → cc:完了 → pm:確認済
+pm:依頼中 → cc:WIP → cc:已完成 → pm:確認済
 ```
 
 ### 3. Handoff Routes Addition

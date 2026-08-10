@@ -24,7 +24,6 @@ cursor:setup --unset
 ## Rules
 
 - Do not change distribution defaults or plugin manifests to make Cursor the shipped fallback.
-- Use `scripts/resolve-impl-backend.sh` / `scripts/set-impl-backend.sh`; do not infer from `HARNESS_IMPL_BACKEND` alone.
 - Treat `~/.cursor/permissions.json`, `.cursorignore`, and Claude sandbox allowlists as manual/user-owned setup surfaces unless the user explicitly asks to edit a local file.
 
 ## Flow
@@ -51,7 +50,6 @@ fi
    ```bash
    bash "${HARNESS_PLUGIN_ROOT}/scripts/setup-cursor.sh" --check
    bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --show
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role worker
    CURSOR_AGENT_BIN="${CURSOR_AGENT_BIN:-}"
    if [ -z "$CURSOR_AGENT_BIN" ]; then
      if command -v cursor-agent >/dev/null 2>&1; then

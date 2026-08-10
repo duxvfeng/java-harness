@@ -37,7 +37,7 @@ Harness 的 SSOT 内存（Layer 2）与 Claude Code 的自动内存（Layer 1）
 自动内存隐式记录通用学习，SSOT 显式管理项目固有决策。
 Layer 1 的见解对项目整体重要时，请用 `/memory ssot` 提升到 Layer 2。
 
-详情: [D22: 3层内存架构](../../.claude/memory/decisions.md#d22-3層メモリアーキテクチャ)
+详情: [D22: 3层内存架构](../../.claude/memory/decisions.md#d22-3层内存架构)
 
 ## 执行步骤
 

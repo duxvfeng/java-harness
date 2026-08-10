@@ -12,27 +12,19 @@ Reviewer 和 Advisor 两个角色始终固定为 brain（`--host claude`）。
 例外仅限 **fresh-context advisory pre-review**：不与生成 diff 的会话共享对话状态的 cursor `review` 层（composer-2.5-fast、read-only）允许在 brain 主评审之前输出 advisory findings。只有 brain 才能输出 primary verdict（`APPROVE | REQUEST_CHANGES`）。
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role reviewer --field model
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role advisor --field model
 ```
 
-> 模型名称的正本在 `model-routing.sh`。`composer-2.5-fast` 是参考值，实际解析遵循上述命令（防止 drift）。
 
 ## 非 `claude` 后端的拓扑结构（不经过 Worker）
 
 当 backend 为 `codex` 或 `cursor` 时，**Lead 不会 spawn Worker agent (`claude-code-harness:worker`)**。
-而是 Lead 自身直接调用 `cursor-companion.sh` / `codex-companion.sh`。Worker 层的介入仅在 backend=`claude` 时。
 
 | backend | 路径 |
 |---------|------|
 | `claude`（默认） | Lead → Worker (`claude-code-harness:worker` agent) → … → Lead review → cherry-pick |
-| `codex` | Lead → `codex-companion.sh task --write` → Lead review → cherry-pick |
-| `cursor` | Lead → `cursor-companion.sh task --write --workspace <isolated-wt>` → Lead review → cherry-pick |
 
 非 claude 后端在中间夹 Worker 会导致 Lead → Worker → companion → composer/codex 的二段委托，使 Worker 的存在意义（通过 agent 约定的 self_review 5 个关卡）落空（非 claude 不生成 `worker-report.v1` 也不生成 `self_review`）。Lead 跳过 Worker 直接调用 companion。
 
-非 claude 后端的 companion 调用中，Lead 也先创建专用 worktree，将 companion stdout 正规化为 `companion-result.v1` 等价的 `{baseCommit, commit, worktreePath, branch, files_changed, summary}`，然后传递到现有的 Lead review / cherry-pick 路径。`REQUEST_CHANGES` 时不使用 `SendMessage`，在同一 worktree 重新执行 `cursor-companion.sh` / `codex-companion.sh`，重新评审 `baseCommit..HEAD` 并进行 range cherry-pick。
 
 ## 非 `claude` 后端的 self_review 关卡
 
@@ -68,9 +60,7 @@ cursor 的 write 委托在拥有专用 `.git` 的 worktree 内执行，Lead 将�
 ## 自然语言 backend trigger
 
 当用户说 `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 时，作为 `cursor backend` 指定处理。
-这与 `--cursor` 是相同的 intent，但 backend 的确定值必须在 `resolve-impl-backend.sh` 中解析。
 解析时作为显式 override 传递 `--backend cursor`，优先于 env / project / user file / default。
-Lead 不将 `composer` 解释为 Claude Worker 内的额外 agent，而是按照非 `claude` 后端的约定不夹 Worker agent 直接调用 `cursor-companion.sh`。
 
 ## Mode 1 — Producer → Sub-Lead → Composer 层级
 
@@ -80,7 +70,6 @@ Lead 不将 `composer` 解释为 Claude Worker 内的额外 agent，而是按照
 |----|------|------|
 | **Producer（Lead）** | 固定为 Claude Code。按 lane 委托给 Sub-Lead，并集约 `companion-result.v1` | 人类对话的 CLI = Lead |
 | **Sub-Lead** | 将 1 个 lane 分解为 mini-plan，并并行 fan-out subtask | orchestrator-spawned **headless CLI**（与 Lead 同一 CLI backend） |
-| **Composer 2.5** | 负责实现 subtask（cursor backend） | `productionCompanionWorker` → `cursor-companion.sh`；每个 lane 按 `companion-result.v1` 集约 |
 
 **仅 hub-spoke**：subWorker 之间不接受 peer results 或 channel。Sub-Lead 通过 inner `breezing.Orchestrator` fan-out，并将 lane 结果折叠为 1 个 `companion-result.v1`。
 

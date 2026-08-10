@@ -34,14 +34,12 @@ Codex 环境无法使用 native TeamAgent 时也不省略。
 
 可用的 fallback:
 
-- `codex-companion.sh review`
 - reviewer subagent
 - 明确分开的 manual-pass
 
 `team_agent_mode` 记录以下任一。
 
 - `native`
-- `codex-companion`
 - `manual-pass`
 - `unavailable`
 

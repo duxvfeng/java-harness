@@ -1,8 +1,5 @@
 ---
 name: cursor-do
-description: "Delegate a single write task to Cursor Composer via cursor-companion.sh inside an isolated worktree, then Lead-review the diff and cherry-pick. Use when user invokes cursor:do, says delegate to cursor, have composer write it, refactor with cursor, hand a file edit to Composer. Do NOT load for: planning, code review only, read-only investigation, or multi-task team runs (use breezing --cursor or cursor:ask instead)."
-description-en: "Delegate a single write task to Cursor Composer via cursor-companion.sh inside an isolated worktree, then Lead-review the diff and cherry-pick. Use when user invokes cursor:do, says delegate to cursor, have composer write it, refactor with cursor, hand a file edit to Composer. Do NOT load for: planning, code review only, read-only investigation, or multi-task team runs (use breezing --cursor or cursor:ask instead)."
-description-zh: "将单个写入任务委托给 Cursor Composer 的技能。在专用 worktree (.claude/worktrees/cursor-do-<id>) 中直接调用 `cursor-companion.sh task --write --workspace <wt>`，Lead 审查 diff 后 cherry-pick 到 main 并更新 Plans.md `cc:done [hash]`。当用户提到 cursor:do、用 cursor 实现、让 composer 写、让光标来做、用 Cursor 重构、把文件编辑交给 Composer 时使用。不适用于：计划 (harness-plan)、仅审查 (harness-review)、只读调查 (cursor:ask)、多任务并行（请改用 breezing --cursor）。"
 allowed-tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
 argument-hint: "[task-description]"
 user-invocable: true
@@ -105,13 +102,11 @@ bash -c '
 
 ## Step 3 — plugin root + backend + model resolve (1 bash)
 
-`HARNESS_PLUGIN_ROOT` / `CLAUDE_PLUGIN_ROOT` が未設定だと `:-.` fallback が consumer repo の cwd に解決し、`scripts/cursor-companion.sh` が見えず起動不能になる (Issue #193 §2)。hooks.json と同じ `valid_root` パターンで堅牢に解決する。
 
 ```bash
 bash -c '
   set -euo pipefail
   valid_root() {
-    [ -n "${1:-}" ] && [ -f "$1/scripts/cursor-companion.sh" ] && { [ -f "$1/.claude-plugin/plugin.json" ] || [ -f "$1/.codex-plugin/plugin.json" ] || [ -f "$1/.cursor-plugin/plugin.json" ]; }
   }
   HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
   ROOT="$HARNESS_PLUGIN_ROOT"
@@ -134,12 +129,9 @@ bash -c '
     done
   fi
   if ! valid_root "$ROOT"; then
-    echo "ERROR: claude-code-harness plugin root not found (no scripts/cursor-companion.sh)" >&2
     exit 2
   fi
   HARNESS_PLUGIN_ROOT="$ROOT"
-  BACKEND=$(bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --backend cursor --role worker)
-  MODEL=$(bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model)
   echo "PLUGIN_ROOT=${HARNESS_PLUGIN_ROOT}"
   echo "BACKEND=$BACKEND"
   echo "MODEL=$MODEL"
@@ -174,7 +166,6 @@ bash -c '
 
 返却された `WT_DIR` / `WT_BRANCH` / `BASE_REF` / `BASE_BRANCH` を以降の Step で使う。失敗時 (branch 名衝突等) は `ID` を作り直して 1 回だけ retry。2 回連続失敗で `ERROR: worktree creation failed` を出し終了。
 
-## Step 5 — cursor-companion.sh task --write で委譲
 
 Lead が直接 companion を呼ぶ ([references/cursor-cli-only.md](${CLAUDE_SKILL_DIR}/references/cursor-cli-only.md) Topology 節 — 非 claude backend では Worker 介在なし)。プロンプトは引数の task そのまま + 必要な追補のみ。冗長な前置きは付けない。
 
@@ -182,7 +173,6 @@ Lead が直接 companion を呼ぶ ([references/cursor-cli-only.md](${CLAUDE_SKI
 bash -c '
   set -euo pipefail
   valid_root() {
-    [ -n "${1:-}" ] && [ -f "$1/scripts/cursor-companion.sh" ] && { [ -f "$1/.claude-plugin/plugin.json" ] || [ -f "$1/.codex-plugin/plugin.json" ] || [ -f "$1/.cursor-plugin/plugin.json" ]; }
   }
   HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
   ROOT="${PLUGIN_ROOT:-$HARNESS_PLUGIN_ROOT}"
@@ -205,7 +195,6 @@ bash -c '
     done
   fi
   if ! valid_root "$ROOT"; then
-    echo "ERROR: claude-code-harness plugin root not found (no scripts/cursor-companion.sh)" >&2
     exit 2
   fi
   HARNESS_PLUGIN_ROOT="$ROOT"
@@ -217,7 +206,6 @@ Constraints:
 - Match existing code style and naming.
 - Create exactly one git commit if your environment supports it; otherwise leave one dirty changeset for Lead auto-commit.
 - Do not touch .claude-plugin/settings*, .claude/settings*, .eslintrc*, biome.json, tsconfig*.json."
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task \
     --write \
     --workspace "${WT_DIR}" \
     "${PROMPT}"
