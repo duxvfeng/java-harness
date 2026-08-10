@@ -29,7 +29,45 @@ effort: medium
 - **手动管理** - 提供完整的命令接口进行手动操作
 - **存储优化** - GZIP压缩、自动清理、健康检查
 
-## 命令接口
+## 🎯 当前可用功能（脚本版本）
+
+以下功能可以立即使用，无需等待完整实现：
+
+### 保存当前会话
+```bash
+# 在项目根目录执行
+bash scripts/session/save-session.sh "完成重要任务"
+
+# 示例输出：
+# ✅ 会话已保存: .claude/state/session-saves/session-20260810-141851.json
+# 📋 摘要: 完成重要任务
+# ⏰ 时间: 2026-08-10 14:18:51
+```
+
+### 查看保存的会话列表
+```bash
+# 查看最近5个会话
+bash scripts/session/list-sessions.sh 5
+
+# 示例输出：
+# 📋 最近的会话 (最新 5 个):
+# 📁 session-20260810-141851
+#    ⏰ 20260810-141851
+#    📝 完成重要任务
+```
+
+### 查看特定会话详情
+```bash
+# 查看会话详细信息
+cat .claude/state/session-saves/session-20260810-141851.json
+
+# 或格式化显示
+cat .claude/state/session-saves/session-20260810-141851.json | grep -E '(session_id|timestamp|summary|saved_at)'
+```
+
+## 📋 完整命令接口（规划中）
+
+以下命令为规划中的完整接口，当前通过脚本提供基础功能：
 
 ### /harness-save-session
 保存当前会话状态到本地存储。
