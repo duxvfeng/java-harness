@@ -318,56 +318,46 @@ for task in execution_order:
             bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true  # fail-open
 
         elif e2e_result["status"] == "FAIL":
-            # 🔥 失败时自动修复循环
+            # 🔥 检测失败，直接回到 harness-work 继续修改
             logger.info(f"端到端检测未通过: {e2e_result.get('critical_issues', []).length} 个关键问题")
+            logger.info(f"将任务交回 harness-work 继续修改，保留当前工作树状态")
 
-            auto_fix_result = run_auto_fix_loop(
-                detection_result=e2e_result,
-                worktree_path=worker_result.worktreePath,
-                worker_id=worker_id,
-                max_iterations=3
-            )
+            # 📋 保存端到端检测结果到工作树状态文件
+            e2e_detection_state = {
+                "status": "FAIL",
+                "detection_id": e2e_result.get("detection_id"),
+                "critical_issues": e2e_result.get("critical_issues", []),
+                "fix_suggestions": e2e_result.get("fix_suggestions", []),
+                "timestamp": e2e_result.get("timestamp"),
+                "worker_result": {
+                    "commit": worker_result.commit,
+                    "worktreePath": worker_result.worktreePath,
+                    "branch": worker_result.branch
+                }
+            }
 
-            if auto_fix_result["success"]:
-                logger.info(f"自动修复成功: {auto_fix_result.get('iterations', 0)} 次迭代")
+            # 保存状态供后续使用
+            state_file = os.path.join(worker_result.worktreePath, ".claude", "state", "e2e-detection", "failure.json")
+            os.makedirs(os.path.dirname(state_file), exist_ok=True)
+            with open(state_file, 'w') as f:
+                json.dump(e2e_detection_state, f, indent=2)
 
-                # 重新调用 harness-review --auto 进行审查
-                verdict_result = call_harness_review_auto(
-                    base_ref=BASE_REF,
-                    worktree_path=worker_result.worktreePath,
-                    mode="strict"
-                )
+            # 🔥 关键改进：直接回到 harness-work 继续修改
+            # 不在这里实现修复循环，而是将控制权交还给 harness-work
+            # harness-work 会处理：
+            # 1. 告知 Worker 问题
+            # 2. Worker 进行修改
+            # 3. 重新进入审查+检测流程
 
-                if verdict_result["success"]:
-                    verdict = verdict_result["result"]["verdict"]
+            # 设置任务状态为需要修改
+            Plans.md: task.status = "cc:WIP [端到端检测失败]"
+            Plans.md: task.context = f"端到端检测失败: {len(e2e_result.get('critical_issues', []))}个关键问题需修复"
 
-                    if verdict == "APPROVE":
-                        # 重新审查通过，重新端到端检测
-                        e2e_result = run_e2e_detection(
-                            worktree_path=worker_result.worktreePath,
-                            base_ref=BASE_REF,
-                            task_context={"task": task, "worker_result": worker_result, "contract_path": contract_path}
-                        )
+            # 保留工作树不删除，Worker 可以继续使用
+            # 不执行 cherry-pick，不删除分支
+            # 下一次 harness-work 执行时，会继续这个任务
 
-                        if e2e_result["status"] == "PASS":
-                            # 检测通过，继续正常流程
-                            cherry-pick latest_commit onto trunk
-                            remove the worker's worktree; delete the feature branch
-                            Plans.md: task.status = "cc:完了 [{hash}]"
-                            bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true
-                        else:
-                            # 重新检测仍然失败，升级到用户
-                            escalate_e2e_failure(e2e_result, auto_fix_result)
-                    else:
-                        # 重新审查未通过，升级到用户
-                        escalate_review_failure(verdict_result)
-                else:
-                    # 重新审查调用失败，升级到用户
-                    escalate_review_failure(verdict_result)
-            else:
-                # 自动修复失败，升级到用户
-                logger.error(f"自动修复失败: {auto_fix_result.get('reason', 'Unknown reason')}")
-                escalate_e2e_failure(e2e_result, auto_fix_result)
+            escalate_to_worker(e2e_result, worker_result)
 
         elif e2e_result["status"] == "SKIPPED":
             # 检测被跳过，继续正常流程（配置禁用或其他原因）
@@ -396,7 +386,328 @@ for task in execution_order:
 
 ---
 
-## 端到端检测集成函数 (Task 12.4 - 自动触发机制)
+## 端到端检测配置加载 (Task 12.4+)
+
+### 配置文件优先级
+
+端到端检测系统支持多层级配置，优先级从高到低：
+
+1. **harness.toml** - 项目级配置（推荐）
+2. **.claude/config/e2e-detection.config.json** - 用户配置
+3. **config/e2e-detection.default.config.json** - 默认配置
+4. **内置默认值** - 系统内置配置
+
+### 配置加载函数
+
+```python
+def load_e2e_config(project_root: str) -> dict:
+    """
+    加载端到端检测配置
+
+    Args:
+        project_root: 项目根目录
+
+    Returns:
+        合并后的配置字典
+    """
+    import toml
+    import json
+    import os
+
+    # 1. 从 harness.toml 加载（最高优先级）
+    config = get_default_e2e_config()
+
+    harness_toml = os.path.join(project_root, "harness.toml")
+    if os.path.exists(harness_toml):
+        try:
+            with open(harness_toml, 'r', encoding='utf-8') as f:
+                toml_config = toml.load(f)
+
+            if "e2e_detection" in toml_config:
+                # 合并 harness.toml 中的配置
+                config = merge_config(config, toml_config["e2e_detection"])
+                logger.info("从 harness.toml 加载端到端检测配置")
+        except Exception as e:
+            logger.warning(f"加载 harness.toml 失败: {e}")
+
+    # 2. 从 JSON 配置加载
+    json_config = os.path.join(project_root, ".claude", "config", "e2e-detection.config.json")
+    if os.path.exists(json_config):
+        try:
+            with open(json_config, 'r', encoding='utf-8') as f:
+                json_config_data = json.load(f)
+
+            # JSON 配置覆盖 harness.toml
+            config = merge_config(config, json_config_data)
+            logger.info("从 JSON 配置加载端到端检测配置")
+        except Exception as e:
+            logger.warning(f"加载 JSON 配置失败: {e}")
+
+    # 3. 应用环境变量覆盖
+    config = apply_env_overrides(config)
+
+    return config
+
+def merge_config(base_config: dict, override_config: dict) -> dict:
+    """
+    深度合并配置
+
+    Args:
+        base_config: 基础配置
+        override_config: 覆盖配置
+
+    Returns:
+        合并后的配置
+    """
+    import copy
+
+    result = copy.deepcopy(base_config)
+
+    for key, value in override_config.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = merge_config(result[key], value)
+        else:
+            result[key] = copy.deepcopy(value)
+
+    return result
+
+def get_default_e2e_config() -> dict:
+    """
+    获取默认端到端检测配置
+
+    Returns:
+        默认配置字典
+    """
+    return {
+        "enabled": True,
+        "mode": "strict",
+        "timeout": 120,
+        "retry_on_failure": True,
+        "max_retries": 3,
+
+        "auto_fix": {
+            "enabled": True,
+            "max_iterations": 3,
+            "fix_timeout": 60,
+            "commit_on_fix": True,
+            "types": {
+                "dependency_update": True,
+                "gitignore_add": True,
+                "code_fix": False,
+                "test_generation": False
+            }
+        },
+
+        "test_types": {
+            "frontend": {
+                "enabled": True,
+                "framework": "auto",
+                "playwright_config": {
+                    "timeout": 30000,
+                    "headless": True,
+                    "browsers": ["chromium", "firefox", "webkit"],
+                    "retries": 1
+                }
+            },
+            "backend": {
+                "enabled": True,
+                "framework": "auto"
+            },
+            "integration": {
+                "enabled": True,
+                "test_scenarios": ["user_login", "data_flow", "error_handling"]
+            },
+            "performance": {
+                "enabled": False,
+                "response_time_max": 2000
+            },
+            "security": {
+                "enabled": True,
+                "scan_vulnerabilities": True,
+                "check_dependencies": True
+            }
+        },
+
+        "thresholds": {
+            "response_time": {
+                "warning": 1500,
+                "critical": 2000
+            },
+            "memory_usage": {
+                "warning": 0.7,
+                "critical": 0.8
+            }
+        },
+
+        "triggers": {
+            "auto_trigger_on_review_pass": True,
+            "require_clean_workspace": True,
+            "branch_patterns": {
+                "include": ["feature/*", "bugfix/*", "hotfix/*"],
+                "exclude": ["draft/*", "wip/*"]
+            }
+        }
+    }
+
+def apply_env_overrides(config: dict) -> dict:
+    """
+    应用环境变量覆盖
+
+    Args:
+        config: 当前配置
+
+    Returns:
+        应用环境变量后的配置
+    """
+    import os
+
+    env_mappings = {
+        "HARNESS_E2E_ENABLED": ("enabled", bool),
+        "HARNESS_E2E_MODE": ("mode", str),
+        "HARNESS_E2E_TIMEOUT": ("timeout", int),
+        "HARNESS_E2E_MAX_RETRIES": ("max_retries", int),
+        "HARNESS_E2E_AUTO_FIX": ("auto_fix.enabled", bool),
+        "HARNESS_E2E_FRONTEND": ("test_types.frontend.enabled", bool),
+        "HARNESS_E2E_BACKEND": ("test_types.backend.enabled", bool),
+        "HARNESS_E2E_INTEGRATION": ("test_types.integration.enabled", bool),
+        "HARNESS_E2E_PERFORMANCE": ("test_types.performance.enabled", bool),
+        "HARNESS_E2E_SECURITY": ("test_types.security.enabled", bool)
+    }
+
+    for env_var, (config_path, value_type) in env_mappings.items():
+        env_value = os.environ.get(env_var)
+        if env_value is not None:
+            # 设置嵌套配置值
+            keys = config_path.split('.')
+            current = config
+
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+            # 类型转换
+            try:
+                if value_type == bool:
+                    current[keys[-1]] = env_value.lower() in ('true', '1', 'yes', 'on')
+                else:
+                    current[keys[-1]] = value_type(env_value)
+            except (ValueError, TypeError):
+                logger.warning(f"环境变量 {env_var} 值无效: {env_value}")
+
+    return config
+```
+
+---
+
+## 端到端检测集成说明 (Task 12.4+ 优化版本)
+
+### 🎯 优化后的流程架构
+
+```
+审查通过 → 端到端检测 → 结果处理
+                         ├─ PASS → cherry-pick → 完成
+                         ├─ FAIL → 交回 harness-work 继续修改
+                         ├─ SKIPPED → 继续（配置禁用）
+                         └─ ERROR → 升级到用户
+```
+
+### 🔄 harness-work 自动修复循环
+
+当端到端检测失败时，任务会自动回到 harness-work 继续修改：
+
+1. **第一次检测失败** → 交回 harness-work，任务保持 WIP 状态
+2. **Worker 修复** → Worker 根据问题报告进行修改
+3. **重新审查** → 修改完成后重新进入审查流程
+4. **重新检测** → 审查通过后再次端到端检测
+5. **循环** → 直到检测通过或达到最大重试次数
+
+### 📋 任务状态管理
+
+端到端检测过程中的任务状态：
+
+- `cc:WIP [端到端检测失败]` - 检测失败，等待修复
+- `cc:WIP` - Worker 正在修复问题
+- `cc:WIP [重新检测]` - 准备重新端到端检测
+- `cc:完了 [hash]` - 检测通过，任务完成
+
+### 🛠️ 自动修复机制
+
+虽然主要修复由 Worker 完成，但系统仍提供自动修复支持：
+
+- **依赖更新** - 自动更新 npm packages
+- **敏感文件保护** - 自动添加到 .gitignore
+- **配置修复** - 修复简单的配置问题
+
+### 🎨 配置管理优化
+
+#### 使用 harness.toml（推荐）
+
+```toml
+# harness.toml
+[e2e_detection]
+enabled = true
+mode = "strict"
+timeout = 120
+
+[e2e_detection.test_types.frontend]
+enabled = true
+framework = "playwright"
+
+[e2e_detection.test_types.frontend.playwright]
+timeout = 30000
+browsers = ["chromium", "firefox", "webkit"]
+```
+
+#### 使用 JSON 配置（兼容）
+
+```json
+// .claude/config/e2e-detection.config.json
+{
+  "enabled": true,
+  "mode": "strict",
+  "test_types": {
+    "frontend": {
+      "enabled": true,
+      "framework": "playwright"
+    }
+  }
+}
+```
+
+#### 使用环境变量（临时）
+
+```bash
+export HARNESS_E2E_ENABLED=true
+export HARNESS_E2E_MODE=strict
+export HARNESS_E2E_FRONTEND=true
+```
+
+### 🚀 关键优势
+
+**架构简洁性**：
+- ✅ 端到端检测专注于检测，不负责修复
+- ✅ harness-work 作为主要协调者处理修复循环
+- ✅ Worker 专注代码修改，保持单一职责
+
+**流程清晰性**：
+- ✅ 检测失败 → 明确回到 harness-work
+- ✅ 修复后重新进入完整流程（审查+检测）
+- ✅ 避免复杂的嵌套循环和状态管理
+
+**配置灵活性**：
+- ✅ 支持 harness.toml、JSON、环境变量
+- ✅ 多层级配置合并
+- ✅ 项目级和用户级配置分离
+
+**错误处理**：
+- ✅ 明确的失败升级路径
+- ✅ 详细的问题报告和修复建议
+- ✅ 保留工作树状态供继续使用
+
+---
+
+## 端到端检测集成函数 (Task 12.4 - 优化版本)
 
 以下函数用于端到端检测的自动触发和修复循环：
 
@@ -628,6 +939,71 @@ def escalate_review_failure(verdict_result: dict):
     raise Exception(f"代码审查失败: {verdict_result.get('error', 'Unknown error')}, ")
 ```
 
+### `escalate_to_worker()`
+
+```python
+def escalate_to_worker(e2e_result: dict, worker_result: dict):
+    """
+    升级端到端检测失败到 Worker 继续修改
+
+    Args:
+        e2e_result: 端到端检测结果
+        worker_result: Worker 结果
+    """
+    logger.error(f"🔥 端到端检测失败，任务交回 Worker 继续修改")
+    logger.error(f"📋 检测ID: {e2e_result.get('detection_id')}")
+    logger.error(f"❌ 关键问题数: {len(e2e_result.get('critical_issues', []))}")
+
+    # 如果有 worker_id，发送消息告知问题
+    if worker_id:
+        failure_message = f"""
+🔥 端到端检测失败，请修复以下问题：
+
+检测ID: {e2e_result.get('detection_id')}
+关键问题: {len(e2e_result.get('critical_issues', []))} 个
+
+问题详情:
+"""
+
+        for i, issue in enumerate(e2e_result.get('critical_issues', [])[:5], 1):
+            failure_message += f"{i}. [{issue.get('test_type', 'unknown')}] {issue.get('description', 'Unknown error')}\n"
+            failure_message += f"   文件: {issue.get('file', 'unknown')}\n"
+            if issue.get('suggestion'):
+                failure_message += f"   建议: {issue.get('suggestion')}\n"
+            failure_message += "\n"
+
+        if len(e2e_result.get('critical_issues', [])) > 5:
+            failure_message += f"... 还有 {len(e2e_result.get('critical_issues', [])) - 5} 个问题\n"
+
+        failure_message += f"""
+请在工作树中修复这些问题后，提交修改：
+  git add -A
+  git commit -m "fix: 修复端到端检测问题"
+
+修复后任务将重新进入审查+检测流程。
+工作树路径: {worker_result.worktreePath}
+"""
+
+        SendMessage(to=worker_id, message=failure_message)
+
+    # 保存失败状态到任务上下文
+    task_context = {
+        "e2e_detection_failure": {
+            "detection_id": e2e_result.get("detection_id"),
+            "status": "FAILED",
+            "critical_issues": e2e_result.get("critical_issues", []),
+            "worker_result": {
+                "commit": worker_result.get("commit"),
+                "worktreePath": worker_result.get("worktreePath"),
+                "branch": worker_result.get("branch")
+            }
+        }
+    }
+
+    # 抛出异常，让上层处理
+    raise Exception(f"端到端检测失败: {len(e2e_result.get('critical_issues', []))} 个关键问题需要修复")
+```
+
 ### `escalate_e2e_error()`
 
 ```python
@@ -641,7 +1017,7 @@ def escalate_e2e_error(e2e_result: dict):
     logger.error(f"端到端检测出错，需要用户介入:")
     logger.error(f"错误信息: {e2e_result.get('error', 'Unknown error')}")
 
-    raise Exception(f"端到端检测出错: {e2e_result.get('error', 'Unknown error')}, 需")
+    raise Exception(f"端到端检测出错: {e2e_result.get('error', 'Unknown error')}, 需要用户检查配置和环境")
 ```
 
 ---
