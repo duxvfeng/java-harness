@@ -20,48 +20,48 @@ effort: low
 
 ## Quick Reference
 
-| サブコマンド | 対象 | 典型トリガー |
+| 子命令 | 对象 | 典型触发器 |
 |------------|------|-------------|
-| `maintenance plans` | Plans.md 完了タスクのアーカイブ移動 | 「Plans.md 整理」「古いタスクを移動」 |
-| `maintenance session-log` | session-log.md の月別分割 | 「session-log 分割」「ログが長い」 |
-| `maintenance logs` | `.claude/logs/` の古いファイル削除 | 「ログ掃除」「30日以上前のログ消して」 |
-| `maintenance state` | `agent-trace.jsonl` / `harness-usage.json` のトリム | 「trace 肥大」「state 圧縮」 |
-| `maintenance all` | 上記4つを順に実行 | 「全部整理」「総掃除」 |
+| `maintenance plans` | Plans.md 已完成任务归档移动 | 「Plans.md 整理」「移动旧任务」 |
+| `maintenance session-log` | session-log.md 按月分割 | 「session-log 分割」「日志过长」 |
+| `maintenance logs` | `.claude/logs/` 旧文件删除 | 「日志清理」「删除30天前的日志」 |
+| `maintenance state` | `agent-trace.jsonl` / `harness-usage.json` 压缩 | 「trace 肥大」「state 压缩」 |
+| `maintenance all` | 按顺序执行以上4个操作 | 「全部整理」「大扫除」 |
 
-`--dry-run` を付けると何をするかだけ列挙して実行しない。自由記述の指示（例:
-「古いアーカイブも消して」「この session-log だけ残して」）は Step 1 で
-受け付けて Step 2 以降の処理パラメータに反映する。
+`--dry-run` 仅列出要执行的操作而不实际执行。自由格式的指示（例:
+「删除旧归档」「只保留这个 session-log」）在 Step 1 中
+接收并反映到 Step 2 之后的处理参数中。
 
-## 実行手順
+## 执行步骤
 
-1. **ユーザー指示のパース**: サブコマンド + 自由記述（除外対象、保存先、日数閾値）を抽出
-2. **SSOT 同期チェック**: `.claude/state/.ssot-synced-this-session` が無ければ
-   `/memory sync` を促す（Plans.md を触る場合のみ必須）
-3. **参照ファイルを開く**: `${CLAUDE_SKILL_DIR}/references/cleanup.md` を読み対応セクションを実行
-4. **Before/After を報告**: 行数と削除件数を表示して完了
+1. **解析用户指示**: 子命令 + 自由格式（排除对象、保存目标、天数阈值）
+2. **SSOT 同步检查**: 如果不存在 `.claude/state/.ssot-synced-this-session`
+   则提示执行 `/memory sync`（仅在操作 Plans.md 时必需）
+3. **打开参考文件**: 读取 `${CLAUDE_SKILL_DIR}/references/cleanup.md` 并执行对应章节
+4. **报告 Before/After**: 显示行数和删除数量并完成
 
-## サブコマンド詳細
+## 子命令详情
 
-対象ごとの実行手順・閾値・アーカイブ先は [cleanup.md](./references/cleanup.md) を参照。
+各对象的执行步骤・阈值・归档目标详见 [cleanup.md](./references/cleanup.md)。
 
-## auto-cleanup-hook との連携
+## 与 auto-cleanup-hook 的联动
 
-PostToolUse hook (`scripts/auto-cleanup-hook.sh` / Go 版 `auto_cleanup_hook.go`) は
-Plans.md・session-log.md・CLAUDE.md の行数超過を検知すると
-`/maintenance で古いタスクをアーカイブすることを推奨します` と feedback を返す。
-この警告を見たら該当サブコマンドを実行する。
+PostToolUse hook (`scripts/auto-cleanup-hook.sh` / Go 版 `auto_cleanup_hook.go`)
+在检测到 Plans.md・session-log.md・CLAUDE.md 的行数超限时
+会返回 `/maintenance 推荐归档旧任务` 的反馈。
+看到此警告时请执行相应的子命令。
 
-## 注意事項
+## 注意事项
 
-- **進行中タスクは動かさない**: `cc:WIP`, `pm:依頼中`, `cursor:依頼中` はアーカイブ対象外
-- **アーカイブ先ディレクトリは固定**: `.claude/memory/archive/` — 別の場所に移すときは
-  ユーザーに確認する
-- **バックアップ**: 200 行超のファイルを編集する前に `cp <file> <file>.bak.$(date +%s)` で
-  ローカルバックアップを取る
-- **CLAUDE.md は警告のみ**: 自動編集しない。分割提案だけ出す
+- **不移动进行中的任务**: `cc:WIP`, `pm:依頼中`, `cursor:依頼中` 不在归档范围内
+- **归档目标目录固定**: `.claude/memory/archive/` — 移动到其他位置时
+  需要向用户确认
+- **备份**: 编辑超过200行的文件前使用 `cp <file> <file>.bak.$(date +%s)` 创建
+  本地备份
+- **CLAUDE.md 仅警告**: 不自动编辑。仅提供分割建议
 
-## 関連スキル
+## 相关技能
 
-- `memory` — Plans.md 整理前の SSOT 昇格（decisions.md / patterns.md 更新）
-- `harness-setup` — セットアップ直後の定期メンテは `harness-setup` 経由でも呼べる
-- `session-init` — セッション開始時のメンテ推奨通知を制御
+- `memory` — Plans.md 整理前的 SSOT 晋升（decisions.md / patterns.md 更新）
+- `harness-setup` — 设置刚完成后的定期维护也可通过 `harness-setup` 调用
+- `session-init` — 控制会话开始时的维护推荐通知

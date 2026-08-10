@@ -1,6 +1,6 @@
 ---
 name: migrate-workflow-files
-description: "既存プロジェクトのAGENTS.md/CLAUDE.md/Plans.mdを、既存内容を精査して対話で引き継ぎ項目を確定しつつ、新フォーマットへ移行（バックアップ付き・Plansはタスク保持マージ）。"
+description: "在尊重现有项目 AGENTS.md/CLAUDE.md/Plans.md 的内容的同时，通过对话确定继承项目并迁移到新格式（附带备份・Plans 采用保持任务合并）。"
 allowed-tools: ["Read", "Write", "Edit", "Bash"]
 ---
 
@@ -8,45 +8,45 @@ allowed-tools: ["Read", "Write", "Edit", "Bash"]
 
 ## 目的
 
-既存プロジェクトで運用中の以下を、**既存内容を尊重しつつ新フォーマットへアップデート**します。
+对现有项目中运行的以下文件，**在尊重现有内容的同时更新到新格式**。
 
 - `AGENTS.md`
 - `CLAUDE.md`
 - `Plans.md`
 
-ポイント:
+重点:
 
-- **対話形式で引き継ぎ情報を確定**（勝手に捨てない / 勝手に上書きしない）
-- 変更前に **必ずバックアップ** を残す
-- `Plans.md` は `merge-plans` の方針で **タスクを保持しつつ構造を更新**
+- **通过对话形式确定继承信息**（不随意删除 / 不随意覆盖）
+- 更改前**必须保留备份**
+- `Plans.md` 按照 `merge-plans` 的方针**保持任务的同时更新结构**
 
 ---
 
 ## 前提（重要）
 
-このスキルは「初回適用時の安全」と「意図した動作（新フォーマット）」の両立のため、
-**ユーザー合意→バックアップ→生成→差分確認**の順で進めます。
+本技能为了同时实现「首次应用时的安全」和「预期动作（新格式）」，
+按照**用户同意→备份→生成→差异确认**的顺序进行。
 
 ---
 
-## 入力（このスキル内で自動検出してOK）
+## 输入（本技能内可自动检测）
 
-- `project_name`: `basename $(pwd)` で推定
+- `project_name`: 用 `basename $(pwd)` 推测
 - `date`: `YYYY-MM-DD`
-- 既存ファイルの有無:
+- 现有文件有无:
   - `AGENTS.md`
   - `CLAUDE.md`
   - `Plans.md`
-- 新フォーマットの参照テンプレ:
+- 新格式参考模板:
   - `templates/AGENTS.md.template`
   - `templates/CLAUDE.md.template`
   - `templates/Plans.md.template`
 
 ---
 
-## 実行フロー
+## 执行流程
 
-### Step 0: 検出と合意取り（必須）
+### Step 0: 检测和同意取得（必需）
 
 1. `Read` で既存 `AGENTS.md` / `CLAUDE.md` / `Plans.md` の存在を確認。
 2. 存在する場合はユーザーへ確認:

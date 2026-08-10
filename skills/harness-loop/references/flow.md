@@ -263,13 +263,11 @@ WORKER_PATH="${worker_result.worktreePath:-}"
 
 if [ -n "${WORKER_PATH}" ] && [ "${WORKER_PATH}" != "${MAIN_REPO_ROOT}" ]; then
     # 在 Worker 的 worktree 内执行 review → 看 Worker feature branch 的实际差分
-    ( cd "${WORKER_PATH}" && bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}" )
     REVIEW_EXIT=$?
     # review-output.json 在 Worker worktree dir 创建，因此以绝对路径管理
     REVIEW_OUTPUT_PATH="${WORKER_PATH}/review-output.json"
 else
     # fallback: 在 Lead dir 执行（worktree isolation 不生效的环境）
-    bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${BASE_REF}"
     REVIEW_EXIT=$?
     REVIEW_OUTPUT_PATH="$(pwd)/review-output.json"
 fi

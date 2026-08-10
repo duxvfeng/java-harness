@@ -12,7 +12,6 @@ user-invocable: true
 
 向 cursor-agent (Composer) **只读**委托提问・调查・设计咨询・对抗性审查的轻量技能。
 
-`cursor-companion.sh task` 无参数时自动附加 **`--mode ask` (hard read-only stop)**，因此不传递 `--write` 的情况下 cursor 侧 **无法文件写入・命令执行**。从而 worktree 隔离・cherry-pick・Lead diff review 全部不需要。
 
 ## Quick Reference
 
@@ -51,7 +50,6 @@ banner 1 行 + 计划 1-2 行。1 秒内输出，立即进入 Step 2。
 
 ### 禁止 (= 冗长)
 
-- **同一事实的两次重述**: 不在后段重新说明 cursor-companion 结果
 - **无内容前言**: 仅"确认使用方法"的行等 tool call 自明声明
 - **3 行以上的经纬回顾**: 必要时压缩为 1 行
 - **启动序列中的 ★ Insight 块**: Insight 仅在最终摘要出现一次
@@ -85,11 +83,8 @@ Step 0 已输出 banner + 计划 (3 行以内)，因此这里确认 banner 行�
 
 之后可以委托开始的 1 行状态等显示进度。仅避免冗长重复。
 
-`composer-2.5-fast` 是 `scripts/model-routing.sh --host cursor --role worker --field model` 解析值的代表表记。实际解析的 model 在 cursor-companion 侧日志输出。
 
-### Step 2: helper root 解析 + cursor-companion 直接执行
 
-`$ARGUMENTS` 作为提问文传递。**绝不附加 `--write`**。`scripts/cursor-companion.sh` 用相对路径调用时，在 consumer repo 的 cwd 直下不可见而 exit，因此用与 hooks.json 相同的 `valid_root` 模式解析 `CLAUDE_PLUGIN_ROOT` / `HARNESS_PLUGIN_ROOT` (Issue #193 §2):
 
 ```bash
 QUESTION="$ARGUMENTS"
@@ -101,7 +96,6 @@ fi
 bash -c '
   set -euo pipefail
   valid_root() {
-    [ -n "${1:-}" ] && [ -f "$1/scripts/cursor-companion.sh" ] && { [ -f "$1/.claude-plugin/plugin.json" ] || [ -f "$1/.codex-plugin/plugin.json" ] || [ -f "$1/.cursor-plugin/plugin.json" ]; }
   }
   HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
   ROOT="$HARNESS_PLUGIN_ROOT"
@@ -124,11 +118,9 @@ bash -c '
     done
   fi
   if ! valid_root "$ROOT"; then
-    echo "ERROR: claude-code-harness plugin root not found (no scripts/cursor-companion.sh)" >&2
     exit 2
   fi
   HARNESS_PLUGIN_ROOT="$ROOT"
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task "$1"
 ' _ "$QUESTION"
 ```
 
@@ -182,7 +174,6 @@ cursor 是不透明子进程，Harness 的护栏 (R01-R13) 不适用于内部。
 ## Topology
 
 ```
-Lead (Claude/Codex) ──[cursor-companion.sh task]──> cursor-agent (--mode ask, locked read-only)
        │
        └──[Step 3: 3-5 行要約]──> User
 ```

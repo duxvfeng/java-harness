@@ -8,7 +8,6 @@
 - `go test ./... -v` 执行中的进度监控
 - 通过 `gh run watch` 追踪 GitHub Actions 进度
 - `npm run build --watch` / `vite build --watch` 的构建错误即时检测
-- 通过 `codex-companion.sh status <job-id>` 检测 Codex job 完成
 - `docker-compose logs -f` / `kubectl logs -f` 的部署日志追踪
 
 **使用区分的判断基准**:

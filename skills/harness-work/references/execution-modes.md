@@ -39,7 +39,6 @@ Use only when `--codex` is explicit. Delegate implementation to the Codex
 companion entrypoint:
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "task"
 ```
 
 Validate the result locally. Codex output is not accepted until the normal

@@ -6,7 +6,6 @@
 
 禁止直接调用 raw `codex exec`。只能通过以下 2 种方式调用 Codex:
 
-1. **`scripts/codex-companion.sh`** — 从 Harness 技能/代理中调用
 2. **`/codex:*` 命令** — 用户交互中的临时使用
 
 ## 禁止事项
@@ -34,42 +33,32 @@ settings.json 的 `deny` 规则阻止旧 MCP 工具（已预设）:
 
 ```bash
 # 可写的任务委托
-bash scripts/codex-companion.sh task --write "修复 bug"
 
 # stdin 方式（用于大型提示）
-cat "$PROMPT_FILE" | bash scripts/codex-companion.sh task --write
 
 # 恢复上一次的线程
-bash scripts/codex-companion.sh task --resume-last --write "继续完成"
 ```
 
 ### 评审
 
 ```bash
 # 工作树的评审
-bash scripts/codex-companion.sh review
 
 # 从特定 base ref 的评审
-bash scripts/codex-companion.sh review --base "${TASK_BASE_REF}"
 
 # 对抗性评审（挑战设计判断）
-bash scripts/codex-companion.sh adversarial-review
 ```
 
 ### 设置·作业管理
 
 ```bash
 # 确认 Codex 可用性
-bash scripts/codex-companion.sh setup --json
 
 # 确认运行中的作业
-bash scripts/codex-companion.sh status
 
 # 获取作业结果
-bash scripts/codex-companion.sh result <job-id>
 
 # 取消作业
-bash scripts/codex-companion.sh cancel <job-id>
 ```
 
 ### /codex:* 指令（用户交互）

@@ -91,7 +91,6 @@ JSON では最低限こう残す。
   "schema_version": "harness-review-closeout.v1",
   "target": "working_tree | branch_range | commit",
   "base_ref": "HEAD",
-  "review_command": "bash scripts/codex-companion.sh review --base HEAD --json",
   "tests": [],
   "accepted_findings": [],
   "rejected_findings": [],

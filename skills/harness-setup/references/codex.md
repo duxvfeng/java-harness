@@ -116,7 +116,6 @@ Codex `0.123.0` 以降の `remote_sandbox_config` と `codex exec` shared flags 
 - host matching 是便利的分类，但不是强的 device authentication。在高风险环境中避免 broad wildcard。
 - Harness 的分发用 `codex/.codex/config.toml` 不写入 organization-specific 的 `remote_sandbox_config`。
 - Codex `0.123.0` 以后 `codex exec` 继承 root-level shared flags，因此 wrapper 侧不添加重复的 `--approval-policy` / `--sandbox` pairs。
-- `scripts/codex-companion.sh task --write` 附带 `--sandbox workspace-write` 是将 Harness 的"写入任务"意图转换为 exec-local，不是 root shared flags 的重复转发。
 - `scripts/codex/codex-exec-wrapper.sh` 的 `--full-auto` 在 53.2.4 中维持。如果要更改，在另外的 task 中添加 approval / sandbox behavior 的回归测试。
 
 requirements example:
@@ -131,8 +130,6 @@ allowed_sandbox_modes = ["read-only", "workspace-write"]
 
 **使用模式**（通过官方插件）:
 ```bash
-bash scripts/codex-companion.sh task --write "任务内容"
 # 或者通过 stdin
-cat /tmp/prompt.md | bash scripts/codex-companion.sh task --write
 ```
 

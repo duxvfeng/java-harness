@@ -22,12 +22,9 @@ cursor:review "Phase 88.5 command namespace diff"
 ## Rules
 
 - Cursor review is advisory. The final verdict must come from the host reviewer.
-- Do not pass `--write` to `cursor-companion.sh`.
 - Use resolver/model routing, not direct env checks:
 
   ```bash
-  bash scripts/resolve-impl-backend.sh --backend cursor --role reviewer
-  bash scripts/model-routing.sh --host cursor --role worker --field model
   ```
 
 - Prefer the existing `harness-review` contract when a full review is requested. This command exists for users who explicitly ask for the Cursor lane.
@@ -95,7 +92,6 @@ Diff:
 ${DIFF_TEXT}
 EOF
 )"
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task "${PROMPT}"
    ```
 
 4. Host reads Cursor's output and performs the primary review:

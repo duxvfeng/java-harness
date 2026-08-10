@@ -8,7 +8,6 @@
 
 ## 前提条件
 
-- Codex CLI 已安装（`scripts/codex-companion.sh setup --json` 确认）
 - Codex 不可用时，回退到 Claude 单独审查
 - `--cursor` 并用时 cursor-agent 已安装 (`setup-cursor.sh --check`)。不可用时 `cursor_verdict: unavailable` 降级
 
@@ -17,16 +16,13 @@
 1. 确认 Codex 可用性
 
    ```bash
-   CODEX_AVAILABLE="$(bash scripts/codex-companion.sh setup --json 2>/dev/null | jq -r '.ready // false')"
    ```
 
 2. 用 Task 工具启动 Claude Reviewer（通常 review 流程）
 
-3. 如果 Codex 可用，并行启动 `scripts/codex-companion.sh review`
 
    ```bash
    # 如果传递了 BASE_REF，指定 --base。--json 获取结构化输出
-   bash scripts/codex-companion.sh review --base "${BASE_REF:-HEAD~1}" --json
    ```
 
 4. 等待双方结果
@@ -52,7 +48,6 @@ TeamAgent Debate 作为故意让不同见解冲突的 read-only review pass 处�
 
 在 Claude Code 中使用 Task tool。
 在 Codex 环境中可能无法使用 native TeamAgent，因此
-用 Codex reviewer subagent、`codex-companion.sh review`、或明确分离的 manual-pass 再现相同观点，
 记录在 `team_agent_mode` 中。
 
 ## 合格线
@@ -100,7 +95,6 @@ TeamAgent Debate 作为故意让不同见解冲突的 read-only review pass 处�
   },
   "team_debate": {
     "required": true,
-    "mode": "native | codex-companion | manual-pass | unavailable",
     "agents": ["Spec Agent", "Plans Agent", "Regression Agent"],
     "disagreements": []
   },

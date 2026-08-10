@@ -31,7 +31,6 @@ operator 无需单独指示 `/harness-plan` 或 `/harness-review`（operator 裁
 2. **Work**: 现有的 Phase 0 → A → B（含 per-task review）。
 3. **Integrated Review Gate（Phase D，默认 ON）**: Phase B 完成后，**在 Phase C 最终化（完成报告・run 完成声明）之前**，对 run 全体的 diff 执行 `harness-review`。
    - review target: 通常 run 为 `{base_ref}..HEAD`。`--no-commit` run 的 commit range 可能为空，因此**以 working tree（未 commit 变更 + untracked 文件）为对象**
-   - fresh-context 的独立 reviewer subagent（与实现 Worker 不共享会话状态）与 `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" review --base "${base_ref}"` 的 second opinion 并行
    - 任一为 REQUEST_CHANGES 相当 → 修正 → 再审查。**重复直到 APPROVE**（最多 3 次）。未收敛时将影响 task 的 marker 恢复为 `cc:WIP`，通过 human escalation 停止并报告 findings 和修正情况
    - primary verdict（`APPROVE | REQUEST_CHANGES`）由 brain（claude host）发出。维持 role-scoped 约束
 4. **Finalize + Report（Phase C）**: 获得 gate 的 APPROVE 后确定 Plans.md 更新・commit・完成报告。不得在未通过 gate 时将 run 报告为「完成」。最终报告按 easy 作法输出（host session 有 `easy` skill 时 invoke 并遵循其作法，无则按 `harness-work` 的 Completion Report 模板）。
@@ -67,10 +66,8 @@ Lead 按 run 单位，从作业内容・量扁平选择 backend。选择时使�
 | 作业性质 | 推荐 backend | 理由 |
 |---|---|---|
 | 通常的实现・修正・测试（既定） | `claude` (native) | Worker 契约（`worker-report.v1` / self_review 5 件）全部有效 |
-| 大规模高独立性批量实现、回避 Claude 侧 rate limit | `codex` | 可向 deep tier 的 xhigh 委托（model 由 `model-routing.sh` 解析） |
 | UI 大量生成、lean 高速委托 | `cursor` | lean path（worktree 隔离 + Lead diff review） |
 
-模型 ID 不写在 skill 中。`bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host <backend> --role worker` 是正本。
 
 ### 可以输出进度报告 (易读范围内)
 
@@ -131,17 +128,12 @@ Lead 按 run 单位，从作业内容・量扁平选择 backend。选择时使�
 ## Natural Language Backend Triggers
 
 `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 正式作为 `cursor backend` 的 trigger 处理。
-这是相当于 `--cursor` 的 intent，Lead 通过 `resolve-impl-backend.sh` 确定 backend。
 解析时作为明确 override 传递 `--backend cursor`，优先于 env / project / user file / default。
 
 | 输入例 | 解释 | 执行路径 |
 |---|---|---|
-| `composer 2.5 で` | `cursor backend` | Lead → `cursor-companion.sh task --write --workspace <wt>` |
-| `コンポーザーで全部` | `cursor backend` | Lead → `cursor-companion.sh task --write --workspace <wt>` |
-| `composer モード` | `cursor backend` | Lead → `cursor-companion.sh task --write --workspace <wt>` |
 
 `composer` は Claude Worker の内側に spawn する追加 agent ではない。
-非 `claude` backend のトポロジーに従い、Lead が Worker agent を挟まずに `cursor-companion.sh` を直接呼ぶ。
 
 > **CC 2.1.111 note**:
 > Opus 4.7 では literal に `/effort xhigh` が使える。
@@ -153,7 +145,6 @@ Lead 按 run 单位，从作业内容・量扁平选择 backend。选择时使�
 > このスクリプトは `env.local` に `export ENABLE_PROMPT_CACHING_1H=1` を追記する (冪等)。
 > 5 分 TTL の既定キャッシュでは breezing の 1 時間超セッションで cache miss が累積し
 > input token コストが最大 12 倍になりうるため、長時間 team 実行では明示的に opt-in する。
-> Codex CLI 子プロセス (`scripts/codex-companion.sh task --write` 等) は通常 env 継承で
 > `ENABLE_PROMPT_CACHING_1H` を読むが、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` が有効な場合は
 > 明示的に export を維持する shell wrapper が必要。詳細は
 > [`docs/long-running-harness.md`](../../docs/long-running-harness.md) を参照。
@@ -216,12 +207,10 @@ Go orchestrator 経路（`harness work --team`）では、Breezing の Lead/Work
 
 ```bash
 # タスク委託（書き込み可能）
-bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "タスク内容"
 
 # stdin 経由（大きなプロンプト向け）
 CODEX_PROMPT=$(mktemp /tmp/codex-prompt-XXXXXX.md)
 # タスク内容を書き出し
-cat "$CODEX_PROMPT" | bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write
 rm -f "$CODEX_PROMPT"
 ```
 
@@ -229,7 +218,6 @@ rm -f "$CODEX_PROMPT"
 
 backend 判定は **必ず resolver 経由**。`HARNESS_IMPL_BACKEND` env を直接読んで backend を決めてはならない。
 env / `--cursor` per-run flag / project `env.local` / user file を
-`bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"` で precedence 解決し、その出力を backend として使う
 （env unset でも project / user file から拾える）。永続 default を変えたい場合は
 `bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" <claude|codex|cursor> [--user]` で project / user file に書き込み、
 run 開始時に resolver が解決する（現行の operator 既定はユーザースコープで `claude`）。review / advisor ロールは brain に固定したまま。
@@ -240,8 +228,6 @@ run 開始時に resolver が解決する（現行の operator 既定はユー�
 
 ### Cursor Backend Fast Path (`--cursor` / lean mode)
 
-`bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"` の出力が `cursor` のときに有効
-（`--cursor` は resolver への明示 override として precedence 最上位）。Worker 層を介在させず Lead が直接 `cursor-companion.sh` を呼ぶ（Phase 85 SSOT、`.claude/rules/cursor-cli-only.md` Topology 節）。
 
 cursor backend は Worker agent spawn / self_review 5 件ゲート / sprint-contract 3 段チェーン / Phase 0 interactive / effort スコアリングを省略し、baseline `15-35s` → target `3-7s` で 1 タスク目の委譲を開始する。節約内訳の全表は
 [references/lean-path-detail.md](${CLAUDE_SKILL_DIR}/references/lean-path-detail.md) を参照。
@@ -250,8 +236,6 @@ cursor backend は Worker agent spawn / self_review 5 件ゲート / sprint-cont
 
 1. **banner + 実行計画** (`🚀 cursor / <model> / <branch> / <task>` + これから進める 2-4 step、合計 5 行以内、1 秒以内)
 2. **1 bash で並列 pre-check**: `git branch --show-current` + `cat VERSION` + `Plans.md tail` + `cursor-agent --version`
-3. **1 bash で resolve**: `bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"` + `bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model`
-4. **即 委譲**: `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task --write --workspace <wt> "<task>"`
    - 委譲開始時に `bin/harness session declare --task <task-id>` で共有 presence に作業宣言（他セッションから task 番号で逆引き可能になる）
 5. cursor 出力を Lead が diff レビュー → cherry-pick → Plans.md `cc:done [hash]` 更新
    - 更新後 `bin/harness session declare --clear` で presence の task 宣言を解除
@@ -261,8 +245,6 @@ cursor backend は Worker agent spawn / self_review 5 件ゲート / sprint-cont
 Worker 実装は既完了（別系統 = claude / Codex で済んだ）、advisory pre-review を Composer に出してもらう lean path。read-only 委譲なので **worktree 不要・cherry-pick 不要・cursor 出力の取り込みレビュー不要**（cursor は新たな diff を生まないため）。ただし対象 diff への **brain 一次レビュー（primary verdict）は省略しない**:
 
 1. banner + 計画: `🚀 cursor / composer-2.5-fast / review` + 「これから: composer に advisory findings を委譲 → brain 一次レビューで verdict 確定」
-2. `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task "diff レビュー: <base_ref>..HEAD"` — **`--write` も `--workspace` も付けない**
-   - companion は `--write` 未指定で default `--mode ask` (hard read-only stop) になる (cursor-companion.sh の workspace guard は `--write` 時のみ発火)
    - cursor 側はファイル書込・コマンド実行が disabled、worktree 隔離不要
 3. cursor 出力 (REQUEST_CHANGES / APPROVE 相当) を Lead が解釈し、`dual_review.cursor_verdict` に advisory として格納
 4. **primary verdict は brain reviewer から取る**。cursor 単独では APPROVE を確定しない (spec.md Execution Backend Contract の self-review scope 契約 = 「diff を生成した同一コンテキストは自分の出力をレビューしない」と整合)。この lean path 自体が fresh-context advisory pre-review であり、委譲先 cursor session は実装 worker と会話状態を共有しないこと

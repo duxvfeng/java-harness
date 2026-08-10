@@ -153,13 +153,11 @@ mode 判定時、明示 mode words (`plan`, `scope`, `full`) と明示フラグ�
 
 ```bash
 HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"; if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then probe="$(cd "${CLAUDE_SKILL_DIR}" && pwd)"; while [ "$probe" != "/" ] && [ ! -d "$probe/scripts" ]; do probe="$(cd "$probe/.." && pwd)"; done; [ -d "$probe/scripts" ] && HARNESS_PLUGIN_ROOT="$probe"; fi
-if [ -x "${HARNESS_PLUGIN_ROOT:-}/scripts/resolve-impl-backend.sh" ]; then resolved_backend="$(bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh" --role reviewer)"; else resolved_backend="claude"; fi
 ```
 
 no-arg / `code` review 结果为 `cursor` 时，添加与 `--cursor` 相同的 `cursor-second-opinion`，但必须先读取 core review gates (`references/code-review.md`, `references/governance.md`)，Cursor reference 仅作 additive 处理。primary verdict 在 brain 侧维持，cursor 限于 `dual_review.cursor_verdict` 的 advisory。`plan` / `scope` 等显式 mode word 优先于 resolver result，cursor default 不会替换 plan/scope references 或 code/governance references。结果为 `claude` / `codex` 时照常，review 的 primary 判定面不变。
 
 ## Pre-Review Cursor (`--pre-review cursor`)
-`/harness-review --pre-review cursor` 通过 `bash scripts/pre-review-cursor.sh [--base ref]` 执行一次 read-only fresh-context composer pre-review（`model-routing.sh --host cursor --tier review` → `cursor-companion.sh task`，无 `--write` / `--workspace` / `--resume`），将 `PRE_REVIEW_FINDINGS:` 附加到 brain 一次审查输入。companion 失败为 `PRE_REVIEW_SKIPPED` + exit 0（fail-open）。**verdict 仅 brain**（self-review scope 契约）。
 
 ## Review Target Detection
 
@@ -263,7 +261,6 @@ TeamAgent Debate は、異なる見解を read-only で衝突させる review pa
 | Skeptic Agent | 寻找以合格为前提而漏掉的 major risk |
 
 即使在 Codex 环境下无法使用 native TeamAgent，也不得省略此 gate。
-通过 `codex-companion.sh review`、可用的 reviewer subagent 或显式分开的 read-only manual-pass 再现同样的 2-4 视角，记录 `team_agent_mode` 为 `native` / `codex-companion` / `manual-pass` / `unavailable`。
 
 ## Code Review Summary
 
@@ -381,8 +378,6 @@ Details:
   },
   "team_debate": {
     "required": false,
-    "mode": "native | codex-companion | manual-pass | unavailable",
-    "team_agent_mode": "native | codex-companion | manual-pass | unavailable",
     "agents": [],
     "disagreements": []
   },
@@ -400,7 +395,6 @@ Codex 环境下可用工具不同，但合格线、规格正本、`Plans.md`、�
 
 | 通常环境 | Codex fallback |
 |---|---|
-| Task tool 的 TeamAgent Debate | reviewer subagent / `codex-companion.sh review` / manual-pass |
 | AskUserQuestion | 不可用时将 `decision_needed.v1` 输出到 stdout，不靠推测推进 |
 | TaskList | 直接读 `Plans.md` |
 ## Related Skills

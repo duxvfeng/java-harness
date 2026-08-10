@@ -122,8 +122,6 @@ Harness 的集成执行技能。
 | backend | 实现承担者 | 委托命令 |
 |---------|------------|------------|
 | `claude`（默认） | Task subagent（`agents/worker.md`） | 用 Agent tool spawn worker |
-| `codex` | Codex CLI | `bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write "<prompt>"` |
-| `cursor` | cursor-agent（model `composer-2.5-fast`） | `bash "${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh" task --write --workspace <worktree> "<prompt>"` |
 
 Codex 调用的治理详情（禁止事项、verdict 映射等）
 参见 [references/codex-cli-only.md](${CLAUDE_SKILL_DIR}/references/codex-cli-only.md)。
@@ -131,7 +129,6 @@ Codex 调用的治理详情（禁止事项、verdict 映射等）
 run 开始时用 resolver 仅解析一次。不得直接读取 `HARNESS_IMPL_BACKEND` env 来决定后端:
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh"
 ```
 
 precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex`） > env > project file > user file > 默认 `claude`。项目设置覆盖用户范围。
@@ -147,8 +144,6 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 后端是 **role-scoped**: 遵循已解决后端的仅是实现（worker）角色。Reviewer / Advisor 总是固定为 brain（`--host claude`）（不向 primary reviewer routing cursor/codex）。唯一例外是 **fresh-context advisory pre-review**: 不与会话状态共享生成 diff 的 session 的 cursor `review` tier 可以输出 advisory findings，primary verdict（`APPROVE | REQUEST_CHANGES`）仅由 brain 输出。
 
 ```bash
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host cursor --role worker --field model
-bash "${HARNESS_PLUGIN_ROOT}/scripts/model-routing.sh" --host claude --role reviewer --field model
 ```
 
 后端为 `codex` / `cursor` 时，Lead 不会 spawn Worker agent，而是直接调用 companion（无 Worker 介入的拓扑）。跳过 self_review 门控，Lead 的 diff 审查成为唯一的质量门控。在委托前输出 cursor backend banner，在 cherry-pick 前通过两道 contract grep 门控（`test-support-claim-wording.sh` / `check-consistency.sh` / `validate-plugin.sh`）。Mode 1 的 Producer → Sub-Lead → Composer 层级、review→iterate 循环详情参见
@@ -268,7 +263,6 @@ Solo / Parallel / Breezing 从相同的 resolver result 选择实现 executor。
 resolver_backend_arg = ""
 if explicit_backend_value in ["claude", "codex", "cursor"]:
     resolver_backend_arg = "--backend {explicit_backend_value}"
-backend = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/resolve-impl-backend.sh\" {resolver_backend_arg}")
 if explicit_flag == "--cursor":
     backend = "cursor"
 if explicit_flag == "--codex":
@@ -282,10 +276,8 @@ if topology in ["solo", "parallel"] and backend in ["cursor", "codex"]:
     bash("mkdir -p .claude/worktrees && git worktree add -b {worktree_branch} {worktree_path} {BASE_REF}")
     companion_prompt = "{task prompt}\n\nAfter making changes, create exactly one git commit in this worktree before returning."
     if backend == "cursor":
-        companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worktree_path} \"{companion_prompt}\"")
     else:
         companion_state_file = "{worktree_path}/.claude/state/codex-primary-environment.json"
-        companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worktree_path} \"{companion_prompt}\"")
     latest_commit = git("-C", worktree_path, "rev-parse", "HEAD")
     if backend == "cursor" and git("-C", worktree_path, "status", "--porcelain") != "":
         git("-C", worktree_path, "add", "-A")
@@ -309,10 +301,8 @@ def enter_non_claude_companion_review_loop(worker_result):
     while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
         previous_commit = latest_commit
         if backend == "cursor":
-            companion_output = bash("bash \"${HARNESS_PLUGIN_ROOT}/scripts/cursor-companion.sh\" task --write --workspace {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
         else:
             companion_state_file = "{worker_result.worktreePath}/.claude/state/codex-primary-environment.json"
-            companion_output = bash("HARNESS_CODEX_PRIMARY_ENV_STATE_FILE={companion_state_file} bash \"${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh\" task --write -C {worker_result.worktreePath} \"Review findings:\n{issues}\n\nFix the findings and commit the result.\"")
         latest_commit = git("-C", worker_result.worktreePath, "rev-parse", "HEAD")
         if backend == "cursor" and git("-C", worker_result.worktreePath, "status", "--porcelain") != "":
             git("-C", worker_result.worktreePath, "add", "-A")
@@ -358,14 +348,12 @@ WT_ID="codex-$(date +%Y%m%d-%H%M%S)-$$"
 WORKTREE_PATH=".claude/worktrees/${WT_ID}"
 git worktree add -b "codex-work/${WT_ID}" "$WORKTREE_PATH" "$BASE_REF"
 HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH" \
   "任务内容。请在此 worktree 中创建 exactly one git commit 后再完成。"
 
 # 通过 stdin（面向较大的 prompt）
 CODEX_PROMPT=$(mktemp /tmp/codex-prompt-XXXXXX.md)
 # 写出任务内容
 cat "$CODEX_PROMPT" | HARNESS_CODEX_PRIMARY_ENV_STATE_FILE="$WORKTREE_PATH/.claude/state/codex-primary-environment.json" \
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/codex-companion.sh" task --write -C "$WORKTREE_PATH"
 rm -f "$CODEX_PROMPT"
 
 # Lead review 后批准后取入 range
@@ -389,7 +377,6 @@ bootstrap route。Cursor 保持 `candidate` — 禁止 supported claim。
 - **Multitask / background agents**: 仅限 smoke target。不主张 Claude Agent Teams parity
 
 ```bash
-bash scripts/model-routing.sh --host cursor --role worker --format json
 bash tests/test-cursor-adapter-candidate.sh
 ```
 

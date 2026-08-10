@@ -1,213 +1,213 @@
 # Cleanup Reference
 
-`/maintenance` 各サブコマンドの実行手順・閾値・アーカイブ先の詳細。
+`/maintenance` 各子命令的执行步骤・阈值・归档目标详情。
 
-## 共通: 環境変数（auto-cleanup-hook と同一 SSOT）
+## 共通: 环境变量（与 auto-cleanup-hook 相同的 SSOT）
 
-| 変数 | デフォルト | 参照元 |
+| 变量 | 默认值 | 来源 |
 |------|---------|-------|
 | `PLANS_MAX_LINES` | 200 | `scripts/auto-cleanup-hook.sh` |
 | `SESSION_LOG_MAX_LINES` | 500 | 同上 |
 | `CLAUDE_MD_MAX_LINES` | 100 | 同上 |
-| `ARCHIVE_AFTER_DAYS` | 7 | Plans.md 完了タスクの年齢閾値 |
-| `LOGS_RETAIN_DAYS` | 30 | `.claude/logs/` の保持日数 |
+| `ARCHIVE_AFTER_DAYS` | 7 | Plans.md 已完成任务的天数阈值 |
+| `LOGS_RETAIN_DAYS` | 30 | `.claude/logs/` 的保留天数 |
 
-ユーザーが自由記述で別の閾値を指定したらそちらを優先。
+用户在自由格式中指定了其他阈值时优先使用该值。
 
 ---
 
-## plans — Plans.md アーカイブ
+## plans — Plans.md 归档
 
 ### 前提
 
-1. `.claude/state/.ssot-synced-this-session` フラグ未存在 → `/memory sync` を促す
-2. `cc:WIP`, `pm:依頼中`, `cursor:依頼中` タグの行は**絶対に動かさない**
+1. `.claude/state/.ssot-synced-this-session` 标志不存在 → 提示执行 `/memory sync`
+2. `cc:WIP`, `pm:依頼中`, `cursor:依頼中` 标记的行**绝对不能移动**
 
-### 手順
+### 步骤
 
 ```bash
 PLANS="Plans.md"
 cp "$PLANS" "$PLANS.bak.$(date +%s)"
 
-# 1. 現状を計測
+# 1. 测量现状
 wc -l "$PLANS"
 grep -c '\[x\].*pm:確認済\|cursor:確認済' "$PLANS" || true
 
-# 2. 7日以上前に完了した行を抽出（Edit ツールで個別に）
-#    対象: `- [x] ... (YYYY-MM-DD) ... pm:確認済|cursor:確認済`
-#    例外: cc:WIP / pm:依頼中 / cursor:依頼中 を含む行は除外
+# 2. 提取7天以上前完成的行（使用 Edit 工具逐个提取）
+#    对象: `- [x] ... (YYYY-MM-DD) ... pm:確認済|cursor:確認済`
+#    例外: 包含 cc:WIP / pm:依頼中 / cursor:依頼中 的行除外
 
-# 3. 抽出した行を「## 📦 アーカイブ」セクションへ append
-#    アーカイブセクションが無ければ末尾に新設
+# 3. 将提取的行 append 到「## 📦 归档」章节
+#    如果没有归档章节则在末尾新建
 ```
 
-### アーカイブセクションの書式
+### 归档章节格式
 
 ```markdown
-## 📦 アーカイブ
+## 📦 归档
 
-### YYYY-MM (月ごとにグルーピング)
+### YYYY-MM (按月分组)
 
-- [x] 旧タスク A (2026-04-05) pm:確認済
-- [x] 旧タスク B (2026-04-07) cursor:確認済
+- [x] 旧任务 A (2026-04-05) pm:確認済
+- [x] 旧任务 B (2026-04-07) cursor:確認済
 ```
 
-### 検知しない場合の出力
+### 无需处理时的输出
 
 ```
-✅ Plans.md: 180行（上限 200）。完了タスク 6件、うち7日以上前 0件。整理不要。
+✅ Plans.md: 180行（上限 200）。完成任务 6件，其中7天以上前 0件。无需整理。
 ```
 
-### 実行後の報告例
+### 执行后的报告示例
 
 ```
-✅ Plans.md 整理完了
+✅ Plans.md 整理完成
 - 行数: 250 → 178 (-72)
-- アーカイブ移動: 9件 (2026-03 グループ)
-- バックアップ: Plans.md.bak.1712900000
+- 归档移动: 9件 (2026-03 分组)
+- 备份: Plans.md.bak.1712900000
 ```
 
 ---
 
-## session-log — session-log.md 月別分割
+## session-log — session-log.md 按月分割
 
-対象は `.claude/memory/session-log.md`。500行超で分割推奨。
+对象是 `.claude/memory/session-log.md`。超过500行时推荐分割。
 
-### 手順
+### 步骤
 
 ```bash
 LOG=".claude/memory/session-log.md"
 ARCHIVE_DIR=".claude/memory/archive/sessions"
 mkdir -p "$ARCHIVE_DIR"
 
-# 1. エントリは `## YYYY-MM-DD` ヘッダーで区切られている前提
-# 2. 直近30日分を残し、それより古いものを月別に分割
-#    出力: .claude/memory/archive/sessions/YYYY-MM.md (append)
-# 3. 元ファイルからは移動分を削除
+# 1. 前提是条目用 `## YYYY-MM-DD` 标题分隔
+# 2. 保留最近30天的内容，将更早的内容按月分割
+#    输出: .claude/memory/archive/sessions/YYYY-MM.md (append)
+# 3. 从原文件中删除已移动的内容
 ```
 
-### 分割ファイルの書式
+### 分割文件格式
 
-各 `archive/sessions/YYYY-MM.md` の先頭に以下を記載:
+在每个 `archive/sessions/YYYY-MM.md` 的开头写入以下内容：
 
 ```markdown
 # Session Log — YYYY-MM
 
-元ファイル: `.claude/memory/session-log.md` から N 日以降に移動。
-移動日: YYYY-MM-DD
+原文件: `.claude/memory/session-log.md` 移动N天以后的内容。
+移动日: YYYY-MM-DD
 ```
 
-### 実行後の報告例
+### 执行后的报告示例
 
 ```
-✅ session-log.md 分割完了
+✅ session-log.md 分割完成
 - 行数: 620 → 180
-- 分割先: archive/sessions/2026-03.md (+230行), 2026-02.md (+210行)
+- 分割目标: archive/sessions/2026-03.md (+230行), 2026-02.md (+210行)
 ```
 
 ---
 
-## logs — `.claude/logs/` の古いファイル削除
+## logs — `.claude/logs/` 旧文件删除
 
-### 手順
+### 步骤
 
 ```bash
 LOGS_DIR=".claude/logs"
 [ -d "$LOGS_DIR" ] || exit 0
 
-# dry-run で対象を列挙
+# 用 dry-run 列出对象
 find "$LOGS_DIR" -type f -mtime +${LOGS_RETAIN_DAYS:-30} -print
 
-# 実行
+# 执行
 find "$LOGS_DIR" -type f -mtime +${LOGS_RETAIN_DAYS:-30} -delete
 ```
 
-### 報告例
+### 报告示例
 
 ```
-✅ logs/ クリーンアップ完了
-- 削除: 12 ファイル (30日以上前)
-- 残存: 34 ファイル
+✅ logs/ 清理完成
+- 删除: 12 文件 (30天以上前)
+- 残存: 34 文件
 ```
 
 ---
 
-## state — agent-trace / harness-usage のトリム
+## state — agent-trace / harness-usage 压缩
 
-`.claude/state/agent-trace.jsonl` と `.claude/state/harness-usage.json` は
-append-only / growing JSON で放置すると数十MBになりうる。
+`.claude/state/agent-trace.jsonl` 和 `.claude/state/harness-usage.json`
+是 append-only / growing JSON，放置的话可能达到数十MB。
 
-### agent-trace.jsonl のトリム
+### agent-trace.jsonl 压缩
 
 ```bash
 TRACE=".claude/state/agent-trace.jsonl"
 [ -f "$TRACE" ] || exit 0
 
-# 末尾1000行だけ残す
+# 只保留最后1000行
 tail -1000 "$TRACE" > "$TRACE.tmp" && mv "$TRACE.tmp" "$TRACE"
 ```
 
-### harness-usage.json の圧縮
+### harness-usage.json 压缩
 
 ```bash
 USAGE=".claude/state/harness-usage.json"
 [ -f "$USAGE" ] || exit 0
 
-# 60日以上前のエントリを削除（構造依存なので jq で条件を適切に書く）
-# 実装前に現物構造を Read で確認してから処理する
+# 删除60天以上前的条目（结构依存，用 jq 适当写条件）
+# 实现前先用 Read 确认实际结构再处理
 ```
 
-### 報告例
+### 报告示例
 
 ```
-✅ state トリム完了
+✅ state 压缩完成
 - agent-trace.jsonl: 8421行 → 1000行
-- harness-usage.json: 2026-02 以前のエントリを削除
+- harness-usage.json: 删除2026-02以前的条目
 ```
 
 ---
 
-## all — 全部実行
+## all — 全部执行
 
-plans → session-log → logs → state の順で実行。途中でエラーが出たら停止してユーザーに報告。
+按 plans → session-log → logs → state 顺序执行。途中出现错误时停止并向用户报告。
 
-### 実行フロー
+### 执行流程
 
-1. SSOT 同期チェック（plans が対象に含まれる時のみ）
-2. 各サブコマンドを順次実行
-3. 最後に Before/After を一覧表示
+1. SSOT 同步检查（仅在 plans 包含在对象中时）
+2. 顺序执行各子命令
+3. 最后显示 Before/After 一览
 
-### 報告例
+### 报告示例
 
 ```
-✅ 総メンテナンス完了
+✅ 总维护完成
 
-| 対象 | Before | After | 変化 |
+| 对象 | Before | After | 变化 |
 |------|--------|-------|------|
-| Plans.md | 250行 | 178行 | -72 (アーカイブ 9件) |
-| session-log.md | 620行 | 180行 | -440 (2ファイル分割) |
-| logs/ | 46 files | 34 files | -12 (30日超) |
+| Plans.md | 250行 | 178行 | -72 (归档 9件) |
+| session-log.md | 620行 | 180行 | -440 (2文件分割) |
+| logs/ | 46 files | 34 files | -12 (超过30天) |
 | agent-trace.jsonl | 8421行 | 1000行 | -7421 |
 
-バックアップ: Plans.md.bak.1712900000
+备份: Plans.md.bak.1712900000
 ```
 
 ---
 
-## よくある追加指示の処理例
+## 常见追加指示处理示例
 
-| 指示 | 処理 |
+| 指示 | 处理 |
 |------|------|
-| 「古いアーカイブも消して」 | `.claude/memory/archive/` 内の N 日超過を追加削除 |
-| 「dry-run で」 | すべての削除・移動を `echo` に差し替え、何を消すかだけ列挙 |
-| 「このファイルは残して」 | 対象リストから該当ファイルを除外して実行 |
-| 「閾値を 300 行に上げて」 | `PLANS_MAX_LINES=300 ` 等の環境変数を一時的に上書き |
+| 「旧归档也删除」 | 额外删除 `.claude/memory/archive/` 内超过N天的内容 |
+| 「用 dry-run」 | 将所有删除・移动替换为 `echo`，仅列出要删除的内容 |
+| 「保留这个文件」 | 从对象列表中排除该文件后执行 |
+| 「将阈值提高到300行」 | 临时覆盖 `PLANS_MAX_LINES=300` 等环境变量 |
 
 ---
 
-## 禁止事項
+## 禁止事项
 
-- ❌ `.claude/memory/decisions.md` / `patterns.md` の自動編集（SSOT 直接改変は禁止）
-- ❌ `CHANGELOG.md` の圧縮・アーカイブ（歴史は削除しない）
-- ❌ `.git/` 配下の操作
-- ❌ バックアップ無しでの行削除（200行超ファイルは必ずバックアップを取る）
+- ❌ `.claude/memory/decisions.md` / `patterns.md` 自动编辑（禁止直接改写 SSOT）
+- ❌ `CHANGELOG.md` 压缩・归档（不删除历史）
+- ❌ `.git/` 下的操作
+- ❌ 无备份的行删除（超过200行的文件必须备份）
