@@ -303,10 +303,85 @@ for task in execution_order:
         review_count++
 
     if verdict == "APPROVE":
-        cherry-pick latest_commit onto trunk (如果已是祖先则跳过 — 重入保护)
-        remove the worker's worktree; delete the feature branch
-        Plans.md: task.status = "cc:完了 [{hash}]"
-        bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true  # fail-open
+        # 🔥 端到端检测环节 (Task 12.4 - 自动触发机制集成)
+        e2e_result = run_e2e_detection(
+            worktree_path=worker_result.worktreePath,
+            base_ref=BASE_REF,
+            task_context={"task": task, "worker_result": worker_result, "contract_path": contract_path}
+        )
+
+        if e2e_result["status"] == "PASS":
+            # 检测通过，继续正常流程
+            cherry-pick latest_commit onto trunk (如果已是祖先则跳过 — 重入保护)
+            remove the worker's worktree; delete the feature branch
+            Plans.md: task.status = "cc:完了 [{hash}]"
+            bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true  # fail-open
+
+        elif e2e_result["status"] == "FAIL":
+            # 🔥 失败时自动修复循环
+            logger.info(f"端到端检测未通过: {e2e_result.get('critical_issues', []).length} 个关键问题")
+
+            auto_fix_result = run_auto_fix_loop(
+                detection_result=e2e_result,
+                worktree_path=worker_result.worktreePath,
+                worker_id=worker_id,
+                max_iterations=3
+            )
+
+            if auto_fix_result["success"]:
+                logger.info(f"自动修复成功: {auto_fix_result.get('iterations', 0)} 次迭代")
+
+                # 重新调用 harness-review --auto 进行审查
+                verdict_result = call_harness_review_auto(
+                    base_ref=BASE_REF,
+                    worktree_path=worker_result.worktreePath,
+                    mode="strict"
+                )
+
+                if verdict_result["success"]:
+                    verdict = verdict_result["result"]["verdict"]
+
+                    if verdict == "APPROVE":
+                        # 重新审查通过，重新端到端检测
+                        e2e_result = run_e2e_detection(
+                            worktree_path=worker_result.worktreePath,
+                            base_ref=BASE_REF,
+                            task_context={"task": task, "worker_result": worker_result, "contract_path": contract_path}
+                        )
+
+                        if e2e_result["status"] == "PASS":
+                            # 检测通过，继续正常流程
+                            cherry-pick latest_commit onto trunk
+                            remove the worker's worktree; delete the feature branch
+                            Plans.md: task.status = "cc:完了 [{hash}]"
+                            bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true
+                        else:
+                            # 重新检测仍然失败，升级到用户
+                            escalate_e2e_failure(e2e_result, auto_fix_result)
+                    else:
+                        # 重新审查未通过，升级到用户
+                        escalate_review_failure(verdict_result)
+                else:
+                    # 重新审查调用失败，升级到用户
+                    escalate_review_failure(verdict_result)
+            else:
+                # 自动修复失败，升级到用户
+                logger.error(f"自动修复失败: {auto_fix_result.get('reason', 'Unknown reason')}")
+                escalate_e2e_failure(e2e_result, auto_fix_result)
+
+        elif e2e_result["status"] == "SKIPPED":
+            # 检测被跳过，继续正常流程（配置禁用或其他原因）
+            logger.info(f"端到端检测被跳过: {e2e_result.get('reason', 'Unknown reason')}")
+            cherry-pick latest_commit onto trunk (如果已是祖先则跳过 — 重入保护)
+            remove the worker's worktree; delete the feature branch
+            Plans.md: task.status = "cc:完了 [{hash}]"
+            bash "${HARNESS_PLUGIN_ROOT}/scripts/auto-checkpoint.sh" "${task.number}" "${HASH}" "${contract_path}" "${REVIEW_RESULT_PATH}" || true  # fail-open
+
+        else:
+            # 检测出错，保守处理
+            logger.error(f"端到端检测出错: {e2e_result.get('error', 'Unknown error')}")
+            # 根据配置决定是否继续，默认升级到用户
+            escalate_e2e_error(e2e_result)
     else:
         escalate to the user
 
@@ -318,3 +393,303 @@ for task in execution_order:
 1. Aggregate the commit log for all tasks.
 2. Render the rich completion report (Breezing template in [completion-report.md](completion-report.md)).
 3. Confirm every task in `Plans.md` reached `cc:完了`.
+
+---
+
+## 端到端检测集成函数 (Task 12.4 - 自动触发机制)
+
+以下函数用于端到端检测的自动触发和修复循环：
+
+### `run_e2e_detection()`
+
+```python
+def run_e2e_detection(worktree_path: str, base_ref: str, task_context: dict) -> dict:
+    """
+    运行端到端检测
+
+    Args:
+        worktree_path: 工作树路径
+        base_ref: 基准 commit SHA 或分支名
+        task_context: 任务上下文信息
+
+    Returns:
+        包含检测结果的字典，包含字段：
+        - status: "PASS" | "FAIL" | "SKIPPED" | "ERROR"
+        - detection_id: 检测ID
+        - timestamp: 检测时间戳
+        - test_results: 各类型测试结果
+        - critical_issues: 关键问题列表
+        - execution_time: 执行时长（秒）
+    """
+    import subprocess
+    import json
+    import os
+
+    e2e_manager_script = os.path.join(
+        HARNESS_PLUGIN_ROOT,
+        "scripts", "e2e-detection", "e2e-detection-manager.js"
+    )
+
+    try:
+        result = subprocess.run(
+            ["node", e2e_manager_script, worktree_path, base_ref],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5分钟超时
+        )
+
+        if result.returncode == 0:
+            # 尝试从输出中解析JSON结果
+            try:
+                detection_result = json.loads(result.stdout)
+                return detection_result
+            except json.JSONDecodeError:
+                # 如果输出不是JSON，从文件中读取
+                result_file = os.path.join(worktree_path, ".claude", "state", "e2e-detection", "latest-result.json")
+                if os.path.exists(result_file):
+                    with open(result_file, 'r') as f:
+                        return json.load(f)
+                else:
+                    return {
+                        "status": "ERROR",
+                        "error": "无法解析检测结果",
+                        "stdout": result.stdout,
+                        "stderr": result.stderr
+                    }
+        else:
+            return {
+                "status": "ERROR",
+                "error": result.stderr or "检测执行失败",
+                "returncode": result.returncode
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "ERROR",
+            "error": "检测超时"
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "error": str(e)
+        }
+```
+
+### `run_auto_fix_loop()`
+
+```python
+def run_auto_fix_loop(detection_result: dict, worktree_path: str, worker_id: str, max_iterations: int = 3) -> dict:
+    """
+    运行自动修复循环
+
+    Args:
+        detection_result: 端到端检测结果
+        worktree_path: 工作树路径
+        worker_id: Worker ID（用于重新审查）
+        max_iterations: 最大迭代次数
+
+    Returns:
+        包含修复结果的字典：
+        - success: bool - 是否修复成功
+        - iterations: int - 实际迭代次数
+        - fixes_applied: int - 应用的修复数量
+        - final_result: dict - 最终检测结果
+        - escalate_to_user: bool - 是否需要升级到用户
+    """
+    import subprocess
+    import json
+    import os
+
+    # 如果检测已通过，无需修复
+    if detection_result.get("status") == "PASS":
+        return {
+            "success": True,
+            "iterations": 0,
+            "reason": "检测已通过，无需修复"
+        }
+
+    # 如果没有关键问题，无需修复
+    critical_issues = detection_result.get("critical_issues", [])
+    if not critical_issues:
+        return {
+            "success": True,
+            "iterations": 0,
+            "reason": "无关键问题需要修复"
+        }
+
+    auto_fix_script = os.path.join(
+        HARNESS_PLUGIN_ROOT,
+        "scripts", "e2e-detection", "auto-fix-controller.js"
+    )
+
+    try:
+        # 生成临时分析文件
+        analysis_result = {
+            "overall_status": "FAIL",
+            "critical_issues": critical_issues,
+            "detection_id": detection_result.get("detection_id"),
+            "fix_suggestions": detection_result.get("fix_suggestions", [])
+        }
+
+        analysis_file = os.path.join(worktree_path, ".claude", "state", "e2e-detection", "analysis.json")
+        with open(analysis_file, 'w') as f:
+            json.dump(analysis_result, f)
+
+        # 调用自动修复控制器
+        result = subprocess.run(
+            ["node", auto_fix_script, analysis_file, worktree_path],
+            capture_output=True,
+            text=True,
+            timeout=180  # 3分钟超时
+        )
+
+        if result.returncode == 0:
+            try:
+                fix_result = json.loads(result.stdout)
+                return fix_result
+            except json.JSONDecodeError:
+                return {
+                    "success": False,
+                    "error": "无法解析修复结果",
+                    "stdout": result.stdout,
+                    "stderr": result.stderr
+                }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr or "修复执行失败"
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "修复超时",
+            "escalate_to_user": True
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "escalate_to_user": True
+        }
+```
+
+### `escalate_e2e_failure()`
+
+```python
+def escalate_e2e_failure(e2e_result: dict, fix_result: dict):
+    """
+    升级端到端检测失败到用户
+
+    Args:
+        e2e_result: 端到端检测结果
+        fix_result: 自动修复结果
+    """
+    import subprocess
+    import os
+
+    escalation_script = os.path.join(
+        HARNESS_PLUGIN_ROOT,
+        "scripts", "e2e-detection", "escalate-failure.sh"
+    )
+
+    # 如果有升级脚本，调用它
+    if os.path.exists(escalation_script):
+        subprocess.run(
+            [escalation_script, json.dumps(e2e_result), json.dumps(fix_result)],
+            capture_output=True
+        )
+
+    # 记录到日志
+    logger.error(f"端到端检测失败，需要用户介入:")
+    logger.error(f"检测状态: {e2e_result.get('status')}")
+    logger.error(f"关键问题: {len(e2e_result.get('critical_issues', []))}")
+
+    if fix_result.get("escalate_to_user"):
+        logger.error(f"修复失败原因: {fix_result.get('reason', 'Unknown')}")
+
+    # 抛出异常或返回错误，让上层处理
+    raise Exception(f"端到端检测失败: {e2e_result.get('status')}, 需要")
+```
+
+### `escalate_review_failure()`
+
+```python
+def escalate_review_failure(verdict_result: dict):
+    """
+    升级审查失败到用户
+
+    Args:
+        verdict_result: 审查结果
+    """
+    logger.error(f"代码审查失败，需要用户介入:")
+    logger.error(f"审查结果: {verdict_result.get('result', {}).get('verdict')}")
+
+    raise Exception(f"代码审查失败: {verdict_result.get('error', 'Unknown error')}, ")
+```
+
+### `escalate_e2e_error()`
+
+```python
+def escalate_e2e_error(e2e_result: dict):
+    """
+    升级端到端检测错误到用户
+
+    Args:
+        e2e_result: 端到端检测结果（ERROR状态）
+    """
+    logger.error(f"端到端检测出错，需要用户介入:")
+    logger.error(f"错误信息: {e2e_result.get('error', 'Unknown error')}")
+
+    raise Exception(f"端到端检测出错: {e2e_result.get('error', 'Unknown error')}, 需")
+```
+
+---
+
+## 端到端检测集成说明 (Task 12.4)
+
+### 集成点
+
+端到端检测已集成到 **Breezing 模式的 Phase B - 审查循环** 中，插入点为：
+
+- **位置**: 审查通过后（`verdict == "APPROVE"`），cherry-pick操作前
+- **触发**: 自动触发，无需人工干预
+- **阻塞**: 是（检测失败会阻塞完成流程）
+
+### 处理流程
+
+1. **PASS**: 直接继续正常流程
+2. **FAIL**: 进入自动修复循环
+   - 尝试自动修复（最多3次迭代）
+   - 修复成功后重新审查
+   - 重新审查通过后重新检测
+   - 最终失败则升级到用户
+3. **SKIPPED**: 跳过检测，继续正常流程
+4. **ERROR**: 检测出错，根据配置决定是否继续
+
+### 配置支持
+
+端到端检测的启用/禁用和参数通过配置文件控制：
+
+- **配置文件**: `.claude/config/e2e-detection.config.json`
+- **默认配置**: `config/e2e-detection.default.config.json`
+- **设置脚本**: `bash scripts/e2e-detection/setup-e2e-detection.sh`
+
+### 重试机制
+
+自动修复循环的参数：
+
+- **最大迭代次数**: 3次（可配置）
+- **每次迭代**: 修复 → 重新审查 → 重新检测
+- **达到上限**: 升级到用户处理
+
+### 错误处理
+
+所有失败场景都会升级到用户：
+
+- 端到端检测失败
+- 自动修复失败
+- 重新审查失败
+- 检测系统错误
+
+用户可以根据升级报告中的问题描述和修复建议进行手动处理。
