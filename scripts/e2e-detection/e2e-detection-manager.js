@@ -18,6 +18,9 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const readline = require('readline');
 
+// 引入 Playwright 执行器
+const { PlaywrightTestExecutor } = require('./playwright-executor.js');
+
 // 配置文件路径
 const CONFIG_PATH = '.claude/config/e2e-detection.config.json';
 const STATE_DIR = '.claude/state/e2e-detection';
@@ -503,7 +506,36 @@ class E2EDetectionManager {
     if (devDeps.cypress || deps.cypress) {
       testCommand = 'npx cypress run';
     } else if (devDeps['@playwright/test'] || deps['@playwright/test']) {
-      testCommand = 'npx playwright test';
+      // 🎭 使用专门的 Playwright 执行器
+      console.log('🎭 检测到 Playwright，使用专用执行器...');
+      const playwrightExecutor = new PlaywrightTestExecutor({
+        timeout: this.config.timeout * 1000,
+        headless: true,
+        retries: 1
+      });
+
+      try {
+        const playwrightResult = await playwrightExecutor.executeTests(worktreePath, {
+          browser: 'chromium' // 默认使用 Chromium
+        });
+
+        // 转换结果格式以兼容现有系统
+        return {
+          status: playwrightResult.status,
+          framework: 'playwright',
+          test_output: playwrightResult.output,
+          execution_time: playwrightResult.execution_time,
+          critical_issues: playwrightResult.critical_issues || [],
+          test_stats: playwrightResult.test_stats || {},
+          failed_tests: playwrightResult.failed_tests || []
+        };
+      } catch (error) {
+        return {
+          status: 'ERROR',
+          error: error.message,
+          critical_issues: []
+        };
+      }
     } else if (devDeps.selenium || deps.selenium) {
       testCommand = 'npm test'; // 假设配置了selenium测试
     }
