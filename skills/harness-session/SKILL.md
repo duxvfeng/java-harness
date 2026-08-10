@@ -1,11 +1,11 @@
 ---
 name: harness-session
-description: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Trigger: save session, restore session, list sessions, session management, context full."
-description-en: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Trigger: save session, restore session, list sessions, session management, context full."
-description-zh: "HAR：会话管理命令，用于保存、恢复和管理 Claude Code 会话。当用户提到保存会话、恢复会话、列出会话、会话管理、context 满时启动。"
+description: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
+description-en: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
+description-zh: "HAR：会话管理命令，用于保存、恢复和管理 Claude Code 会话。命令：/harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
 kind: utility
 purpose: "Manage Claude Code sessions to prevent context loss"
-trigger: "save session, restore session, list sessions, show session, cleanup sessions, session management, context full, token usage, session save, session restore"
+trigger: "/harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions, save session, restore session, list sessions, show session, cleanup sessions, session management, context full, token usage, session save, session restore"
 shape: command
 role: utility
 owner: harness-core
@@ -14,6 +14,22 @@ allowed-tools: ["Read", "Write", "Bash", "Glob"]
 argument-hint: "<command> [args]"
 user-invocable: true
 effort: medium
+commands:
+  - name: "/harness-save-session"
+    description: "Save current Claude Code session state"
+    usage: "/harness-save-session [summary] [--force]"
+  - name: "/harness-restore-session"
+    description: "Restore saved session state"
+    usage: "/harness-restore-session <saveId> [--full] [--summary-only]"
+  - name: "/harness-list-sessions"
+    description: "List all saved sessions"
+    usage: "/harness-list-sessions [--recent N] [--all]"
+  - name: "/harness-show-session"
+    description: "Show detailed session information"
+    usage: "/harness-show-session <saveId>"
+  - name: "/harness-cleanup-sessions"
+    description: "Clean up old session saves"
+    usage: "/harness-cleanup-sessions [--keep N] [--dry-run]"
 ---
 
 # Harness Session Management
