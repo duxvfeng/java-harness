@@ -451,10 +451,10 @@
 | 12.1 | 创建 ModelTier 枚举 `[tdd:required]` | 实现基于复杂度分数的模型等级映射（FAST/BALANCED/QUALITY/POWERFUL），支持环境变量映射 | 单元测试通过，包含所有等级的分数范围验证 | - | cc:完成 ✅ 2026-08-10 [1775f53] |
 | 12.2 | 创建 TierConfig 数据类 `[tdd:required]` | 实现单个等级的配置类，包含降级链列表和验证逻辑 | 单元测试通过，正确处理空降级链异常 | 12.1 | cc:完成 ✅ 2026-08-10 [1775f53] |
 | 12.3 | 创建 ModelSelectionConfig 总配置类 `[tdd:required]` | 实现总配置类，管理所有等级配置和全局设置 | 单元测试通过，支持启用/禁用功能 | 12.2 | cc:完成 ✅ 2026-08-10 [1775f53] |
-| 12.4 | 创建 ModelReferenceResolver 解析器 `[tdd:required]` | 实现环境变量引用解析器，支持 `env:MODEL_NAME` 格式 | 单元测试通过，正确处理缺失和空环境变量 | 12.3 | cc:TODO |
-| 12.5 | 创建 ModelAvailabilityChecker 检查器 `[tdd:required]` | 实现模型可用性检查器，包含格式验证和可选 API 调用 | 单元测试通过，超时设置正确 | 12.4 | cc:TODO |
-| 12.6 | 创建 ModelSelectionConfigLoader 加载器 `[tdd:required]` | 实现配置加载器，支持 settings.json 和 harness.toml 双格式优先级加载 | 单元测试通过，默认配置正确加载 | 12.5 | cc:TODO |
-| 12.7 | 创建 SmartModelSelector 核心选择器 `[tdd:required]` | 实现核心模型选择逻辑，包含完整降级链执行 | 单元测试通过，所有等级正确选择 | 12.6 | cc:TODO |
+| 12.4 | 创建 ModelReferenceResolver 解析器 `[tdd:required]` | 实现环境变量引用解析器，支持 `env:MODEL_NAME` 格式 | 单元测试通过，正确处理缺失和空环境变量 | 12.3 | cc:完成 ✅ 2026-08-10 [6d25da4] |
+| 12.5 | 创建 ModelAvailabilityChecker 检查器 `[tdd:required]` | 实现模型可用性检查器，包含格式验证和可选 API 调用 | 单元测试通过，超时设置正确 | 12.4 | cc:完成 ✅ 2026-08-10 [6d25da4] |
+| 12.6 | 创建 ModelSelectionConfigLoader 加载器 `[tdd:required]` | 实现配置加载器，支持 settings.json 和 harness.toml 双格式优先级加载 | 单元测试通过，默认配置正确加载 | 12.5 | cc:完成 ✅ 2026-08-10 [6d25da4] |
+| 12.7 | 创建 SmartModelSelector 核心选择器 `[tdd:required]` | 实现核心模型选择逻辑，包含完整降级链执行 | 单元测试通过，所有等级正确选择 | 12.6 | cc:完成 ✅ 2026-08-10 [6d25da4] |
 | 12.8 | 集成到 EffortRouter 系统 `[tdd:required]` | 在现有 EffortRouter 中集成智能模型选择，返回 WorkerSpawnConfig | 集成测试通过，不破坏现有功能 | 12.7 | cc:TODO |
 | 12.9 | 更新技能文档 `[tdd:skip:docs-only]` | 在 harness-work SKILL.md 中添加智能模型选择章节说明 | 文档完整，包含配置示例和使用场景 | 12.8 | cc:TODO |
 | 12.10 | 编写端到端集成测试 `[tdd:required]` | 创建完整的端到端测试，覆盖配置优先级、降级机制、异常处理 | 端到端测试覆盖率 > 80%，所有场景通过 | 12.9 | cc:TODO |
