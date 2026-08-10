@@ -1,3 +1,21 @@
+---
+name: harness-session
+description: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Trigger: save session, restore session, list sessions, session management, context full."
+description-en: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Trigger: save session, restore session, list sessions, session management, context full."
+description-zh: "HAR：会话管理命令，用于保存、恢复和管理 Claude Code 会话。当用户提到保存会话、恢复会话、列出会话、会话管理、context 满时启动。"
+kind: utility
+purpose: "Manage Claude Code sessions to prevent context loss"
+trigger: "save session, restore session, list sessions, show session, cleanup sessions, session management, context full, token usage, session save, session restore"
+shape: command
+role: utility
+owner: harness-core
+since: "2026-08-09"
+allowed-tools: ["Read", "Write", "Bash", "Glob"]
+argument-hint: "<command> [args]"
+user-invocable: true
+effort: medium
+---
+
 # Harness Session Management
 
 会话管理技能 - 提供会话保存、恢复、清理等完整会话生命周期管理功能。
