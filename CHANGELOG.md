@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 更新 Options 表格中 `--auto-mode` 说明
   - 更新 Progressive Disclosure 表格添加智能推荐参考链接
   - 创建设计规格文档 `docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md`
+- **📖 Task 13.12 文档更新**: 更新用户文档和 README
+  - 在 README.md 中添加智能执行模式推荐系统功能介绍（约 100 行）
+  - 在 README_EN.md 中添加英文版功能介绍（约 100 行）
+  - 创建用户指南 `docs/user-guides/smart-mode-recommendation-guide.md`
+  - 更新核心价值列表和当前状态
 
 ## [5.1.0-java] - 2026-08-10 (Phase 12: 智能模型选择系统)
 
