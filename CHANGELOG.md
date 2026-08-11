@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.1.0-java] - 2026-08-10 (Phase 12: 智能模型选择系统)
+## [5.1.0-java] - 2026-08-11 (Phase 12: 智能模型选择系统)
 
 ### Added
 - **🤖 智能模型选择系统**: 根据任务复杂度自动选择最优的 AI 大模型
@@ -13,40 +13,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 创建四个模型等级（FAST/BALANCED/QUALITY/POWERFUL）精准匹配任务需求
   - 实现完整的降级机制，确保系统总能找到可用模型
   - 支持环境变量解析（`env:VAR_NAME` 格式）
-  - 配置优先级：settings.json > harness.toml > 默认配置
+  - 配置优先级：环境变量 > settings.json > harness.toml > 默认配置
 - **📦 核心组件**:
-  - `ModelTier`: 模型等级枚举（4 个等级）
+  - `ModelTier`: 模型等级枚举（4 个等级：FAST/BALANCED/QUALITY/POWERFUL）
   - `TierConfig`: 单个等级配置类（包含降级链）
   - `ModelSelectionConfig`: 总配置类（管理所有等级）
-  - `ModelReferenceResolver`: 环境变量引用解析器
-  - `ModelAvailabilityChecker`: 模型可用性检查器
-  - `ModelSelectionConfigLoader`: 配置加载器（支持优先级）
-  - `SmartModelSelector`: 核心选择器（实现降级链）
-  - `EffortRouter`: 路由器（集成智能选择与 effort routing）
-  - `TaskContext`: 任务上下文（包含评分要素）
-  - `WorkerSpawnConfig`: Worker 启动配置（包含 effort tier 和模型）
+  - `ModelSelectionConfigLoader`: 配置加载器（支持 JSON 和 TOML 格式）
+  - `ModelAvailabilityChecker`: 增强的模型可用性检查器（支持网络连通性检查）
+  - `SmartModelSelector`: 核心选择器（实现三层缓存和降级链）
+  - `ModelSelectionLogger`: 结构化日志记录器（文件持久化）
+  - `EffortRouter`: 集成智能模型选择（已完成）
+  - `WorkerSpawnConfig`: Worker 启动配置（包含 effort tier 和选择的模型）
+- **🎯 功能增强**:
+  - 配置文件加载功能（支持实际 JSON 和 TOML 文件解析）
+  - 增强的模型可用性检查（真实模型名称验证、网络连接检查）
+  - 完整的缓存系统（配置缓存、可用性缓存、选择结果缓存）
+  - 结构化日志记录（性能监控、错误追踪、文件持久化）
 - **🧪 测试覆盖**:
-  - 110 个单元测试（tasks 12.1-12.8）覆盖所有核心组件
-  - 10 个端到端集成测试（task 12.10）验证完整流程
-  - 7 个性能和压力测试（task 12.11）验证性能指标
-  - 测试通过率：100%，性能表现优秀
+  - 端到端集成测试（配置优先级、降级机制、异常处理）
+  - 性能和压力测试（单次选择 < 100ms，支持 10+ 并发线程）
+  - 并发测试（20线程，成功率 > 90%）
+  - 内存稳定性测试（内存增长 < 50MB）
+  - 缓存性能测试（缓存命中率 > 60%）
 - **📖 文档更新**:
-  - 更新 `skills/harness-work/SKILL.md` 添加智能模型选择章节
-  - 创建用户配置指南（`docs/user-guides/smart-model-selection-guide.md`）
-  - 更新 README.md 添加智能模型选择功能说明
-  - 更新 CHANGELOG.md 记录 Phase 12 变更
-- **⚡ 性能优化**:
-  - 单次选择时间：< 100ms（实际 ~0ms）
-  - 并发支持：20+ 线程（超过 10+ 目标）
-  - 内存占用：~0MB（远低于 10MB 目标）
-  - 吞吐量：200K ops/sec（远超 10K 目标）
-  - 选择成功率：100%（超过 98% 目标）
+  - 更新 `skills/harness-work/SKILL.md` 添加智能模型选择完整章节
+  - 创建用户配置指南（`docs/user-guides/smart-model-selection-configuration.md`）
+  - 更新 README.md 添加智能模型选择功能说明（包含专门章节）
+  - 更新 CHANGELOG.md 记录 Phase 12 完整变更
+- **⚡ 性能指标**:
+  - 单次选择时间：< 100ms（典型任务）
+  - 缓存命中时间：< 10ms（缓存命中场景）
+  - 并发支持：10+ 并发线程，高并发下成功率 > 90%
+  - 内存占用：< 10MB（配置和缓存）
+  - 选择成功率：> 98%（完整降级机制）
 
 ### Changed
-- **EffortRouting 升级**: 从单纯的 effort tier 选择升级为 effort tier + 模型选择的完整路由
+- **EffortRouter 升级**: 从单纯的 effort tier 选择升级为 effort tier + 模型选择的完整路由
 - **配置管理**: 新增智能模型选择配置支持（settings.json 和 harness.toml）
 - **WorkerSpawnConfig**: 新增 selectedModel 字段，包含选择的模型名称
-- **性能基准**: 建立了完整的性能和压力测试基准
+- **监控能力**: 新增结构化日志记录和性能监控
+
+### Fixed
+- 修复配置文件加载的优先级处理
+- 修复模型可用性检查的网络超时处理
+- 修复缓存并发访问的线程安全问题
 
 ### Technical Details
 - **新增模块**:

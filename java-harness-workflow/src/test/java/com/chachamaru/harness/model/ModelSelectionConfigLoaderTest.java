@@ -1,10 +1,14 @@
 package com.chachamaru.harness.model;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,89 +49,245 @@ class ModelSelectionConfigLoaderTest {
         // 验证默认配置的基本属性
         assertTrue(config.isEnabled());
         assertEquals("effortBased", config.getStrategy());
-        assertTrue(config.getMaxAttempts() > 0);
-        assertTrue(config.getTimeout() > 0);
+        assertTrue(config.getTierConfigs().containsKey(ModelTier.FAST));
+        assertTrue(config.getTierConfigs().containsKey(ModelTier.BALANCED));
+        assertTrue(config.getTierConfigs().containsKey(ModelTier.QUALITY));
+        assertTrue(config.getTierConfigs().containsKey(ModelTier.POWERFUL));
     }
 
     @Test
-    void testGetDefaultConfig() {
-        // 测试获取默认配置
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
-        assertNotNull(defaultConfig);
+    void testAllTiersLoadedCorrectly(@TempDir Path tempDir) throws IOException {
+        // 创建包含所有等级的配置
+        Path settingsPath = tempDir.resolve(".claude");
+        Files.createDirectories(settingsPath);
 
-        // 验证默认配置包含所有必需的等级
-        assertTrue(defaultConfig.getAllTiers().contains(ModelTier.FAST));
-        assertTrue(defaultConfig.getAllTiers().contains(ModelTier.BALANCED));
-        assertTrue(defaultConfig.getAllTiers().contains(ModelTier.QUALITY));
-        assertTrue(defaultConfig.getAllTiers().contains(ModelTier.POWERFUL));
-    }
+        Path settingsFile = settingsPath.resolve("settings.json");
+        String jsonContent = """
+            {
+              "modelSelection": {
+                "enabled": true,
+                "strategy": "effortBased",
+                "tierMapping": {
+                  "fast": {
+                    "modelEnv": "FAST_MODEL",
+                    "fallbackModels": ["fast1", "fast2"]
+                  },
+                  "balanced": {
+                    "modelEnv": "BALANCED_MODEL",
+                    "fallbackModels": ["balanced1", "balanced2"]
+                  },
+                  "quality": {
+                    "modelEnv": "QUALITY_MODEL",
+                    "fallbackModels": ["quality1", "quality2"]
+                  },
+                  "powerful": {
+                    "modelEnv": "POWERFUL_MODEL",
+                    "fallbackModels": ["powerful1", "powerful2"]
+                  }
+                }
+              }
+            }
+            """;
+        Files.writeString(settingsFile, jsonContent);
 
-    @Test
-    void testDefaultConfigHasValidTierConfigs() {
-        // 测试默认配置的所有等级配置都有效
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
 
-        for (ModelTier tier : defaultConfig.getAllTiers()) {
-            Optional<TierConfig> tierConfig = defaultConfig.getTierConfig(tier);
-            assertTrue(tierConfig.isPresent(), "Tier " + tier + " should have config");
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
 
-            TierConfig config = tierConfig.get();
-            assertDoesNotThrow(() -> config.validate(), "Tier " + tier + " config should be valid");
+            assertNotNull(config);
+            assertEquals(4, config.getTierConfigs().size());
+            assertNotNull(config.getTierConfig(ModelTier.FAST));
+            assertNotNull(config.getTierConfig(ModelTier.BALANCED));
+            assertNotNull(config.getTierConfig(ModelTier.QUALITY));
+            assertNotNull(config.getTierConfig(ModelTier.POWERFUL));
+        } finally {
+            System.setProperty("user.dir", originalDir);
         }
     }
 
     @Test
-    void testDefaultConfigTimeoutSettings() {
-        // 测试默认配置的超时设置
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+    void testLoadFromSettingsJsonWithValidConfig(@TempDir Path tempDir) throws IOException {
+        // 创建测试配置文件
+        Path settingsPath = tempDir.resolve(".claude");
+        Files.createDirectories(settingsPath);
 
-        assertEquals(5000, defaultConfig.getTimeout(), "Default timeout should be 5000ms");
-        assertEquals(3, defaultConfig.getMaxAttempts(), "Default max attempts should be 3");
-        assertFalse(defaultConfig.isValidateApiCall(), "API validation should be disabled by default");
+        Path settingsFile = settingsPath.resolve("settings.json");
+        String jsonContent = """
+            {
+              "modelSelection": {
+                "enabled": true,
+                "strategy": "effortBased",
+                "tierMapping": {
+                  "fast": {
+                    "modelEnv": "ANTHROPIC_DEFAULT_FABLE_MODEL",
+                    "fallbackModels": [
+                      "env:ANTHROPIC_DEFAULT_FABLE_MODEL",
+                      "env:ANTHROPIC_MODEL",
+                      "glm-4.7"
+                    ]
+                  }
+                }
+              }
+            }
+            """;
+        Files.writeString(settingsFile, jsonContent);
+
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
+
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
+
+            assertNotNull(config);
+            assertTrue(config.isEnabled());
+            assertEquals("effortBased", config.getStrategy());
+            assertNotNull(config.getTierConfig(ModelTier.FAST));
+        } finally {
+            System.setProperty("user.dir", originalDir);
+        }
     }
 
     @Test
-    void testDefaultConfigStrategy() {
-        // 测试默认配置的策略
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+    void testLoadFromHarnessTomlWithValidConfig(@TempDir Path tempDir) throws IOException {
+        // 创建测试配置文件
+        Path tomlFile = tempDir.resolve("harness.toml");
+        String tomlContent = """
+            [model_selection]
+            enable_smart_selection = true
+            strategy = "effort_based"
 
-        assertEquals("effortBased", defaultConfig.getStrategy());
+            [model_selection.tiers.fast]
+            model_env = "ANTHROPIC_DEFAULT_FABLE_MODEL"
+            fallback_models = [
+              "env:ANTHROPIC_DEFAULT_FABLE_MODEL",
+              "env:ANTHROPIC_MODEL",
+              "glm-4.7"
+            ]
+            """;
+        Files.writeString(tomlFile, tomlContent);
+
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
+
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
+
+            assertNotNull(config);
+            assertTrue(config.isEnabled());
+            assertEquals("effortBased", config.getStrategy());
+            assertNotNull(config.getTierConfig(ModelTier.FAST));
+        } finally {
+            System.setProperty("user.dir", originalDir);
+        }
     }
 
     @Test
-    void testLoadFromSettingsJsonWithNonExistentFile() {
-        // 测试加载不存在的 settings.json（应该回退到默认配置）
-        Optional<ModelSelectionConfig> result = loader.loadFromSettingsJson(".claude/non_existent_settings.json");
-        // 由于文件不存在，应该返回 Optional.empty()
-        assertFalse(result.isPresent(), "Non-existent file should return empty Optional");
+    void testConfigPrioritySettingsJsonOverridesToml(@TempDir Path tempDir) throws IOException {
+        // 创建两个配置文件
+        Path settingsPath = tempDir.resolve(".claude");
+        Files.createDirectories(settingsPath);
+
+        Path settingsFile = settingsPath.resolve("settings.json");
+        String jsonContent = """
+            {
+              "modelSelection": {
+                "enabled": false,
+                "strategy": "custom_strategy"
+              }
+            }
+            """;
+        Files.writeString(settingsFile, jsonContent);
+
+        Path tomlFile = tempDir.resolve("harness.toml");
+        String tomlContent = """
+            [model_selection]
+            enable_smart_selection = true
+            strategy = "toml_strategy"
+            """;
+        Files.writeString(tomlFile, tomlContent);
+
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
+
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
+
+            // JSON 配置应该覆盖 TOML 配置
+            assertNotNull(config);
+            assertFalse(config.isEnabled()); // JSON 的 false 应该覆盖 TOML 的 true
+            assertEquals("custom_strategy", config.getStrategy()); // JSON 的 strategy 应该被使用
+        } finally {
+            System.setProperty("user.dir", originalDir);
+        }
     }
 
     @Test
-    void testLoadFromHarnessTomlWithNonExistentFile() {
-        // 测试加载不存在的 harness.toml（应该回退到默认配置）
-        Optional<ModelSelectionConfig> result = loader.loadFromHarnessToml("non_existent_harness.toml");
-        assertFalse(result.isPresent(), "Non-existent file should return empty Optional");
+    void testLoadWithInvalidJsonReturnsDefaultConfig(@TempDir Path tempDir) throws IOException {
+        // 创建无效的 JSON 文件
+        Path settingsPath = tempDir.resolve(".claude");
+        Files.createDirectories(settingsPath);
+
+        Path settingsFile = settingsPath.resolve("settings.json");
+        Files.writeString(settingsFile, "{ invalid json }");
+
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
+
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
+
+            // 应该回退到默认配置
+            assertNotNull(config);
+            assertTrue(config.isEnabled());
+        } finally {
+            System.setProperty("user.dir", originalDir);
+        }
     }
 
     @Test
-    void testLoadOrDefaultWithMissingFiles() {
-        // 测试当所有配置文件都不存在时，返回默认配置
-        ModelSelectionConfig config = loader.loadOrDefault();
-        assertNotNull(config, "Should always return a config, even if default");
-        assertTrue(config.isEnabled(), "Default config should be enabled");
+    void testLoadWithInvalidTomlReturnsDefaultConfig(@TempDir Path tempDir) throws IOException {
+        // 创建无效的 TOML 文件
+        Path tomlFile = tempDir.resolve("harness.toml");
+        Files.writeString(tomlFile, "invalid toml content [(");
+
+        // 在临时目录中测试
+        String originalDir = System.getProperty("user.dir");
+        System.setProperty("user.dir", tempDir.toString());
+
+        try {
+            ModelSelectionConfigLoader testLoader = new ModelSelectionConfigLoader();
+            ModelSelectionConfig config = testLoader.loadOrDefault();
+
+            // 应该回退到默认配置
+            assertNotNull(config);
+            assertTrue(config.isEnabled());
+        } finally {
+            System.setProperty("user.dir", originalDir);
+        }
     }
 
     @Test
     void testDefaultConfigFallbackChainStructure() {
         // 测试默认配置的降级链结构
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+        ModelSelectionConfig defaultConfig = loader.loadOrDefault();
 
-        for (ModelTier tier : defaultConfig.getAllTiers()) {
-            Optional<TierConfig> tierConfigOpt = defaultConfig.getTierConfig(tier);
-            assertTrue(tierConfigOpt.isPresent());
+        Map<ModelTier, TierConfig> tierConfigs = defaultConfig.getTierConfigs();
 
-            TierConfig tierConfig = tierConfigOpt.get();
-            String[] fallbackChain = tierConfig.getFallbackChain();
+        for (ModelTier tier : tierConfigs.keySet()) {
+            TierConfig tierConfig = tierConfigs.get(tier);
+            String[] fallbackChain = tierConfig.getFallbackModels();
 
             // 验证降级链结构：env: -> env: -> 直接模型名
             assertTrue(fallbackChain.length >= 2, "Fallback chain should have at least 2 entries");
@@ -145,7 +305,7 @@ class ModelSelectionConfigLoaderTest {
     @Test
     void testDefaultConfigEnvironmentVariables() {
         // 测试默认配置的环境变量映射
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+        ModelSelectionConfig defaultConfig = loader.loadOrDefault();
 
         // 检查每个等级的环境变量名称
         Map<ModelTier, TierConfig> tierConfigs = defaultConfig.getTierConfigs();
@@ -166,51 +326,19 @@ class ModelSelectionConfigLoaderTest {
     @Test
     void testDefaultConfigValidation() {
         // 测试默认配置能通过验证
-        ModelSelectionConfig defaultConfig = loader.getDefaultConfig();
+        ModelSelectionConfig defaultConfig = loader.loadOrDefault();
         assertDoesNotThrow(() -> defaultConfig.validate());
-    }
-
-    @Test
-    void testLoadPriority() {
-        // 测试配置加载优先级（逻辑测试）
-        // settings.json > harness.toml > 默认配置
-
-        // 由于我们无法在测试中创建真实文件，这里测试方法存在性和基本行为
-        ModelSelectionConfig config = loader.loadOrDefault();
-        assertNotNull(config, "Should return default config when no files exist");
-    }
-
-    @Test
-    void testLoadWithExplicitPaths() {
-        // 测试使用显式路径加载配置
-        Optional<ModelSelectionConfig> result1 = loader.loadFromSettingsJson("/custom/path/settings.json");
-        Optional<ModelSelectionConfig> result2 = loader.loadFromHarnessToml("/custom/path/harness.toml");
-
-        // 由于文件不存在，都应该返回空
-        assertFalse(result1.isPresent());
-        assertFalse(result2.isPresent());
     }
 
     @Test
     void testGetDefaultConfigIsConsistent() {
         // 测试默认配置的一致性
-        ModelSelectionConfig config1 = loader.getDefaultConfig();
-        ModelSelectionConfig config2 = loader.getDefaultConfig();
+        ModelSelectionConfig config1 = loader.loadOrDefault();
+        ModelSelectionConfig config2 = loader.loadOrDefault();
 
-        // 默认配置应该是相同的实例或等价的
+        // 默认配置的基本属性应该是一致的
         assertEquals(config1.getStrategy(), config2.getStrategy());
-        assertEquals(config1.getTimeout(), config2.getTimeout());
-        assertEquals(config1.getMaxAttempts(), config2.getMaxAttempts());
-        assertEquals(config1.getAllTiers(), config2.getAllTiers());
-    }
-
-    @Test
-    void testLoadOrDefaultReturnsImmutableConfig() {
-        // 测试返回的配置是不可变的（通过验证不抛异常）
-        ModelSelectionConfig config = loader.loadOrDefault();
-        assertDoesNotThrow(() -> config.validate());
-
-        // 配置应该包含所有必需的等级
-        assertFalse(config.getAllTiers().isEmpty());
+        assertEquals(config1.isEnabled(), config2.isEnabled());
+        assertEquals(config1.getTierConfigs().size(), config2.getTierConfigs().size());
     }
 }

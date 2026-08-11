@@ -30,7 +30,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelForFastTier() {
+    void testSelectModelForFastTier() throws ModelUnavailableException {
         // 低复杂度任务（0-2 分）应该选择 FAST 等级
         String model = selector.selectModel(0);
         assertNotNull(model);
@@ -43,7 +43,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelForBalancedTier() {
+    void testSelectModelForBalancedTier() throws ModelUnavailableException {
         // 中等复杂度任务（3-4 分）应该选择 BALANCED 等级
         String model = selector.selectModel(3);
         assertNotNull(model);
@@ -55,7 +55,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelForQualityTier() {
+    void testSelectModelForQualityTier() throws ModelUnavailableException {
         // 高复杂度任务（5-6 分）应该选择 QUALITY 等级
         String model = selector.selectModel(5);
         assertNotNull(model);
@@ -67,7 +67,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelForPowerfulTier() {
+    void testSelectModelForPowerfulTier() throws ModelUnavailableException {
         // 超高复杂度任务（≥7 分）应该选择 POWERFUL 等级
         String model = selector.selectModel(7);
         assertNotNull(model);
@@ -83,7 +83,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelWithNegativeScore() {
+    void testSelectModelWithNegativeScore() throws ModelUnavailableException {
         // 负数分数应该默认使用 FAST 等级
         String model = selector.selectModel(-1);
         assertNotNull(model);
@@ -114,7 +114,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testFallbackChainExecution() {
+    void testFallbackChainExecution() throws ModelUnavailableException {
         // 测试降级链执行逻辑
         String model = selector.selectModel(3);
 
@@ -127,7 +127,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelConsistency() {
+    void testSelectModelConsistency() throws ModelUnavailableException {
         // 测试相同复杂度分数的选择一致性
         String model1 = selector.selectModel(3);
         String model2 = selector.selectModel(3);
@@ -137,7 +137,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelWithBoundaryScores() {
+    void testSelectModelWithBoundaryScores() throws ModelUnavailableException {
         // 测试边界值
         String fastModel = selector.selectModel(2);  // FAST 上界
         String balancedModel = selector.selectModel(3);  // BALANCED 下界
@@ -148,10 +148,10 @@ class SmartModelSelectorTest {
 
     @Test
     void testGetConfiguration() {
-        // 测试获取配置
-        ModelSelectionConfig config = selector.getConfiguration();
-        assertNotNull(config);
-        assertEquals(testConfig, config);
+        // 测试获取策略
+        String strategy = selector.getStrategy();
+        assertNotNull(strategy);
+        assertEquals("effortBased", strategy);
     }
 
     @Test
@@ -170,21 +170,21 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelWithZeroScore() {
+    void testSelectModelWithZeroScore() throws ModelUnavailableException {
         // 零分应该选择 FAST 等级
         String model = selector.selectModel(0);
         assertNotNull(model);
     }
 
     @Test
-    void testSelectModelWithHighScore() {
+    void testSelectModelWithHighScore() throws ModelUnavailableException {
         // 高分应该选择 POWERFUL 等级
         String model = selector.selectModel(999);
         assertNotNull(model);
     }
 
     @Test
-    void testAllTiersReturnValidModels() {
+    void testAllTiersReturnValidModels() throws ModelUnavailableException {
         // 测试所有等级都能返回有效的模型
         for (int score = 0; score <= 10; score++) {
             String model = selector.selectModel(score);
@@ -194,7 +194,7 @@ class SmartModelSelectorTest {
     }
 
     @Test
-    void testSelectModelWithConfigValidation() {
+    void testSelectModelWithConfigValidation() throws ModelUnavailableException {
         // 测试配置验证集成
         ModelSelectionConfig validConfig = createTestConfig();
         assertDoesNotThrow(() -> {
@@ -232,10 +232,7 @@ class SmartModelSelectorTest {
         return new ModelSelectionConfig(
             true,
             "effortBased",
-            tierConfigs,
-            5000,
-            3,
-            false
+            tierConfigs
         );
     }
 
@@ -252,10 +249,7 @@ class SmartModelSelectorTest {
         return new ModelSelectionConfig(
             true,
             "effortBased",
-            tierConfigs,
-            5000,
-            3,
-            false
+            tierConfigs
         );
     }
 
@@ -283,10 +277,7 @@ class SmartModelSelectorTest {
         return new ModelSelectionConfig(
             true,
             "effortBased",
-            tierConfigs,
-            5000,
-            3,
-            false
+            tierConfigs
         );
     }
 }

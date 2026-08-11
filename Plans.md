@@ -446,8 +446,8 @@
 
 ### 实现任务
 
-| Task | 内容 | DoD | Depends | Status |
-|------|------|-----|---------|--------|
+| Task | 内容 | DoD | Depends | Notes | Status |
+|------|------|-----|---------|--------|--------|
 | 12.1 | 创建 ModelTier 枚举 `[tdd:required]` | 实现基于复杂度分数的模型等级映射（FAST/BALANCED/QUALITY/POWERFUL），支持环境变量映射 | 单元测试通过，包含所有等级的分数范围验证 | - | cc:完成 ✅ 2026-08-10 [1775f53] |
 | 12.2 | 创建 TierConfig 数据类 `[tdd:required]` | 实现单个等级的配置类，包含降级链列表和验证逻辑 | 单元测试通过，正确处理空降级链异常 | 12.1 | cc:完成 ✅ 2026-08-10 [1775f53] |
 | 12.3 | 创建 ModelSelectionConfig 总配置类 `[tdd:required]` | 实现总配置类，管理所有等级配置和全局设置 | 单元测试通过，支持启用/禁用功能 | 12.2 | cc:完成 ✅ 2026-08-10 [1775f53] |
@@ -461,6 +461,10 @@
 | 12.11 | 编写性能和压力测试 `[tdd:required]` | 创建性能测试，验证单次选择 < 100ms，支持 10+ 并发线程 | 性能测试通过，无内存泄漏 | 12.10 | cc:TODO |
 | 12.12 | 创建用户配置指南 `[tdd:skip:docs-only]` | 编写详细的用户配置文档，包含快速开始、配置详解、故障排除 | 文档完整，示例可运行 | 12.11 | cc:TODO |
 | 12.13 | 更新 README 和 CHANGELOG `[tdd:skip:docs-only]` | 在主 README 中添加功能介绍，在 CHANGELOG 中记录版本变更 | README 功能完整，CHANGELOG 格式正确 | 12.12 | cc:TODO |
+| 12.14 | 完善配置文件加载功能 `[tdd:required]` | 实现 ModelSelectionConfigLoader.load() 方法，支持 settings.json 和 harness.toml 实际文件解析和优先级管理 | 能正确读取和解析配置文件，优先级正确（环境变量 > settings.json > harness.toml > 默认配置），配置验证测试通过 | 12.6 | cc:完成 ✅ 2026-08-11 [config-loader-implementation] |
+| 12.15 | 增强模型可用性检查 `[tdd:required]` | 实现真实的 ModelAvailabilityChecker.isAvailable() 方法，包含模型名称格式验证、网络连接检查、可选 API 调用验证 | 能正确检测模型可用性，超时机制工作正常，API 调用验证可选启用，测试通过 | 12.5 | cc:完成 ✅ 2026-08-11 [enhanced-availability-checker] |
+| 12.16 | 实现缓存机制 `[tdd:required]` | 在 SmartModelSelector 中实现配置缓存、可用性缓存（5分钟）和选择结果缓存（1分钟），提升性能 | 缓存命中率 > 60%，单次选择时间 < 100ms，缓存失效机制正确，性能测试通过 | 12.7 | cc:完成 ✅ 2026-08-11 [caching-implementation] |
+| 12.17 | 完善错误处理和日志记录 `[tdd:required]` | 实现完整的异常处理、日志记录和监控，包括配置错误、模型不可用、降级失败等场景 | 所有异常场景都有适当的处理和日志，日志格式统一，监控指标可收集，错误处理测试通过 | 12.8 | cc:完成 ✅ 2026-08-11 [enhanced-error-handling-logging] |
 
 ---
 

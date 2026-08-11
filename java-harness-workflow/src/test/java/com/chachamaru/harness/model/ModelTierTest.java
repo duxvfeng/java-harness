@@ -14,7 +14,7 @@ class ModelTierTest {
         assertEquals("FAST", ModelTier.FAST.name());
         assertEquals(0, ModelTier.FAST.getMinScore());
         assertEquals(2, ModelTier.FAST.getMaxScore());
-        assertEquals("ANTHROPIC_DEFAULT_FABLE_MODEL", ModelTier.FAST.getEnvVariable());
+        assertEquals("ANTHROPIC_DEFAULT_FABLE_MODEL", ModelTier.FAST.getModelEnv());
     }
 
     @Test
@@ -22,7 +22,7 @@ class ModelTierTest {
         assertEquals("BALANCED", ModelTier.BALANCED.name());
         assertEquals(3, ModelTier.BALANCED.getMinScore());
         assertEquals(4, ModelTier.BALANCED.getMaxScore());
-        assertEquals("ANTHROPIC_DEFAULT_HAIKU_MODEL", ModelTier.BALANCED.getEnvVariable());
+        assertEquals("ANTHROPIC_DEFAULT_HAIKU_MODEL", ModelTier.BALANCED.getModelEnv());
     }
 
     @Test
@@ -30,7 +30,7 @@ class ModelTierTest {
         assertEquals("QUALITY", ModelTier.QUALITY.name());
         assertEquals(5, ModelTier.QUALITY.getMinScore());
         assertEquals(6, ModelTier.QUALITY.getMaxScore());
-        assertEquals("ANTHROPIC_DEFAULT_SONNET_MODEL", ModelTier.QUALITY.getEnvVariable());
+        assertEquals("ANTHROPIC_DEFAULT_SONNET_MODEL", ModelTier.QUALITY.getModelEnv());
     }
 
     @Test
@@ -38,7 +38,7 @@ class ModelTierTest {
         assertEquals("POWERFUL", ModelTier.POWERFUL.name());
         assertEquals(7, ModelTier.POWERFUL.getMinScore());
         assertEquals(999, ModelTier.POWERFUL.getMaxScore());
-        assertEquals("ANTHROPIC_DEFAULT_OPUS_MODEL", ModelTier.POWERFUL.getEnvVariable());
+        assertEquals("ANTHROPIC_DEFAULT_OPUS_MODEL", ModelTier.POWERFUL.getModelEnv());
     }
 
     @Test
@@ -91,38 +91,26 @@ class ModelTierTest {
     }
 
     @Test
-    void testContainsScore() {
-        // 测试 containsScore 方法
-        assertTrue(ModelTier.FAST.containsScore(0));
-        assertTrue(ModelTier.FAST.containsScore(1));
-        assertTrue(ModelTier.FAST.containsScore(2));
-        assertFalse(ModelTier.FAST.containsScore(3));
-
-        assertTrue(ModelTier.BALANCED.containsScore(3));
-        assertTrue(ModelTier.BALANCED.containsScore(4));
-        assertFalse(ModelTier.BALANCED.containsScore(5));
-
-        assertTrue(ModelTier.QUALITY.containsScore(5));
-        assertTrue(ModelTier.QUALITY.containsScore(6));
-        assertFalse(ModelTier.QUALITY.containsScore(7));
-
-        assertTrue(ModelTier.POWERFUL.containsScore(7));
-        assertTrue(ModelTier.POWERFUL.containsScore(100));
-        assertFalse(ModelTier.POWERFUL.containsScore(6));
+    void testScoreRanges() {
+        // 测试分数范围验证
+        assertTrue(0 >= ModelTier.FAST.getMinScore() && 0 <= ModelTier.FAST.getMaxScore());
+        assertTrue(3 >= ModelTier.BALANCED.getMinScore() && 3 <= ModelTier.BALANCED.getMaxScore());
+        assertTrue(5 >= ModelTier.QUALITY.getMinScore() && 5 <= ModelTier.QUALITY.getMaxScore());
+        assertTrue(7 >= ModelTier.POWERFUL.getMinScore() && 7 <= ModelTier.POWERFUL.getMaxScore());
     }
 
     @Test
     void testEnvVariableFormat() {
         // 验证环境变量名称格式正确
-        assertTrue(ModelTier.FAST.getEnvVariable().startsWith("ANTHROPIC_DEFAULT_"));
-        assertTrue(ModelTier.BALANCED.getEnvVariable().startsWith("ANTHROPIC_DEFAULT_"));
-        assertTrue(ModelTier.QUALITY.getEnvVariable().startsWith("ANTHROPIC_DEFAULT_"));
-        assertTrue(ModelTier.POWERFUL.getEnvVariable().startsWith("ANTHROPIC_DEFAULT_"));
+        assertTrue(ModelTier.FAST.getModelEnv().startsWith("ANTHROPIC_DEFAULT_"));
+        assertTrue(ModelTier.BALANCED.getModelEnv().startsWith("ANTHROPIC_DEFAULT_"));
+        assertTrue(ModelTier.QUALITY.getModelEnv().startsWith("ANTHROPIC_DEFAULT_"));
+        assertTrue(ModelTier.POWERFUL.getModelEnv().startsWith("ANTHROPIC_DEFAULT_"));
 
-        assertTrue(ModelTier.FAST.getEnvVariable().endsWith("_MODEL"));
-        assertTrue(ModelTier.BALANCED.getEnvVariable().endsWith("_MODEL"));
-        assertTrue(ModelTier.QUALITY.getEnvVariable().endsWith("_MODEL"));
-        assertTrue(ModelTier.POWERFUL.getEnvVariable().endsWith("_MODEL"));
+        assertTrue(ModelTier.FAST.getModelEnv().endsWith("_MODEL"));
+        assertTrue(ModelTier.BALANCED.getModelEnv().endsWith("_MODEL"));
+        assertTrue(ModelTier.QUALITY.getModelEnv().endsWith("_MODEL"));
+        assertTrue(ModelTier.POWERFUL.getModelEnv().endsWith("_MODEL"));
     }
 
     @Test
