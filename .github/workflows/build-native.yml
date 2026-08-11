@@ -3,8 +3,7 @@ name: Build Native Images
 on:
   push:
     branches:
-      - main
-      - master
+      - feature/*
   workflow_dispatch:
     inputs:
       create_release:
