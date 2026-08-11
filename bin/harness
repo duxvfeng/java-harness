@@ -1,0 +1,4 @@
+#!/bin/bash
+# Temporary wrapper script for harness CLI until native binary is rebuilt with GraalVM
+JAR_FILE="/Users/apple/IdeaProjects/java-harness/java-harness-cli/target/java-harness-cli-4.1.1.jar"
+exec java -jar "$JAR_FILE" "$@"
