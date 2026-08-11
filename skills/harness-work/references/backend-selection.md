@@ -59,7 +59,7 @@ cursor 的 write 委托在拥有专用 `.git` 的 worktree 内执行，Lead 将�
 
 ## 自然语言 backend trigger
 
-当用户说 `composer` / `コンポーザー` / `Composer で` / `composer 2.5` / `composer モード` 时，作为 `cursor backend` 指定处理。
+当用户说 `composer` / `编辑器` / `在 Composer 中` / `composer 2.5` / `composer 模式` 时，作为 `cursor backend` 指定处理。
 解析时作为显式 override 传递 `--backend cursor`，优先于 env / project / user file / default。
 
 ## Mode 1 — Producer → Sub-Lead → Composer 层级

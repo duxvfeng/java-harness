@@ -1,0 +1,299 @@
+{
+  "$schema": "../schemas/e2e-detection-config.schema.json",
+  "enabled": true,
+  "mode": "strict",
+  "timeout": 120,
+  "retry_on_failure": true,
+  "max_retries": 3,
+  "description": "端到端检测 Playwright 优化配置",
+  "version": "1.0.0",
+  "test_types": {
+    "frontend": {
+      "enabled": true,
+      "framework": "playwright",
+      "description": "前端功能测试配置 - Playwright 优化",
+      "test_paths": [
+        "e2e/",
+        "tests/e2e/",
+        "tests/",
+        "playwright/"
+      ],
+      "supported_frameworks": {
+        "playwright": {
+          "command": "npx playwright test",
+          "config_file": "playwright.config.ts",
+          "browsers": ["chromium", "firefox", "webkit"],
+          "features": {
+            "auto_wait": true,
+            "video_recording": "retain-on-failure",
+            "screenshot": "only-on-failure",
+            "trace": "retain-on-failure"
+          }
+        },
+        "cypress": {
+          "command": "npx cypress run",
+          "config_file": "cypress.config.js"
+        },
+        "selenium": {
+          "command": "npm test",
+          "config_file": "selenium.config.js"
+        }
+      },
+      "playwright_config": {
+        "timeout": 30000,
+        "expect_timeout": 5000,
+        "headless": true,
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "browsers": ["chromium", "firefox", "webkit"],
+        "workers": null,
+        "retries": 1,
+        "reporter": ["html", "list"]
+      }
+    },
+    "backend": {
+      "enabled": true,
+      "framework": "auto",
+      "description": "后端API测试配置",
+      "test_paths": [
+        "backend/tests/",
+        "src/test/api/",
+        "test/",
+        "__tests__/"
+      ],
+      "supported_frameworks": {
+        "nodejs": {
+          "command": "npm test",
+          "config_files": ["package.json"]
+        },
+        "java": {
+          "maven": {
+            "command": "mvn test",
+            "config_file": "pom.xml"
+          },
+          "gradle": {
+            "command": "./gradlew test",
+            "config_file": "build.gradle"
+          }
+        },
+        "python": {
+          "command": "pytest",
+          "config_files": ["pytest.ini", "setup.cfg"]
+        },
+        "go": {
+          "command": "go test ./...",
+          "config_files": ["go.mod"]
+        }
+      }
+    },
+    "integration": {
+      "enabled": true,
+      "description": "前后端集成测试配置 - Playwright 增强",
+      "test_scenarios": [
+        "user_login",
+        "data_flow",
+        "error_handling",
+        "ui_interaction"
+      ],
+      "scenario_configs": {
+        "user_login": {
+          "description": "用户登录流程集成测试",
+          "timeout": 30,
+          "components": ["frontend_login", "backend_auth", "session_management"],
+          "playwright_tests": ["e2e/login.spec.ts"]
+        },
+        "data_flow": {
+          "description": "数据流转集成测试",
+          "timeout": 60,
+          "components": ["api_request", "data_processing", "response_handling"],
+          "playwright_tests": ["e2e/data-flow.spec.ts"]
+        },
+        "error_handling": {
+          "description": "错误处理集成测试",
+          "timeout": 30,
+          "components": ["frontend_validation", "backend_error_handling", "user_feedback"],
+          "playwright_tests": ["e2e/error-handling.spec.ts"]
+        },
+        "ui_interaction": {
+          "description": "用户界面交互测试",
+          "timeout": 45,
+          "components": ["button_clicks", "form_submissions", "navigation"],
+          "playwright_tests": ["e2e/ui-interaction.spec.ts"]
+        }
+      }
+    },
+    "performance": {
+      "enabled": false,
+      "description": "性能测试配置",
+      "response_time_max": 2000,
+      "response_time_warning": 1500,
+      "concurrent_users": 10,
+      "memory_usage_max": 0.8,
+      "cpu_usage_max": 0.9,
+      "tools": {
+        "lighthouse": {
+          "command": "npx lighthouse",
+          "config_file": "lighthouse.config.js"
+        },
+        "jmeter": {
+          "command": "jmeter -n -t",
+          "config_file": "test-plan.jmx"
+        },
+        "k6": {
+          "command": "k6 run",
+          "config_file": "load-test.js"
+        },
+        "playwright_benchmark": {
+          "command": "node playwright-benchmark.js",
+          "metrics": ["first_contentful_paint", "largest_contentful_paint", "cumulative_layout_shift", "time_to_interactive"]
+        }
+      }
+    },
+    "security": {
+      "enabled": true,
+      "description": "安全测试配置",
+      "scan_vulnerabilities": true,
+      "check_dependencies": true,
+      "scan_secrets": true,
+      "tools": {
+        "npm_audit": {
+          "command": "npm audit --json",
+          "enabled": true
+        },
+        "safety": {
+          "command": "safety check",
+          "enabled": true
+        },
+        "owasp_dependency_check": {
+          "command": "dependency-check",
+          "enabled": false
+        },
+        "git_leak": {
+          "command": "gitleaks detect",
+          "enabled": false
+        }
+      },
+      "sensitive_patterns": [
+        "*.pem",
+        "*.key",
+        ".env*",
+        "secrets/**",
+        "*credentials*",
+        "*password*",
+        "id_rsa",
+        "*.jwt"
+      ]
+    }
+  },
+  "thresholds": {
+    "response_time": {
+      "warning": 1500,
+      "critical": 2000,
+      "description": "响应时间阈值（毫秒）"
+    },
+    "memory_usage": {
+      "warning": 0.7,
+      "critical": 0.8,
+      "description": "内存使用率阈值"
+    },
+    "cpu_usage": {
+      "warning": 0.8,
+      "critical": 0.9,
+      "description": "CPU使用率阈值"
+    },
+    "concurrent_users": {
+      "min": 10,
+      "recommended": 50,
+      "description": "并发用户数支持"
+    },
+    "error_rate": {
+      "warning": 0.01,
+      "critical": 0.05,
+      "description": "错误率阈值"
+    },
+    "playwright_metrics": {
+      "test_timeout": 30000,
+      "action_timeout": 5000,
+      "navigation_timeout": 30000,
+      "max_flaky_tests": 0,
+      "description": "Playwright 特定阈值"
+    }
+  },
+  "triggers": {
+    "auto_trigger_on_review_pass": true,
+    "require_clean_workspace": true,
+    "skip_on_draft_pr": true,
+    "skip_on_wip_branch": true,
+    "branch_patterns": {
+      "include": ["feature/*", "bugfix/*", "hotfix/*"],
+      "exclude": ["draft/*", "wip/*", "experimental/*"]
+    }
+  },
+  "auto_fix": {
+    "enabled": true,
+    "max_iterations": 3,
+    "fix_types": {
+      "dependency_update": true,
+      "gitignore_add": true,
+      "code_fix": false,
+      "test_generation": false,
+      "playwright_fix": true
+    },
+    "fix_timeout": 60,
+    "commit_on_fix": true,
+    "playwright_auto_fix": {
+      "selector_fix": true,
+      "timeout_adjustment": true,
+      "retry_flaky_tests": true
+    }
+  },
+  "reporting": {
+    "generate_report": true,
+    "report_format": "markdown",
+    "include_details": true,
+    "save_artifacts": true,
+    "artifacts_location": ".claude/artifacts/e2e-detection/",
+    "playwright_reports": {
+      "html_report": true,
+      "trace_files": "retain-on-failure",
+      "screenshots": "only-on-failure",
+      "video_files": "retain-on-failure"
+    }
+  },
+  "integration": {
+    "harness_work": {
+      "enabled": true,
+      "trigger_point": "after_review",
+      "blocking": true
+    },
+    "harness_review": {
+      "enabled": true,
+      "send_feedback": true
+    },
+    "ci_integration": {
+      "enabled": false,
+      "platform": "github",
+      "comment_on_pr": true
+    }
+  },
+  "advanced": {
+    "parallel_execution": true,
+    "max_parallel_workers": 3,
+    "cache_test_results": true,
+    "cache_ttl": 3600,
+    "cleanup_after_test": true,
+    "fail_fast": false,
+    "continue_on_failure": true,
+    "debug_mode": false,
+    "log_level": "info",
+    "playwright_advanced": {
+      "dev_tools": false,
+      "screenshot_on_failure": true,
+      "video_on_failure": true,
+      "trace_on_failure": true,
+      "browsers_order": ["chromium", "firefox", "webkit"]
+    }
+  }
+}

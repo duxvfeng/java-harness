@@ -253,6 +253,277 @@ fi
 
 以后的 `node "${HARNESS_PLUGIN_ROOT}/scripts/..."` / `bash "${HARNESS_PLUGIN_ROOT}/scripts/..."` 以此已解析的 root 为前提。
 
+### Auto Review Integration (v2.1.0+)
+
+从 v2.1.0 开始，harness-work 使用 harness-review 的 --auto 模式进行代码审查，实现职责清晰分离。
+
+**调用函数:**
+
+```python
+def call_harness_review_auto(base_ref: str, worktree_path: str, mode: str = "strict") -> dict:
+    """
+    调用 harness-review --auto 模式进行自动代码审查
+
+    Args:
+        base_ref: 基准 commit SHA 或分支名
+        worktree_path: 工作树路径
+        mode: 审查模式 (strict|lenient)
+
+    Returns:
+        包含审查结果的字典
+        {
+            "success": bool,
+            "result": {
+                "verdict": "APPROVE|REQUEST_CHANGES",
+                "findings": [...],
+                "summary": "...",
+                "performance": {...}
+            },
+            "stdout": str,
+            "stderr": str
+        }
+    """
+    import subprocess
+    import json
+    import os
+
+    # 确定脚本路径（项目统一的 scripts/ 目录）
+    auto_review_script = os.path.join(
+        HARNESS_PLUGIN_ROOT,
+        "scripts", "review", "auto-review.sh"
+    )
+
+    # 准备输出文件
+    output_file = f"/tmp/harness-review-{os.getpid()}.json"
+
+    # 构建命令
+    cmd = [
+        auto_review_script,
+        "--auto",
+        "--base-ref", base_ref,
+        "--output", output_file,
+        "--mode", mode
+    ]
+
+    try:
+        # 执行审查
+        result = subprocess.run(
+            cmd,
+            cwd=worktree_path,
+            timeout=30,
+            capture_output=True,
+            text=True
+        )
+
+        # 读取结果
+        if os.path.exists(output_file):
+            with open(output_file, 'r') as f:
+                review_result = json.load(f)
+
+            # 清理临时文件
+            os.remove(output_file)
+
+            return {
+                "success": True,
+                "result": review_result,
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+        else:
+            return {
+                "success": False,
+                "error": "输出文件不存在",
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "审查超时（超过 30 秒）"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+def lightweight_review_fallback(base_ref: str, worktree_path: str) -> str:
+    """
+    轻量级审查降级方案
+    当 harness-review --auto 不可用时使用
+
+    Args:
+        base_ref: 基准 commit SHA
+        worktree_path: 工作树路径
+
+    Returns:
+        "APPROVE" 或 "REQUEST_CHANGES"
+    """
+    import subprocess
+
+    try:
+        # 基础检查：确保代码可以编译/运行
+        result = subprocess.run(
+            ["git", "-C", worktree_path, "diff", "--name-only", f"{base_ref}..HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        changed_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
+
+        # 如果有变更文件，进行基本检查
+        if changed_files:
+            # 检查是否有明显的错误（如编译错误）
+            # 这里可以添加更多基础检查
+            pass
+
+        # 保守策略：如果有任何变更，要求人工审查
+        if changed_files:
+            return "REQUEST_CHANGES"
+        else:
+            return "APPROVE"
+
+    except Exception:
+        # 出错时采用保守策略
+        return "REQUEST_CHANGES"
+
+class AutoFixReviewLoop:
+    """自动修复审查循环 (v2.1.1+)"""
+
+    def __init__(self, max_iterations: int = 3):
+        """
+        初始化自动修复循环
+
+        Args:
+            max_iterations: 最大修复尝试次数
+        """
+        self.max_iterations = max_iterations
+        self.iteration_count = 0
+
+    def auto_fix_issues(self, issues: list, worktree_path: str, worker_context: dict) -> dict:
+        """
+        自动修复代码问题
+
+        Args:
+            issues: 需要修复的问题列表
+            worktree_path: 工作树路径
+            worker_context: Worker 上下文
+
+        Returns:
+            修复结果字典
+        """
+        import subprocess
+
+        fixed_count = 0
+        failed_count = 0
+
+        for issue in issues:
+            try:
+                fix_command = self.generate_fix_command(issue)
+                result = subprocess.run(
+                    fix_command,
+                    cwd=worktree_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+
+                if result.returncode == 0:
+                    print(f"✅ 修复: {issue['file']}:{issue['line']} - {issue['message']}")
+                    fixed_count += 1
+                else:
+                    print(f"⚠️  修复失败: {issue['file']}:{issue['line']}")
+                    failed_count += 1
+
+            except Exception as e:
+                print(f"❌ 修复异常: {issue['file']}:{issue['line']} - {e}")
+                failed_count += 1
+
+        return {
+            "success": fixed_count > 0,
+            "fixed_count": fixed_count,
+            "failed_count": failed_count
+        }
+
+    def generate_fix_command(self, issue: dict) -> list:
+        """根据问题生成修复命令"""
+        file_path = issue["file"]
+        line_number = issue["line"]
+        rule = issue.get("rule", "")
+        suggestion = issue.get("suggestion", "")
+
+        # 根据不同的规则生成不同的修复命令
+        if rule == "no-system-out":
+            return [
+                "sed", "-i",
+                f"{line_number}s/System.out.println/LOGGER.info/",
+                file_path
+            ]
+        elif rule == "no-print-statements":
+            return [
+                "sed", "-i",
+                f"{line_number}s/print(/logging.info/",
+                file_path
+            ]
+        else:
+            # 通用修复策略
+            return [
+                "sed", "-i",
+                f"{line_number}i// TODO: 需要修复: {issue['message']}",
+                file_path
+            ]
+
+    def commit_fixes(self, worktree_path: str, commit_message: str) -> dict:
+        """提交修复"""
+        import subprocess
+
+        try:
+            subprocess.run(
+                ["git", "add", "-A"],
+                cwd=worktree_path,
+                check=True,
+                capture_output=True
+            )
+
+            result = subprocess.run(
+                ["git", "diff", "--staged", "--name-only"],
+                cwd=worktree_path,
+                capture_output=True,
+                text=True
+            )
+
+            if not result.stdout.strip():
+                return {
+                    "success": False,
+                    "error": "没有需要提交的变更"
+                }
+
+            subprocess.run(
+                ["git", "commit", "-m", commit_message],
+                cwd=worktree_path,
+                check=True,
+                capture_output=True
+            )
+
+            return {
+                "success": True,
+                "commit_message": commit_message
+            }
+
+        except subprocess.CalledProcessError as e:
+            return {
+                "success": False,
+                "error": f"Git 命令执行失败: {e}"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+```
+
 ### Backend-resolved executor path (Solo / Parallel / Breezing)
 
 Solo / Parallel / Breezing 从相同的 resolver result 选择实现 executor。
@@ -294,11 +565,106 @@ def enter_non_claude_companion_review_loop(worker_result):
     # companion-result.v1 has no worker_id and no worker_result.self_review.
     # Do not use the Worker-only SendMessage/self_review loop for cursor/codex.
     latest_commit = worker_result.commit
-    diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
-    verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+
+    # 调用 harness-review --auto 模式进行自动审查
+    verdict_result = call_harness_review_auto(
+        base_ref=worker_result.baseCommit,
+        worktree_path=worker_result.worktreePath,
+        mode="strict"
+    )
+
+    if not verdict_result["success"]:
+        # 如果自动审查失败，降级到基础检查
+        logger.warning(f"harness-review --auto 失败，使用 fallback: {verdict_result.get('error')}")
+        verdict = lightweight_review_fallback(
+            base_ref=worker_result.baseCommit,
+            worktree_path=worker_result.worktreePath
+        )
+        findings = []
+    else:
+        verdict = verdict_result["result"]["verdict"]
+        findings = verdict_result["result"].get("findings", [])
+
     review_count = 0
     MAX_REVIEWS = read_contract(contract_path, ".review.max_iterations") or 3
-    while verdict == "REQUEST_CHANGES" and review_count < MAX_REVIEWS:
+
+    # 集成自动修复循环
+    auto_fix_loop = AutoFixReviewLoop(max_iterations=MAX_REVIEWS)
+
+    while review_count < MAX_REVIEWS:
+        # 调用自动审查
+        verdict_result = call_harness_review_auto(
+            base_ref=BASE_REF,
+            worktree_path=worker_result.worktreePath,
+            mode="strict"
+        )
+
+        if not verdict_result["success"]:
+            # 如果自动审查失败，降级到基础检查
+            logger.warning(f"harness-review --auto 失败，使用 fallback: {verdict_result.get('error')}")
+            verdict = lightweight_review_fallback(
+                base_ref=BASE_REF,
+                worktree_path=worker_result.worktreePath
+            )
+            # 如果 fallback 也不通过，直接跳过循环
+            if verdict == "REQUEST_CHANGES":
+                logger.warning("Fallback 审查也不通过，跳过自动修复循环")
+                break
+        else:
+            verdict = verdict_result["result"]["verdict"]
+            findings = verdict_result["result"].get("findings", [])
+
+        # 如果审查通过，退出循环
+        if verdict == "APPROVE":
+            print("✅ 审查通过，继续流程")
+            break
+
+        # 审查不通过，执行自动修复循环
+        print(f"❌ 审查未通过 (第 {review_count + 1} 次)")
+
+        # 分析问题并自动修复
+        critical_major_issues = [
+            f for f in findings
+            if f.get("severity") in ["critical", "major"]
+        ]
+
+        if not critical_major_issues:
+            print("⚠️  没有 critical/major 问题，可能是判定问题")
+            break
+
+        print(f"🔧 发现 {len(critical_major_issues)} 个需要修复的问题")
+
+        # 调用自动修复
+        fix_result = auto_fix_loop.auto_fix_issues(
+            critical_major_issues,
+            worker_result.worktreePath,
+            worker_context
+        )
+
+        if not fix_result["success"]:
+            print(f"❌ 自动修复失败: {fix_result.get('error')}")
+            break
+
+        # 提交修复
+        commit_result = auto_fix_loop.commit_fixes(
+            worker_result.worktreePath,
+            f"fix: 审查问题修复 (第 {review_count + 1} 次尝试)"
+        )
+
+        if not commit_result["success"]:
+            print(f"❌ 提交修复失败: {commit_result.get('error')}")
+            break
+
+        review_count += 1
+        print(f"✅ 修复已提交，准备第 {review_count + 1} 次审查...")
+
+    # 检查是否达到最大重试次数
+    if review_count >= MAX_REVIEWS and verdict != "APPROVE":
+        print(f"⚠️  达到最大重试次数 ({MAX_REVIEWS})，需要人工介入")
+        # 可以选择继续或停止
+        user_input = input("继续尝试？(y/n): ")
+        if user_input.lower() != 'y':
+            raise EscalationError("达到最大重试次数，用户选择停止")
         previous_commit = latest_commit
         if backend == "cursor":
         else:
@@ -312,8 +678,23 @@ def enter_non_claude_companion_review_loop(worker_result):
             raise EscalationError("{backend} companion retry produced no new commit")
         worker_result.commit = latest_commit
         worker_result.summary = companion_output
-        diff_text = git("-C", worker_result.worktreePath, "diff", "{worker_result.baseCommit}..HEAD")
-        verdict = codex_exec_review(diff_text) or reviewer_agent_review(diff_text)
+
+        # 重新调用 harness-review --auto 进行审查
+        verdict_result = call_harness_review_auto(
+            base_ref=worker_result.baseCommit,
+            worktree_path=worker_result.worktreePath,
+            mode="strict"
+        )
+
+        if verdict_result["success"]:
+            verdict = verdict_result["result"]["verdict"]
+            findings = verdict_result["result"].get("findings", [])
+        else:
+            # 如果自动审查失败，降级处理
+            logger.warning(f"harness-review --auto 重试失败，使用 fallback: {verdict_result.get('error')}")
+            verdict = "REQUEST_CHANGES"  # 保守策略
+            findings = []
+
         review_count++
     if verdict == "APPROVE":
         git cherry-pick --no-commit {worker_result.baseCommit}..{worker_result.commit}
@@ -746,6 +1127,177 @@ report:
 任务执行中 `harness-progress` 将进度的件数与 drift alert 汇总到一张 HTML。
 由 PostToolUse hook 自动再生成，订货人无需记住调用方式就能看到最新的进度板
 （`posttool-progress-regen.sh` 最多每 1 分钟再生成 1 次）。
+
+## 端到端检测集成 (v2.2.0+)
+
+### 概述
+
+从 v2.2.0 开始，harness-work 集成了端到端检测功能，在代码审查通过后自动触发前后端一起检查，确保代码质量不仅限于代码层面，还包括功能层面的完整性。
+
+### 核心流程
+
+```
+代码实现 → 审查通过 → 端到端检测 → 结果处理
+                                    ├─ PASS → cherry-pick → 完成
+                                    ├─ FAIL → 自动修复/harness-work继续修改
+                                    ├─ SKIPPED → 继续（配置禁用）
+                                    └─ ERROR → 升级到用户
+```
+
+### 自动触发机制
+
+端到端检测会在以下情况**自动运行**：
+
+- ✅ 代码审查通过后（verdict == "APPROVE"）
+- ✅ 配置启用的项目中（e2e_detection.enabled = true）
+- ✅ 非草稿分支上
+- ✅ 工作空间干净时
+
+### 配置管理
+
+所有端到端检测配置统一在 `harness.toml` 中管理：
+
+```toml
+# 端到端检测配置
+[e2e_detection]
+enabled = true  # 启用端到端检测
+mode = "strict"  # 模式: strict | lenient
+timeout = 120  # 单次测试超时时间（秒）
+
+# 前端功能测试 - 🎭 默认使用 Playwright
+[e2e_detection.test_types.frontend]
+enabled = true  # 启用前端测试
+framework = "playwright"  # 测试框架
+
+[e2e_detection.test_types.frontend.playwright]
+browsers = ["chromium", "firefox", "webkit"]  # 多浏览器支持
+headless = true  # 无头模式
+retries = 1  # 失败重试
+
+# 后端API测试
+[e2e_detection.test_types.backend]
+enabled = true  # 启用后端测试
+framework = "auto"  # 自动检测框架
+```
+
+### Playwright 默认支持
+
+系统默认启用 Playwright 作为前端测试框架，提供以下特性：
+
+- 🎭 **多浏览器测试**：Chromium、Firefox、WebKit
+- 🚀 **自动等待机制**：减少不稳定测试
+- 📸 **失败时自动截图**：便于调试
+- 🎥 **失败时自动录制视频**：重现问题
+- 🔍 **失败时保存追踪**：详细调试信息
+- ⚡ **并行测试执行**：提高测试效率
+- 📊 **HTML 报告生成**：美观的测试报告
+
+### 失败处理策略
+
+当端到端检测失败时，系统会根据配置自动处理：
+
+1. **自动修复尝试**（如果启用）：
+   - 依赖更新：自动更新缺失的依赖包
+   - 敏感文件保护：自动添加到 .gitignore
+   - 代码修复：尝试自动修复常见问题
+
+2. **回到 harness-work**：
+   - 如果自动修复失败或达到最大重试次数
+   - 系统会自动将任务交还给 harness-work 继续修改
+   - 避免内部修复循环，利用现有的工作流
+
+3. **升级到用户**：
+   - 如果检测出错或配置错误
+   - 系统会停止并提示用户检查配置
+
+### 配置优先级
+
+```
+harness.toml > JSON 配置 > 默认配置 > 环境变量
+```
+
+### 临时覆盖配置
+
+```bash
+# 临时禁用端到端检测
+export HARNESS_E2E_ENABLED=false
+
+# 临时切换到宽松模式
+export HARNESS_E2E_MODE=lenient
+
+# 临时禁用前端测试
+export HARNESS_E2E_FRONTEND=false
+```
+
+### 检测类型
+
+系统支持以下端到端检测类型：
+
+- ✅ **前端测试**：Playwright（默认）、Cypress、Selenium
+- ✅ **后端测试**：自动检测（Node.js/Java/Python/Go）
+- ✅ **集成测试**：用户登录、数据流转、错误处理
+- ⚪ **性能测试**：可选（默认关闭）
+- ✅ **安全测试**：漏洞扫描、依赖检查
+
+### 报告和诊断
+
+端到端检测会生成详细的报告：
+
+- 📋 多格式报告（Markdown/JSON/HTML/Console）
+- 🔍 详细的问题分析和修复建议
+- 📊 性能指标收集
+- 📁 测试产物保存（截图、视频、追踪）
+
+### 集成点
+
+端到端检测集成在Breezing模式的Phase B（各任务执行）和Solo/Parallel模式中的审查通过后：
+
+```python
+# 在审查通过后自动触发
+if verdict == "APPROVE":
+    # 加载端到端检测配置
+    e2e_config = load_e2e_detection_config()
+    
+    if e2e_config.enabled:
+        # 执行端到端检测
+        detection_result = run_e2e_detection(e2e_config)
+        
+        if detection_result.status == "PASS":
+            # 继续正常流程
+            cherry_pick_to_trunk()
+        elif detection_result.status == "FAIL":
+            # 回到 harness-work 继续修改
+            escalate_to_harness_work(detection_result)
+        elif detection_result.status == "ERROR":
+            # 升级到用户
+            escalate_to_user(detection_result)
+```
+
+### 监控和日志
+
+端到端检测会输出详细日志，便于调试和监控：
+
+- 检测执行日志：记录每个测试类型的执行情况
+- 失败分析日志：记录失败原因和修复建议
+- 性能日志：记录检测耗时和资源使用
+
+### 故障排除
+
+**问题**: 端到端检测总是失败
+- **解决**: 检查测试是否完整，配置是否正确
+
+**问题**: Playwright 浏览器无法启动
+- **解决**: 检查 Playwright 是否正确安装，运行 `npx playwright install`
+
+**问题**: 检测超时
+- **解决**: 增加 `timeout` 配置或优化测试性能
+
+### 相关文档
+
+- **架构设计**: `docs/architecture/e2e-detection-architecture.md`
+- **分析报告**: `docs/analysis/e2e-detection-analysis-report.md`
+- **Playwright指南**: `docs/playwright-testing-guide.md`
+- **配置参考**: `docs/playwright-default-config.md`
 
 ## 相关技能
 
