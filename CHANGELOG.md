@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **🧠 智能执行模式推荐系统**: Phase 13 计划已添加到 Plans.md
+  - 任务数量：12 个任务（13.1-13.12）
+  - 核心功能：基于任务特征自动推荐 Solo/Parallel/Breezing 执行模式
+  - 预期特性：
+    - 智能任务分析（数量、复杂度、依赖关系、审查需求）
+    - 透明决策过程（推荐理由、置信度评分）
+    - 自动确认机制（高置信度自动应用）
+    - 学习能力（历史推荐效果优化）
+    - CLI 集成（--auto-mode 参数支持）
+  - 预估工作量：4-5 天
+  - 优先级：高优先级，解决用户模式选择困惑
+- **📖 Task 13.11 文档更新**: 更新 harness-work SKILL.md
+  - 新增「智能执行模式推荐系统」完整章节（约 200 行）
+  - 包含工作原理、评分规则、置信度机制、用户交互、学习与缓存、API 使用
+  - 更新 Quick Reference 表格添加 `--auto-mode` 行
+  - 更新 Options 表格中 `--auto-mode` 说明
+  - 更新 Progressive Disclosure 表格添加智能推荐参考链接
+  - 创建设计规格文档 `docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md`
+- **📖 Task 13.12 文档更新**: 更新用户文档和 README
+  - 在 README.md 中添加智能执行模式推荐系统功能介绍（约 100 行）
+  - 在 README_EN.md 中添加英文版功能介绍（约 100 行）
+  - 创建用户指南 `docs/user-guides/smart-mode-recommendation-guide.md`
+  - 更新核心价值列表和当前状态
+
 ## [5.1.0-java] - 2026-08-10 (Phase 12: 智能模型选择系统)
 
 ### Added
