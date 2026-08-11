@@ -9,8 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Review command handler.
- * Reviews completed work tasks.
+ * Review command handler with E2E detection integration (placeholder).
+ *
+ * Reviews completed work tasks and triggers end-to-end detection after approval.
+ *
+ * @since 2.2.0 - Added E2E detection integration (stub implementation)
  */
 public class ReviewHandler implements CommandHandler {
     private static final Logger logger = LoggerFactory.getLogger(ReviewHandler.class);
@@ -20,6 +23,7 @@ public class ReviewHandler implements CommandHandler {
         try {
             // Get working directory from system property or default to current directory
             String workDir = System.getProperty("java.harness.work.dir", ".");
+            Path projectRoot = Paths.get(workDir);
 
             // Read Plans.md if it exists
             Path plansPath = Paths.get(workDir, "Plans.md");
@@ -60,6 +64,13 @@ public class ReviewHandler implements CommandHandler {
             prompt.append("- [ ] Tests pass and coverage adequate\n");
             prompt.append("- [ ] Documentation updated\n");
             prompt.append("- [ ] No regressions introduced\n");
+
+            // Add E2E detection notice (when fully implemented)
+            prompt.append("\n⚠️ **E2E Detection**: After review approval (APPROVE), ");
+            prompt.append("end-to-end detection will be automatically triggered to verify functionality.\n");
+            prompt.append("If E2E detection fails, the work will be returned to harness-work for fixes.\n");
+            prompt.append("\n🔧 **Current Status**: E2E detection Java implementation in progress...");
+            prompt.append("\n   Full integration available after Java classes compilation fixes.\n");
 
             System.out.println(prompt.toString());
 
