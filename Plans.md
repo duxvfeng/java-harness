@@ -499,33 +499,136 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 
 ---
 
+## Phase 13: 智能执行模式推荐系统（执行流程协调优化）🆕
+
+### 📋 需求说明
+
+本 Phase 为 Java Harness 添加智能执行模式推荐系统，解决用户在 Solo/Parallel/Breezing 模式选择上的困惑：
+- **智能分析**：基于任务特征自动推荐最优执行模式
+- **透明决策**：提供推荐理由和置信度，让用户理解为什么选择该模式
+- **自动确认**：高置信度推荐自动应用，减少用户决策负担
+- **学习能力**：记录历史推荐效果，持续优化推荐算法
+- **CLI 集成**：与 `--auto-mode` 参数无缝集成
+
+### 事前确认章节
+
+**Phase 13 涉及核心组件实现和技能修改，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: 创建新的 Java 模型类和配置文件
+  - **理由**: Task 13.1-13.2 需要创建执行模式枚举、任务特征数据类、推荐配置
+  - **scope**: Phase 13 / Task 13.1-13.2
+
+- **事项**: 修改现有技能文件
+  - **理由**: Task 13.7, 13.11 需要修改 harness-work SKILL.md 和相关技能文件
+  - **scope**: Phase 13 / Task 13.7, 13.11
+
+- **事项**: 创建新测试文件和配置
+  - **理由**: Task 13.9-13.10 需要创建单元测试、集成测试和测试数据
+  - **scope**: Phase 13 / Task 13.9-13.10
+
+#### 说明
+- 所有代码修改仅限于项目现有模块结构内
+- 技能文件修改遵循现有技能规范
+- 测试文件创建不影响现有功能
+- 配置文件采用标准的 TOML/JSON 格式
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 13.1 | 创建执行模式枚举和数据模型 `[tdd:required]` | 实现 ExecutionMode 枚举，定义 SOLO/PARALLEL/BREEZING，创建 TaskCharacteristics、ModeRecommendation 数据类 | 所有数据类包含必要字段，JSON 序列化正常，单元测试通过 | - | cc:完成 ✅ 2026-08-11 |
+| 13.2 | 实现任务特征分析器 `[tdd:required]` | 创建 TaskAnalyzer 类，分析任务数量、复杂度、依赖关系、审查需求 | 分析逻辑正确，能识别各种任务特征，测试覆盖率 > 80% | 13.1 | cc:TODO |
+| 13.3 | 实现智能评分算法 `[tdd:required]` | 创建 ModeScorer 类，实现针对三种模式的评分算法，包含权重配置 | 评分算法正确，推荐结果符合预期，可配置权重参数 | 13.2 | cc:TODO |
+| 13.4 | 实现推荐生成器 `[tdd:required]` | 创建 RecommendationGenerator 类，生成推荐、解释理由、备选方案 | 推荐生成完整，解释清晰合理，置信度计算准确 | 13.3 | cc:TODO |
+| 13.5 | 创建 ModeRecommender 核心引擎 `[tdd:required]` | 整合 TaskAnalyzer、ModeScorer、RecommendationGenerator，提供统一的推荐接口 | 核心引擎工作正常，API设计清晰，单元测试通过 | 13.4 | cc:TODO |
+| 13.6 | 实现用户交互组件 `[tdd:required]` | 创建 ModeAdvisor 类，实现推荐展示、用户确认机制、交互式模式助手 | 用户交互流畅，推荐展示美观，确认机制正确 | 13.5 | cc:TODO |
+| 13.7 | 集成到 harness-work 执行流程 `[tdd:required]` | 修改 harness-work SKILL.md，在 Phase A 前调用 ModeRecommender，添加 --auto-mode 参数 | 集成点正确，与现有流程兼容，自动选择机制工作 | 13.6 | cc:TODO |
+| 13.8 | 实现缓存和学习机制 `[tdd:required]` | 创建推荐缓存、历史学习、性能优化机制，提升推荐速度和准确性 | 缓存命中率 > 60%，学习机制有效，性能达标 | 13.5 | cc:TODO |
+| 13.9 | 编写单元测试 `[tdd:required]` | 为所有核心组件编写单元测试，覆盖推荐逻辑、边界条件、错误处理 | 测试覆盖率 > 80%，所有核心逻辑有测试 | 13.8 | cc:TODO |
+| 13.10 | 编写集成测试 `[tdd:required]` | 测试推荐系统与 harness-work 的完整集成，验证推荐准确性和执行协调性 | 集成测试覆盖所有场景，推荐准确率 > 85%，测试通过 | 13.9 | cc:TODO |
+| 13.11 | 更新 harness-work SKILL.md 文档 `[tdd:skip:docs-only]` | 在 SKILL.md 中添加智能推荐说明，更新 Phase A 流程，添加使用示例 | 文档完整，包含推荐机制说明、流程图、使用指南 | 13.10 | cc:TODO |
+| 13.12 | 更新用户文档和 README `[tdd:skip:docs-only]` | 在 README.md 中添加智能模式推荐功能介绍，创建使用指南 | 用户能理解推荐功能，会使用自动模式，文档验证通过 | 13.11 | cc:TODO |
+
+---
+
+## 实施说明
+
+### 🎯 主要特点
+
+1. **智能推荐**：基于任务特征自动推荐最优执行模式
+2. **透明决策**：提供详细推荐理由和置信度评分
+3. **自动确认**：高置信度推荐自动应用，减少用户决策负担
+4. **学习能力**：记录历史推荐效果，持续优化算法
+5. **CLI 集成**：与 `--auto-mode` 参数无缝集成
+
+### 📊 工作范围
+
+- **新增文件**：
+  - `java-harness-workflow/src/main/java/com/chachamaru/harness/mode/` 完整包结构
+  - `java-harness-workflow/src/main/java/com/chachamaru/harness/model/` 扩展数据模型
+  - `docs/user-guides/smart-mode-selection-guide.md` 用户指南
+  
+- **修改文件**：
+  - `skills/harness-work/SKILL.md` 添加智能推荐流程
+  - `README.md` 添加智能模式推荐功能说明
+  - `CHANGELOG.md` 记录 Phase 13 变更
+
+### 🔧 技术架构
+
+- **核心组件**：ModeRecommender、TaskAnalyzer、ModeScorer、RecommendationGenerator
+- **数据模型**：ExecutionMode、TaskCharacteristics、ModeRecommendation
+- **用户交互**：ModeAdvisor、推荐展示、确认机制
+- **性能优化**：推荐缓存、历史学习、权重配置
+
+### 🚀 性能目标
+
+- 推荐生成时间：< 50ms
+- 任务分析时间：< 100ms
+- 置信度计算：< 10ms
+- 内存占用：< 5MB
+- 推荐准确率：> 85%
+
+### 🔄 与现有系统集成
+
+- **与 harness-work 集成**：在 Phase A 前调用 ModeRecommender
+- **与执行模式兼容**：支持 Solo/Parallel/Breezing 三种模式
+- **与配置系统集成**：支持 harness.toml 配置权重参数
+- **向后兼容**：不影响现有显式模式选择功能
+
+---
+
 ## 实现计划总览
 
 ### 完成状态
 - **已完成 Phases**: 1-7, 9 (文档重建 + 双平台支持 + 多语言规范)
 - **进行中**: Phase 8 (Codex 实现完善)
-- **待开始**: Phase 10 (智能分支隔离检测), Phase 11 (会话保存和恢复系统), Phase 12 (端到端前后端集成检测功能)
+- **待开始**: Phase 10 (智能分支隔离检测), Phase 11 (会话保存和恢复系统), Phase 12 (端到端前后端集成检测功能), Phase 13 (智能执行模式推荐系统)
 
 ### 优先级建议
-1. **Phase 12** (端到端前后端集成检测功能) - 高优先级，提升代码质量保证
-2. **Phase 11** (会话保存和恢复系统) - 高优先级，解决用户实际问题
-3. **Phase 10** (智能分支隔离检测) - 中优先级，改进用户体验
-4. **Phase 8** (Codex 实现完善) - 低优先级，可选功能
+1. **Phase 13** (智能执行模式推荐系统) - 高优先级，解决用户模式选择困惑
+2. **Phase 12** (端到端前后端集成检测功能) - 高优先级，提升代码质量保证
+3. **Phase 11** (会话保存和恢复系统) - 高优先级，解决用户实际问题
+4. **Phase 10** (智能分支隔离检测) - 中优先级，改进用户体验
+5. **Phase 8** (Codex 实现完善) - 低优先级，可选功能
 
 ### 预估工作量
 - **Phase 8**: 2-3 天 (配置生成和集成测试)
 - **Phase 10**: 4-5 天 (分支检测、用户交互、集成测试)
 - **Phase 11**: 5-7 天 (完整会话管理系统，包含 13 个任务)
-- **Phase 12**: 5-6 天 (端到端检测功能，包含 11 个任务)
+- **Phase 12**: 5-6 天 (端到端检测功能，包含 12 个任务)
+- **Phase 13**: 4-5 天 (智能模式推荐系统，包含 12 个任务)
 
 ---
 
 ## 下一步行动
 
 **推荐执行顺序**:
-1. 完成 **Phase 12** (端到端前后端集成检测功能) - 提升代码质量保证，高优先级
-2. 完成 **Phase 11** (会话保存和恢复系统) - 解决最紧迫的 context 满问题
-3. 完成 **Phase 10** (智能分支隔离检测) - 改进分支安全性
-4. 可选完成 **Phase 8** (Codex 实现完善) - 扩展平台支持
+1. 完成 **Phase 13** (智能执行模式推荐系统) - 解决模式选择困惑，最高优先级
+2. 完成 **Phase 12** (端到端前后端集成检测功能) - 提升代码质量保证
+3. 完成 **Phase 11** (会话保存和恢复系统) - 解决最紧迫的 context 满问题
+4. 完成 **Phase 10** (智能分支隔离检测) - 改进分支安全性
+5. 可选完成 **Phase 8** (Codex 实现完善) - 扩展平台支持
 
-**启动方式**: 使用 `/harness-work` 或 `/breezing` 开始实施 Phase 12
+**启动方式**: 使用 `/harness-work` 或 `/breezing` 开始实施 Phase 13
