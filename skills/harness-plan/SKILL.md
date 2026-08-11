@@ -326,6 +326,54 @@ co-required planning output 意味着必须输出两者，precedence 仍维持 `
 
 任务以 `cc:TODO` 标记添加。
 
+### add 完成时的下一步指引（必須）
+
+`add` 完成后，不要仅报告"已添加"，**必须**同时提示 **接下来可直接输入的命令**。
+与 `create` 的会话启动指引同源，区别在于 `add` 通常在当前会话内继续，因此以
+**当前会话的下一条输入** 为主，长时任务才并记新会话启动命令。
+
+至少包含以下 2 行:
+
+- `下一步输入:`
+- `适用场景:`
+
+优先顺序如下:
+
+1. 新任务的 Depends 已全部满足，且只添加了 1 个任务
+   - 下一步输入: `/harness-work <新task编号>`
+   - 适用场景: 依赖已解除，可立即实现
+2. 一次添加了多个依赖薄弱的任务
+   - 下一步输入: `/breezing all`
+   - 替代: `/harness-work all`
+3. 新任务的 Depends 尚未完成
+   - 下一步输入: `/harness-plan sync`
+   - 适用场景: 先确认阻塞任务的实际状态，再决定实现顺序
+   - 同时明示阻塞任务编号，不让用户自己去表里找
+4. 长时间运行或跨 resume 前提
+   - 新会话的启动命令: `ENABLE_PROMPT_CACHING_1H=1 claude`
+   - 下一步输入: `/harness-loop all`
+
+示例:
+
+```text
+已添加: Task 12.13 [lane:gate] cc:TODO (Depends: 12.6)
+下一步输入: /harness-work 12.13
+适用场景: Depends 的 12.6 已 cc:完成，可立即开始实现
+```
+
+```text
+已添加: Task 10.14, 10.15 cc:TODO (Depends: 10.13)
+下一步输入: /harness-plan sync
+适用场景: Depends 的 10.13 仍为 cc:TODO，先确认 Phase 10 的实际进度
+```
+
+追加规则:
+
+- product-impacting 的 `add` 中，`Spec delta` 未获批准前不要提示 `/harness-work`。
+  此时下一步输入固定为"批准 Spec delta"，实现命令在批准后再提示
+- 事前确认章节有未批准事项时同样处理。先获得批准，再提示实现命令
+- 影响非工程师判断的追加，一并提议 `/harness-plan-brief`
+
 ### update — 标记更新
 
 更改任务的状态标记。
