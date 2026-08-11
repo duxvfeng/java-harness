@@ -5,11 +5,6 @@ on:
     branches:
       - main
       - master
-      - feature/**
-    paths:
-      - 'java-harness-cli/src/**'
-      - 'pom.xml'
-      - '.github/workflows/build-native.yml'
   workflow_dispatch:
     inputs:
       create_release:
@@ -29,16 +24,14 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: arm64
-          # ✅ 长期方案：在 Apple Silicon 运行器上交叉编译 Intel 二进制
-          - os: macos-latest
+          # macOS Intel - 使用原生 Intel 运行器
+          - os: macos-15-intel
             platform: darwin
             arch: amd64
-            native_target: 'x86_64'   # 关键：指定 Intel 目标
-          # Apple Silicon 原生构建
+          # macOS ARM - 使用原生 Apple Silicon 运行器
           - os: macos-latest
             platform: darwin
             arch: arm64
-            native_target: 'arch64'  # 关键：指定 ARM 目标
           - os: windows-latest
             platform: windows
             arch: amd64
@@ -79,27 +72,17 @@ jobs:
         shell: bash
         run: |
           cd java-harness-cli
-          # 关键：通过 -Dnative-image.target 指定目标架构
-          # 对于 darwin-amd64 (Intel)，target 为 x86_64
-          # 对于 darwin-arm64 (Apple Silicon)，target 为 arch64
-          if [ -n "${{ matrix.native_target }}" ]; then
-            mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B \
-              -Dnative-image.target=${{ matrix.native_target }}
-          else
-            # Linux 和 Windows 保持原有方式
-            mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
-          fi
+          # 每个运行器原生构建自身架构，无需任何 target 参数
+          mvn -Pnative package -DskipTests -Dmaven.test.skip=true -B
 
       - name: 📋 复制构建产物（扁平化结构）
         shell: bash
         run: |
           mkdir -p bin
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            # Windows: harness-windows-amd64.exe
             TARGET_FILE="bin/harness-windows-amd64.exe"
             SOURCE_FILE="java-harness-cli/target/harness.exe"
           else
-            # Unix: harness-{platform}-{arch}
             TARGET_FILE="bin/harness-${{ matrix.platform }}-${{ matrix.arch }}"
             SOURCE_FILE="java-harness-cli/target/harness"
           fi
@@ -242,7 +225,7 @@ jobs:
             ### 压缩包内容：
             - `harness-linux-amd64` - Linux AMD64 (x86_64)
             - `harness-linux-arm64` - Linux ARM64 (arch64)
-            - `harness-darwin-amd64` - macOS Intel (x86_64) **（通过交叉编译构建）**
+            - `harness-darwin-amd64` - macOS Intel (x86_64) **（原生构建）**
             - `harness-darwin-arm64` - macOS Apple Silicon (arm64)
             - `harness-windows-amd64.exe` - Windows (x86_64)
 
@@ -256,4 +239,4 @@ jobs:
 
             # 运行
             ./harness-linux-amd64 --version
-            # Windows 直接运行 .exe# Updated at Mon Aug 10 16:23:18     2026
+            # Windows 直接运行 .exe
