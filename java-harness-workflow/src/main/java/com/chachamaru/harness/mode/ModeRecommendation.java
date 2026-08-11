@@ -1,5 +1,6 @@
 package com.chachamaru.harness.mode;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,7 +18,12 @@ public record ModeRecommendation(
     double confidence,
     String reason,
     List<ExecutionMode> alternativeModes
-) {
+) implements Serializable {
+
+    /**
+     * 序列化版本UID
+     */
+    private static final long serialVersionUID = 1L;
     /**
      * 验证推荐结果的有效性
      * @return true 如果推荐结果有效，否则 false

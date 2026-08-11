@@ -40,6 +40,7 @@ Harness 的集成执行技能。
 | `/harness-work --isolate-branch` | **branch-iso** | 在隔离分支执行，测试通过后合并 |
 | Cursor host (adapter candidate) | cursor | Task/subagent routing via `.cursor/AGENTS.md`; not auto-selected |
 | `/harness-work --breezing` | breezing | 强制团队执行 |
+| `/harness-work --auto-mode` | **智能推荐** | 基于任务特征智能推荐模式，高置信度自动应用 |
 | `/harness-work 3 --plan roadmap` | solo | 从名为 Plans 的 `roadmap` 执行任务3 |
 
 ## Execution Mode Auto Selection（无标志时的自动判定）
@@ -58,6 +59,202 @@ Harness 的集成执行技能。
 1. **明确标志始终覆盖自动模式**（`--parallel N` / `--breezing` / `--codex` 与任务数无关强制执行）
 2. **`--codex` 仅在明确时触发**。因存在 Codex CLI 未安装的环境，不自动选择
 3. `--codex` 可与其他模式组合: `--codex --breezing` → Codex + Breezing
+
+## 智能执行模式推荐系统（Smart Mode Recommendation）
+
+**Purpose**: 通过分析任务特征自动推荐最优执行模式，消除用户在 Solo/Parallel/Breezing 选择上的困惑。
+
+### 核心价值
+
+- **智能分析**: 基于任务数量、复杂度、依赖关系、审查需求四维度自动评估
+- **透明决策**: 提供推荐理由和置信度评分，让用户理解选择依据
+- **自动确认**: 高置信度推荐自动应用，减少决策负担
+- **学习能力**: 记录用户反馈，持续优化推荐算法
+
+### 工作原理（三步流水线）
+
+```
+任务描述 + 变更文件
+       ↓
+  [1. TaskAnalyzer] → TaskCharacteristics (taskCount, complexity, dependencies, reviewNeed)
+       ↓
+  [2. ModeScorer]   → ModeScores (soloScore, parallelScore, breezingScore)
+       ↓
+  [3. RecommendationGenerator] → ModeRecommendation (mode, confidence, reason, alternatives)
+```
+
+#### Step 1: 任务特征分析（TaskAnalyzer）
+
+从任务描述和变更文件中提取四维特征：
+
+| 特征 | 枚举值 | 说明 |
+|------|--------|------|
+| taskCount | int | 任务数量 |
+| complexity | SIMPLE / MODERATE / COMPLEX / VERY_COMPLEX | 复杂度等级 |
+| dependencies | INDEPENDENT / SEQUENTIAL / MIXED | 依赖关系类型 |
+| reviewNeed | NONE / OPTIONAL / REQUIRED | 审查需求 |
+
+#### Step 2: 加权评分（ModeScorer）
+
+对三种模式分别计算匹配度评分（0.0-1.0），默认权重：
+
+| 维度 | 权重 | 说明 |
+|------|------|------|
+| 任务数量 | 35% | 任务数越多，越倾向并行/团队模式 |
+| 复杂度 | 35% | 复杂度越高，越倾向团队模式 |
+| 依赖关系 | 20% | 依赖越复杂，越需要协调 |
+| 审查需求 | 10% | 审查需求越高，越需要独立 Reviewer |
+
+各模式的最优特征：
+- **SOLO**: 1 任务、低复杂度、独立、无需审查
+- **PARALLEL**: 2-4 任务、中等复杂度、独立、可选审查
+- **BREEZING**: 6+ 任务、高复杂度、混合依赖、必须审查
+
+#### Step 3: 推荐生成（RecommendationGenerator）
+
+基于评分差异计算置信度：
+
+| 评分差距 | 置信度范围 | 说明 |
+|----------|-----------|------|
+| ≥0.4 | 0.85-1.0 | 差异很大，高置信度 |
+| ≥0.2 | 0.70-0.85 | 差异明显，中高置信度 |
+| ≥0.05 | 0.55-0.70 | 差异较小，中等置信度 |
+| <0.05 | 0.40-0.55 | 差异很小，低置信度 |
+
+### 置信度与自动确认机制
+
+| 置信度 | 行为 | 用户交互 |
+|--------|------|----------|
+| **≥80%** | 自动应用 | 显示推荐，自动执行 |
+| **70%-80%** | 推荐确认 | 显示推荐，用户确认 [Y/n] |
+| **<70%** | 多选项 | 显示选择菜单供用户决定 |
+
+### 复杂度评分规则
+
+TaskAnalyzer 从任务描述和变更文件中计算复杂度分数（0-10）：
+
+| 因素 | 条件 | 分数 |
+|------|------|------|
+| 任务数量 | >=2 个 | +1 |
+| 任务数量 | >=4 个 | +2 |
+| 文件数量 | >=3 个 | +1 |
+| 文件数量 | >=5 个 | +2 |
+| 核心目录 | 路径包含 `core/` | +3 |
+| 安全目录 | 路径包含 `security/`、`guardrails/` | +3 |
+| 架构/迁移 | 包含 architecture、migration 关键字 | +8 |
+| 超高风险 | 包含 refactor、database、schema | +5 |
+| 高风险 | 包含 design、security | +2 |
+| 失败历史 | agent memory 中有失败记录 | +3 |
+| 显式指定 | `effort: low/medium/high/xhigh` | 直接映射 |
+
+复杂度等级映射：>=7 VERY_COMPLEX, >=3 COMPLEX, >=1 MODERATE, else SIMPLE
+
+### 用户交互（ModeAdvisor）
+
+ModeAdvisor 提供丰富的交互体验：
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║            🤖 智能执行模式推荐                                    ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📊 推荐模式: BREEZING
+🎯 置信度:   85.0% (0.85)
+
+💡 推荐理由:
+   推荐使用 BREEZING 模式执行，因为有 6 个任务需要团队协作，
+   任务较为复杂，需要严格的代码审查。
+   BREEZING 模式通过 Lead/Worker/Reviewer 角色分离，
+   可以有效协调复杂任务，保证代码质量。
+
+⭐ 强烈推荐 - 该模式最适合当前任务特征
+
+🔄 备选方案: [PARALLEL]
+```
+
+置信度强度指示：
+- ⭐ 强烈推荐（≥85%）— 高度匹配
+- ✅ 推荐（70%-85%）— 较好选择
+- 💭 建议（50%-70%）— 可考虑
+- 🤔 可选（<50%）— 多种模式可行
+
+### 学习与缓存
+
+#### 推荐缓存（RecommendationCache）
+
+- LRU 缓存，默认 100 条
+- 以 (tasks, files) 为 key 缓存推荐结果
+- 避免重复计算，提升响应速度
+
+#### 自适应学习（AdaptiveLearner）
+
+- 记录用户的接受/拒绝反馈
+- 学习率衰减：<10 条反馈 0.3，<50 条 0.1，50+ 条 0.05
+- `isWellLearned` 标记：50+ 条反馈时生效
+- 存储路径：`.claude/mode-learning/user-feedback.dat`
+
+#### 权重优化（WeightOptimizer）
+
+- 根据用户偏好自动调整评分权重
+- 偏好检测：5+ 次选择且某模式占比 >60% 时识别为强偏好
+- 权重向用户偏好模式倾斜后归一化
+
+### 配置方式
+
+#### 权重自定义（代码方式）
+
+```java
+ScoringWeights weights = ScoringWeights.builder()
+    .taskCountWeight(0.40)      // 提高任务数量权重
+    .complexityWeight(0.30)     // 调整复杂度权重
+    .dependencyWeight(0.20)     // 保持依赖关系权重
+    .reviewRequirementWeight(0.10) // 保持审查需求权重
+    .build();
+
+ModeRecommender recommender = new ModeRecommender(weights);
+```
+
+#### 缓存配置
+
+```java
+RecommendationCache cache = new RecommendationCache(200); // 200 条缓存
+```
+
+#### 学习数据存储
+
+```java
+LearningPersistence persistence = new LearningPersistence(".claude/mode-learning");
+```
+
+### API 使用
+
+```java
+// 基本推荐
+ModeRecommender recommender = new ModeRecommender();
+ModeRecommendation rec = recommender.recommend(tasks, files);
+
+// 带失败历史
+ModeRecommendation rec = recommender.recommend(tasks, files, true);
+
+// 完整 API（含显式 effort）
+ModeRecommendation rec = recommender.recommend(tasks, files, false, "high");
+
+// 带调试信息
+RecommendationResult result = recommender.recommendWithDebugInfo(tasks, files);
+// result.recommendation() — 推荐结果
+// result.characteristics() — 任务特征
+// result.scores() — 评分详情
+
+// 快速推荐（仅返回模式）
+ExecutionMode mode = recommender.quickRecommend(tasks, files);
+
+// 自动确认判断
+if (recommender.shouldAutoApply(rec)) {
+    // 自动应用推荐
+} else if (recommender.requiresUserConfirmation(rec)) {
+    // 需要用户确认
+}
+```
 
 ## Branch Isolation Mode（分支隔离模式）
 
@@ -167,7 +364,7 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 | `--no-tdd` | 跳过 TDD 阶段 | false |
 | `--tdd-bypass` | 仅在紧急情况下绕过 TDD 强制。将 `HARNESS_TDD_BYPASS_REASON` 或明确理由保留在 audit 中 | false |
 | `--no-simplify` | 跳过 Auto-Refinement | false |
-| `--auto-mode` | 明确 Harness 侧的 Auto Mode rollout。与在 CC 2.1.111 中已不需要的 `--enable-auto-mode` 不同 | false |
+| `--auto-mode` | 启用智能执行模式推荐。基于任务特征自动推荐 Solo/Parallel/Breezing，高置信度时自动应用。同时也是 CC Auto Mode rollout 的 opt-in 标志 | false |
 | `--isolate-branch` | 启用分支隔离模式。任务执行前自动创建 feature 分支，测试通过后合并回主分支 | false |
 | `--no-merge` | 与 `--isolate-branch` 配合使用，完成测试后保留分支不自动合并 | false |
 | `--branch-name <name>` | 自定义分支名称（默认：feature/task-<id>-<timestamp>） | auto |
@@ -188,6 +385,8 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 | Solo / Breezing 完成报告的生成 | `references/completion-report.md` |
 | 测试/CI 失败时的重新票决命令 | `references/failure-reticketing.md` |
 | 规格权威版本检查的基准 | `docs/plans/spec-ssot.md` |
+| **智能执行模式推荐、评分算法、学习机制** | 本文件「智能执行模式推荐系统」章节 |
+| 智能推荐的设计规格 | `docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md` |
 
 ### 重要停止条件
 
