@@ -445,6 +445,53 @@ co-required planning output 意味着必须输出两者，precedence 仍维持 `
 | `blocked` | `blocked` |
 | `TODO` | `cc:TODO` |
 
+### list — 列出命名计划
+
+一览 `plans/manifest.json` 或 `.claude/plans/registry.json` 的所有命名计划。
+
+```
+/harness-plan list
+```
+
+**实现步骤**:
+1. 检查计划注册表文件是否存在 (`.claude/plans/registry.json` 或 `plans/manifest.json`)
+2. 如果文件不存在，显示"没有注册的计划"并提示如何创建
+3. 读取并解析注册表 JSON 文件
+4. 格式化显示所有已注册的计划，包括：
+   - 计划名称 (name)
+   - 计划 ID (id)
+   - 计划文件路径 (file)
+   - 状态 (status)
+   - 创建时间 (created_at)
+   - 更新时间 (updated_at)
+5. 显示当前激活的计划 (active_plan)
+6. 提供下一步操作提示
+
+**输出格式**:
+
+```text
+## Registered Plans
+===================
+- main (ID: 20250111-main, Status: active)
+  File: Plans.md
+  Created: 2025-01-11T10:30:00Z
+
+- roadmap (ID: 20250110-roadmap, Status: active)
+  File: plans/roadmap.md
+  Created: 2025-01-10T15:20:00Z
+
+Active plan: 20250111-main
+```
+
+**错误处理**:
+- 如果注册表文件不存在：提示用户创建第一个计划或检查项目配置
+- 如果 JSON 解析失败：显示原始文件内容并提示格式错误
+- 如果 jq 工具不可用：提供原始 JSON 输出
+
+**可选操作**:
+- 使用 `scripts/plan/plan-registry.sh list` 作为底层实现
+- 支持过滤和排序选项（如 `--status active`、`--sort updated`）
+
 ### sync — 进度同步
 
 对照实现与 Plans.md，检测并更新差异（Plans.md 现状获取 → 格式检测 → git 状态获取 → agent trace 分析 → 差异检测 → 标记修正提案 → 下一步提示）。
