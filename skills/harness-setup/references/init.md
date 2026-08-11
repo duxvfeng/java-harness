@@ -32,7 +32,7 @@ project/
    - 配置 Playwright 等测试框架
    - 支持智能跳过逻辑
 5. 配置 hooks.json
-6. **Go 二进制验证**: 通过 `harness version` 确认二进制文件可用（v4.0 以后不需要 Node.js）
+6. **Java 二进制验证**: 通过 `harness version` 确认二进制文件可用（v4.0 以后不需要 Node.js）
 7. **插件文件同步**: 通过 `harness sync` 同步 `.claude-plugin/` 下的文件到最新版本
 8. **健康检查**: 通过 `harness doctor` 通过所有检查项，如有问题则提供修复方案
 
