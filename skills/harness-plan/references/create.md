@@ -62,7 +62,7 @@ Security gate 不要求实际读取 `.env` 或 secret。
 
 ## Lane taxonomy / stage gate / unknown data contract
 
-Fast / Gate / Release 不是新 skill，而是 **Plans metadata**（Content 或 DoD 开头的标签）。
+Fast / Gate / Release 与 kickoff / understand / tasking / pair / showcase / respond 都不是新 skill，而是 **Plans metadata**（Content 或 DoD 开头的标签）。
 5 column 模板不变。
 
 ### Lane taxonomy
@@ -73,6 +73,18 @@ Fast / Gate / Release 不是新 skill，而是 **Plans metadata**（Content 或 
 | `[lane:gate]` | spec / workflow / mirror / guardrail / 大部分功能实现 |
 | `[lane:release]` | public artifact / version / tag / GitHub Release |
 
+### Stage taxonomy
+
+| 标签 | 何时使用 | Skill 映射 |
+|------|---------|------------|
+| `[stage:kickoff]` | 需求刚进入，需对齐目标、用户、边界、Story Card / freeze gate | `harness-plan create`、`harness-plan-brief` |
+| `[stage:understand]` | 需要调研 spec、repo、memory、unknown data 或比较方案 | `harness-plan create`、`memory`、`harness-plan-brief` |
+| `[stage:tasking]` | 需要拆任务、确定 DoD / Depends、确认 formatter baseline、整理 Plans.md | `harness-plan create`、`harness-sync` |
+| `[stage:pair]` | 进入实现、TDD、测试修复、evidence collect / handoff | `harness-work`、`test-driven-development` |
+| `[stage:showcase]` | 需要 review、acceptance、演示、Quality Quadrants 分类 | `harness-review`、`harness-accept`、`requesting-code-review` |
+| `[stage:respond]` | 需要交付总结、状态同步、release / closeout、下一步建议 | `harness-work`、`harness-sync`、`harness-release` |
+
+`[stage:*]` 描述任务在 evidence-driven delivery loop 中的位置；`[lane:*]` 描述执行路径/风险。两者必须可以并存，不能用 stage 替代 lane。
 ### Stage gate
 
 planning output 按以下 5 个阶段结构化:
@@ -88,6 +100,13 @@ planning output 按以下 5 个阶段结构化:
 `not_observed != absent`。failed search / 未读 file / missing fixture / API unavailable 为 **`unknown`**。
 仅在 repo evidence 可确认时断定不存在。
 
+### Stage + lane examples（并存示例）
+
+```markdown
+| 1.1 | `[Contract]` `[stage:kickoff]` `[lane:gate]` `[tdd:skip:docs-contract]` Story Card freeze gate 定义 | spec.md 含 Story Card 边界与 freeze 条件 | - | cc:TODO |
+| 1.2 | `[Implementation]` `[stage:pair]` `[lane:gate]` `[tdd:required]` evidence writer 実装 | writer tests PASS、evidence.v1 JSON valid | 1.1 | cc:TODO |
+| 1.3 | `[Review]` `[stage:showcase]` `[lane:fast]` `[tdd:skip:review-only]` Quality Quadrants review | review artifact 含 Q1-Q4 分类 | 1.2 | cc:TODO |
+```
 ### Lane examples（最小示例）
 
 `[lane:fast]`:
@@ -504,3 +523,30 @@ Plans.md 输出后，为使用户不迷失下一步，
 2. cc:TODO 任务按优先级列表化
 3. 可并行任务附加 `[P]` 标记
 4. 提示下个执行任务
+
+## Story Card / Freeze Gate
+
+Before `harness-plan create` enters `understand`, it must produce a Story Card and explicitly decide whether the card is frozen. The freeze gate prevents implementation tasks from being split while the target, user, boundary, or acceptance evidence is still ambiguous.
+
+### Story Card template
+
+```markdown
+## Story Card
+
+- Story: [one-sentence user outcome]
+- User/Actor: [primary user, system, or operator]
+- Boundary: [included scope, excluded scope, and integration boundary]
+- Acceptance: [Given/When/Then criteria or other yes/no checks]
+- Evidence: [test, artifact, metric, or observation that proves acceptance]
+- Open Questions: [unresolved decisions; use `none` when empty]
+- Freeze Decision: `frozen` | `not frozen`
+- Next Stage: `understand` | `clarify`
+```
+
+### Freeze rules
+
+1. Align the Story, User/Actor, Boundary, Acceptance, and Evidence fields with the user before freezing.
+2. Record every unresolved decision in Open Questions; do not hide ambiguity inside implementation tasks.
+3. Enter `understand` only when `Freeze Decision: frozen` and `Next Stage: understand` are both explicit.
+4. When the card is not frozen, keep `Next Stage: clarify` and do not split implementation tasks in `Plans.md`.
+5. A later scope change reopens the gate and requires a new freeze decision before task decomposition continues.

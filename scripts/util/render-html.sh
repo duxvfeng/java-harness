@@ -55,6 +55,11 @@ ESTIMATED_TOTAL_MINUTES=$(echo "$DATA" | jq -r '.estimated_total_minutes')
 COST_SO_FAR=$(echo "$DATA" | jq -r '.cost_so_far_usd')
 COST_ESTIMATE=$(echo "$DATA" | jq -r '.cost_estimate_usd')
 GENERATED_AT=$(echo "$DATA" | jq -r '.generated_at')
+UPSTREAM_SPEED=$(echo "$DATA" | jq -r '.metrics.upstream_speed_tasks_per_hour // 0')
+DOWNSTREAM_BLOCKED_TASKS=$(echo "$DATA" | jq -r '.metrics.downstream_blocked_tasks // 0')
+DOWNSTREAM_BLOCKED_MINUTES=$(echo "$DATA" | jq -r '.metrics.downstream_blocked_minutes // 0')
+PROCESS_TIME_MINUTES=$(echo "$DATA" | jq -r '.metrics.process_time_minutes // 0')
+LEAD_TIME_MINUTES=$(echo "$DATA" | jq -r '.metrics.lead_time_minutes // 0')
 
 # Format task lists
 TODO_ITEMS=$(echo "$DATA" | jq -r '.todo_tasks[] | "<li><span class=\"task-number\">\(.number)</span> \(.title)</li>"' | tr '\n' ' ')
@@ -381,6 +386,35 @@ if [[ $ELAPSED_MINUTES -gt 0 ]]; then
 EOF
 fi
 
+# Add observable consequence metrics
+cat >> "$OUTPUT_PATH" <<EOF
+            <div class="flow-metrics">
+                <h2>Observable Consequences</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Upstream Speed</div>
+                        <div class="value">$(printf "%.2f" "$UPSTREAM_SPEED") tasks/hour</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Downstream Blocked</div>
+                        <div class="value">$DOWNSTREAM_BLOCKED_TASKS tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Blocked Time</div>
+                        <div class="value">$(printf "%.0f" "$DOWNSTREAM_BLOCKED_MINUTES")m</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Process Time</div>
+                        <div class="value">$(printf "%.0f" "$PROCESS_TIME_MINUTES")m</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Lead Time</div>
+                        <div class="value">$(printf "%.0f" "$LEAD_TIME_MINUTES")m</div>
+                    </div>
+                </div>
+            </div>
+
+EOF
 # Add tasks section if there are any tasks
 if [[ $((TODO_COUNT + WIP_COUNT + DONE_COUNT)) -gt 0 ]]; then
     cat >> "$OUTPUT_PATH" <<EOF

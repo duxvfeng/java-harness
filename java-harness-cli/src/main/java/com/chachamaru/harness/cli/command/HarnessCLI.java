@@ -2,7 +2,7 @@ package com.chachamaru.harness.cli.command;
 
 import com.chachamaru.harness.cli.command.hook.HookCommand;
 import com.chachamaru.harness.cli.command.plan.PlanGroupCommand;
-import com.chachamaru.harness.cli.command.evidence.CollectCommand;
+import com.chachamaru.harness.cli.command.evidence.EvidenceCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -20,7 +20,7 @@ import picocli.CommandLine.Command;
              // Hook command group
              HookCommand.class,
              // Evidence commands
-             CollectCommand.class,
+             EvidenceCommand.class,
              // Plan commands
              PlanGroupCommand.class,
              // Core commands

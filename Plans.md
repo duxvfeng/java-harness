@@ -561,3 +561,43 @@
 3. 可选完成 **Phase 8** (Codex 实现完善) - 扩展平台支持
 
 **启动方式**: 使用 `/harness-work` 或 `/breezing` 开始实施 Phase 12
+
+## Phase 13: Evidence-Driven Delivery Loop
+
+Purpose: 建立从 Story 到 Probe 的 evidence.v1 证据闭环，并将 6-stage 工作流、质量四象限和跨阶段 handoff 固化到 Harness 文档与 Java 协议层。
+
+### Scope and contract
+
+- `spec.md` 是产品契约，`Plans.md` 是任务台账；冲突时遵循 `spec.md > sub-spec > Plans.md`。
+- 6-stage 标签为 `kickoff → understand → tasking → pair → showcase → respond`。
+- evidence.v1 的阶段序列为 `story → scenario → model → plan → execution → observation → decision → probe`。
+- `not_observed != absent`：未观察到的数据必须保留为 unknown/not observed，不得推断为不存在。
+
+### Pre-approval
+
+- **文件系统写入**：Task 13.3-13.4、13.6 需要在 `.claude/state/` 下写入 evidence.v1 feed。
+- **技能文档修改**：Task 13.2、13.5、13.7 需要修改 harness-plan、harness-review 及 routing 文档。
+
+### Required — Evidence foundation
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 13.1 | 确认 Java 构建 lint/formatter baseline `[stage:tasking] [tdd:skip:setup-task]` | 确认 Maven 与 java-harness-protocol 测试入口；无 baseline 时记录 setup 缺口 | - | cc:完成 ✅ 2026-08-11 |
+| 13.2 | 定义 6-stage 标签词汇表 `[stage:tasking] [tdd:skip:docs-only]` | routing-rules.md 与 harness-plan create.md 含 6 阶段定义、skill 映射及与 `[lane:*]` 并存示例 | - | cc:完成 ✅ 2026-08-11 |
+| 13.3 | 实现 evidence.v1 数据模型 `[stage:pair] [tdd:required]` | java-harness-protocol 实现 EvidenceRecord 八阶段模型与 JSON 序列化；测试覆盖 round-trip、字段名和校验 | 13.1 | cc:完成 ✅ 2026-08-11 |
+| 13.4 | 实现 evidence collect 契约输出 `[stage:pair] [tdd:required]` | CollectCommand 从 stdin/file 读取合法 evidence.v1 并写入 `.claude/state/`；集成测试通过 | 13.3 | cc:完成 ✅ 2026-08-11 |
+
+### Recommended — 质量与协作增强
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 13.5 | Quality Quadrants Q1-Q4 分类 `[stage:showcase] [tdd:skip:docs-only]` | harness-review 输出按 Q1(技术支撑)/Q2(业务验收)/Q3(业务评价)/Q4(技术评价) 标注 findings | code-review.md 含四象限定义与标注示例，审查输出可归类 | 13.2 | cc:完成 ✅ 2026-08-11 |
+| 13.6 | Shared Evidence Feed / Handoff `[stage:pair] [tdd:required]` | 基于 evidence.v1 实现阶段间证据传递：下一阶段读取上一阶段证据而非重复上下文 | 集成测试验证 handoff 读取正确，跨阶段不重放全上下文 | 13.4 | cc:完成 ✅ 2026-08-11 |
+| 13.7 | Story Card / Freeze gate `[stage:kickoff] [tdd:skip:docs-only]` | harness-plan create 显式产出可冻结 Story Card（对齐→冻结→进入 understand） | create.md 含 Story Card 模板与 freeze gate 说明 | 13.2 | cc:完成 ✅ 2026-08-11 |
+
+### Optional
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 13.8 | Role Slot / Access Policy per stage `[stage:tasking] [tdd:skip:docs-only]` | Workspace Protocol 参与者分配：每阶段 Human/Agent 角色槽文档化 | team-mode.md 含每阶段角色槽与 access policy 说明 | 13.6 | cc:完成 ✅ 2026-08-11 |
+| 13.9 | 可观察后果指标扩展 `[stage:respond] [tdd:required]` | harness-progress 从进度/成本扩展到上游速度/下游堵塞、Process Time vs Lead Time 指标 | 指标计算有单元测试，HTML 展示新指标 | 13.6 | cc:完成 ✅ 2026-08-11 |

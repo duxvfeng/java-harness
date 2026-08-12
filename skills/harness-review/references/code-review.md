@@ -96,3 +96,25 @@ Opus 4.8 忠实地遵守"不要报告 low-severity"，即使调查也会缩小�
 
 `REQUEST_CHANGES` 后必须进行修正后再审查。
 连续 2 次遗漏相同 issue 时强制 TeamAgent Debate。
+
+## Quality Quadrants (Q1-Q4)
+
+Every review finding must carry one primary quality quadrant. Add an optional secondary quadrant only when the same finding has a distinct, material effect in another dimension.
+
+| Quadrant | Meaning | Typical evidence |
+|---|---|---|
+| Q1 技术支撑 | The implementation can technically support the contract. | Code, component, adapter, schema, integration, or build failure |
+| Q2 业务验收 | The requested behavior passes explicit acceptance criteria. | Given/When/Then result, acceptance test, workflow output |
+| Q3 业务评价 | Real users can use the result effectively and it fits the business context. | User feedback, usability observation, domain fit, operational workflow |
+| Q4 技术评价 | Non-functional technical quality is sufficient for operation and change. | Performance, security, reliability, observability, maintainability |
+
+Use the quadrant as a finding label, not as a replacement for severity or confidence:
+
+```text
+[Q1][major] Adapter rejects the accepted evidence.v1 field shape.
+[Q2][minor] Given a valid plan, When execution starts, Then the handoff is not visible.
+[Q3][recommendation] The review summary is difficult for the target operator to act on.
+[Q4][major] The feed write path has no bounded handling for malformed records.
+```
+
+If a finding spans quadrants, keep one primary label and state the secondary impact explicitly, for example `[Q1][Q4]`. The review verdict still follows the existing severity, evidence, and gate rules.

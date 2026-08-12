@@ -38,6 +38,26 @@
 
 **对应**: 通过 `/harness-work --codex` 执行
 
+## 阶段标签路由（参考）
+
+`[stage:*]` 是 Plans metadata，不是新的 skill 触发词；实际 skill 加载仍以各技能 `description` 为 SSOT。阶段标签用于标明任务处于交付闭环的哪个位置，便于 `harness-plan`、`harness-work`、`harness-review` 等已有 skill 分工。
+
+| 标签 | 阶段目标 | 主要 skill / surface |
+|------|---------|----------------------|
+| `[stage:kickoff]` | 对齐用户意图、产出 Story Card、冻结进入理解阶段的边界 | `harness-plan create`、`harness-plan-brief` |
+| `[stage:understand]` | 调研现有规格、repo evidence、unknown data，并区分已观察与未观察 | `harness-plan create`、`memory`、`harness-plan-brief` |
+| `[stage:tasking]` | 将理解结果拆为 Plans.md task contract，确定 DoD、Depends、baseline | `harness-plan create`、`harness-sync` |
+| `[stage:pair]` | 执行实现或测试任务，收集 evidence，保持 TDD / review gate | `harness-work`、`test-driven-development` |
+| `[stage:showcase]` | 展示可验证结果，执行 review / acceptance / Quality Quadrants 分类 | `harness-review`、`harness-accept`、`requesting-code-review` |
+| `[stage:respond]` | 汇总交付、同步状态、给出后续行动或 release / closeout 指引 | `harness-work`、`harness-sync`、`harness-release` |
+
+### 与 lane 标签并存
+
+`[stage:*]` 表示流程位置，`[lane:*]` 表示执行风险/路径；两者可以同时出现在 Content 或 DoD 中，不互相替代。
+
+```markdown
+| 13.2 | 定义 6-stage 标签词汇表 `[stage:tasking]` `[lane:gate]` `[tdd:skip:docs-only]` | routing-rules.md 与 create.md 含阶段表、skill 映射、并存示例 | - | cc:TODO |
+```
 ## 路由判定流程（参考）
 
 > 此部分是对 Claude Code 内部行为的说明，不是额外的关键词定义。

@@ -8,6 +8,8 @@ set -euo pipefail
 # Default values
 PLANS_FILE="Plans.md"
 PROJECT_NAME="current"
+EVENTS_FILE=".claude/state/progress-events.jsonl"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -18,6 +20,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --project)
       PROJECT_NAME="$2"
+      shift 2
+      ;;
+    --events)
+      EVENTS_FILE="$2"
       shift 2
       ;;
     *)
@@ -33,11 +39,25 @@ if [[ ! -f "$PLANS_FILE" ]]; then
   exit 1
 fi
 
+# Calculate optional event-based flow metrics. Missing event files are valid.
+
+# Calculate optional event-based flow metrics. Missing event files are valid.
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="${PYTHON_BIN:-python3}"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_BIN="${PYTHON_BIN:-python}"
+else
+  METRICS_JSON='{"upstream_speed_tasks_per_hour":0,"downstream_blocked_tasks":0,"downstream_blocked_minutes":0,"process_time_minutes":0,"lead_time_minutes":0}'
+fi
+if [[ -z "${METRICS_JSON:-}" ]]; then
+  METRICS_JSON=$("$PYTHON_BIN" "$SCRIPT_DIR/progress-metrics.py" --events "$EVENTS_FILE")
+fi
+
 # Temporary file for JSON output
 TMP_OUTPUT=$(mktemp)
 
 # Use awk to parse the markdown table and generate JSON
-awk -v project="$PROJECT_NAME" '
+awk -v project="$PROJECT_NAME" -v metrics_json="$METRICS_JSON" '
 BEGIN {
     todo_count = 0
     wip_count = 0
@@ -150,6 +170,7 @@ END {
     printf "  \"estimated_total_minutes\": 0,\n"
     printf "  \"cost_so_far_usd\": 0,\n"
     printf "  \"cost_estimate_usd\": 0,\n"
+    printf "  \"metrics\": %s,\n", metrics_json
     printf "  \"alerts\": [],\n"
     printf "  \"generated_at\": \"%s\"\n", timestamp
     printf "}\n"

@@ -175,6 +175,57 @@ This implementation targets Claude Code Harness v4 spec and aims for 100% compat
 
 ---
 
+## Evidence-Driven Delivery Model
+
+**Status**: Target model (incremental adoption via Phase 13). Reference diagram: `incremental_expansion.png`.
+
+This section defines a unified delivery vocabulary that binds the existing planning/execution/review/acceptance/release skills into an explicit, verifiable closed loop. It does NOT introduce a new runtime; it standardizes stage labels and an evidence contract on top of components that already exist.
+
+### 6-Stage Delivery Loop
+
+Every unit of delivery flows through six stages. Each stage maps to existing skills and carries a stage gate:
+
+| Stage | Meaning | Existing skill(s) | Gate |
+|-------|---------|-------------------|------|
+| `kickoff` | Freeze the Story / business boundary | `harness-plan create` | Story Card aligned & frozen |
+| `understand` | Analyze & model shared context | `harness-plan-brief` | Scenario / Model agreed |
+| `tasking` | Architect tasks & plan tests | `harness-plan` (tasks + DoD + `[tdd:*]`) | Approved Plan |
+| `pair` | Red/Green/Refactor verifiable increment | `harness-work` + TDD | Quality (tests green) |
+| `showcase` | Product observation & ship decision | `harness-accept` | Observation / Decision |
+| `respond` | Runtime feedback & knowledge evolution | `harness-release` + `harness-sync --retro` | Knowledge / Probe |
+
+Stages are recorded as metadata on Plans.md tasks using a `[stage:<name>]` tag in the Content or DoD prefix, reusing the existing `[lane:*]` labeling mechanism. `not_observed != absent`: absence of a stage tag means "unclassified", not "stageless".
+
+### Evidence Contract (`evidence.v1`)
+
+Stage handoff is carried by a structured evidence record rather than replayed conversation context. The canonical shape:
+
+```
+Story → Scenario → Model → Plan → Execution → Observation → Decision → Probe
+```
+
+Each field is `understood` (readable), `executable`, `verifiable`, and `traceable`. Records are persisted under `.claude/state/` and consumed by the next stage. The current `evidence collect` CLI command is a stub and MUST be implemented to emit this contract.
+
+### Quality Quadrants (Q1–Q4)
+
+`harness-review` classifies findings along two axes (business vs. technical × support vs. evaluation):
+
+- **Q1 技术支撑** — failures located in code/component/adapter/contract
+- **Q2 业务验收** — Given/When/Then acceptance verification
+- **Q3 业务评价** — real user-experience appropriateness
+- **Q4 技术评价** — non-functional (performance/security/observability)
+
+Quadrants are a classification dimension layered onto existing multi-angle review, not a new review engine.
+
+### Explicit Scope Exclusions
+
+The following diagram elements are OUT of scope for java-harness (recorded to prevent silent omission):
+
+- **Product-level Full Stack coverage** (Frontend/Backend/DB, Client/BFF/Microservice boundaries): these are properties of the *product being built*, not capabilities of the harness tool itself.
+- **Real-time collaboration platform** (WebSocket/SSE live Stage Board): out of scope for a CLI harness. Multi-participant needs are served by the opt-in team-mode dry-run issue bridge.
+
+---
+
 **Specification Status**: Active  
 **Last Updated**: 2026-08-01  
 **Maintainer**: Java Harness Team  
