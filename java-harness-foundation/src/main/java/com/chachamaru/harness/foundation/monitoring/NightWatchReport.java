@@ -116,8 +116,8 @@ public final class NightWatchReport {
         Path root = repoRoot.toAbsolutePath().normalize();
         Instant timestamp = now == null ? Instant.now() : now;
         HealthResult health = checkHealth();
-        int staleHours = loadThreshold(root.resolve("templates/night-watch-config.yaml"), "stale_task_hours", DEFAULT_STALE_TASK_HOURS);
-        int decisionHours = loadThreshold(root.resolve("templates/night-watch-config.yaml"), "open_decision_hours", DEFAULT_OPEN_DECISION_HOURS);
+        int staleHours = loadThreshold(root.resolve("scripts/templates/night-watch-config.yaml"), "stale_task_hours", DEFAULT_STALE_TASK_HOURS);
+        int decisionHours = loadThreshold(root.resolve("scripts/templates/night-watch-config.yaml"), "open_decision_hours", DEFAULT_OPEN_DECISION_HOURS);
         List<UnresolvedLoop> unresolvedLoops = detectUnresolvedLoops(resolveMailboxPath(), timestamp);
         List<StaleTask> staleTasks = detectStaleTasks(root.resolve("Plans.md"), staleHours, timestamp);
         List<OpenDecision> decisions = detectOpenDecisions(root.resolve(".claude/memory/decisions.md"), decisionHours, timestamp);

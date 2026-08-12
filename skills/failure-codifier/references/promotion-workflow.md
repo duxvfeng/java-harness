@@ -69,6 +69,6 @@ After approval, edit `.claude/memory/patterns.md` or `.claude/memory/decisions.m
 
 ## Related artifacts
 
-- Schema: `templates/schemas/failure-rule.v1.json`
+- Schema: `scripts/templates/schemas/failure-rule.v1.json`
 - Skill: `skills/failure-codifier/SKILL.md`
 - Tests: `go/internal/failurecodifier/*_test.go`

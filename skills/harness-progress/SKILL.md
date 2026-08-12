@@ -83,7 +83,7 @@ bash scripts/progress-snapshot.sh \
 OUT_PATH="${OUT_PATH:-out/progress-snapshot.html}"
 mkdir -p "$(dirname "$OUT_PATH")"
 
-bash scripts/render-html.sh \
+bash scripts/util/render-html.sh \
   --template progress \
   --data "$SNAPSHOT_JSON" \
   --out "$OUT_PATH"

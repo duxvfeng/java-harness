@@ -37,7 +37,7 @@ cd go && go test ./internal/failurecodifier/... -count=1
 ## 参考
 
 - 提升工作流程: [references/promotion-workflow.md](${CLAUDE_SKILL_DIR}/references/promotion-workflow.md)
-- Schema: `templates/schemas/failure-rule.v1.json`
+- Schema: `scripts/templates/schemas/failure-rule.v1.json`
 - Core: `go/internal/failurecodifier/`
 
 ## 禁止事项

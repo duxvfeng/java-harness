@@ -97,4 +97,35 @@ class NightWatchReportTest {
         assertEquals(1, report.openDecisions().size());
         assertEquals("2026-08-01", report.openDecisions().get(0).decisionId());
     }
+
+    @Test
+    void usesDefaultThresholdsWhenProjectConfigurationIsAbsent() throws Exception {
+        Path root = Files.createTempDirectory("night-watch-default-config");
+        Path plans = root.resolve("Plans.md");
+        Files.writeString(plans, "| 99.1.1 | stale task | DoD | deps | cc:WIP |\n");
+        Instant now = Instant.parse("2026-08-12T00:00:00Z");
+        Files.setLastModifiedTime(plans, FileTime.from(now.minus(80, ChronoUnit.HOURS)));
+        System.setProperty("NIGHT_WATCH_ENABLED", "false");
+
+        NightWatchReport.Report report = NightWatchReport.build(root, false, now);
+
+        assertEquals(1, report.staleTasks().size());
+    }
+
+    @Test
+    void usesScriptConfigurationWhenPresent() throws Exception {
+        Path root = Files.createTempDirectory("night-watch-script-config");
+        Path config = root.resolve("scripts/templates/night-watch-config.yaml");
+        Files.createDirectories(config.getParent());
+        Files.writeString(config, "stale_task_hours: 96\nopen_decision_hours: 168\n");
+        Path plans = root.resolve("Plans.md");
+        Files.writeString(plans, "| 99.1.1 | recent task | DoD | deps | cc:WIP |\n");
+        Instant now = Instant.parse("2026-08-12T00:00:00Z");
+        Files.setLastModifiedTime(plans, FileTime.from(now.minus(80, ChronoUnit.HOURS)));
+        System.setProperty("NIGHT_WATCH_ENABLED", "false");
+
+        NightWatchReport.Report report = NightWatchReport.build(root, false, now);
+
+        assertTrue(report.staleTasks().isEmpty());
+    }
 }

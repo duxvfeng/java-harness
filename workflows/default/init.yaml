@@ -82,9 +82,9 @@ steps:
     skill: harness-init
     input:
       templates:
-        - templates/core/agents-md.template
-        - templates/core/claude-md.template
-        - templates/core/plans-md.template
+        - java-harness-foundation/src/main/resources/templates/core/agents-md.template
+        - java-harness-foundation/src/main/resources/templates/core/claude-md.template
+        - java-harness-foundation/src/main/resources/templates/core/plans-md.template
       context_from:
         - project_context
     output:
@@ -100,9 +100,9 @@ steps:
     skill: memory
     input:
       templates:
-        - templates/memory/decisions-md.template
-        - templates/memory/patterns-md.template
-        - templates/memory/session-log.md.template
+        - scripts/templates/memory/decisions-md.template
+        - scripts/templates/memory/patterns-md.template
+        - scripts/templates/memory/session-log.md.template
     output:
       create_files:
         - .claude/memory/decisions.md

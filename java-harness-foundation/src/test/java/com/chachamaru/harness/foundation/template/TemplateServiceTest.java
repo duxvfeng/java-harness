@@ -6,6 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -265,5 +266,27 @@ class TemplateServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> {
             builtin.add("new-template");
         });
+    }
+
+    @Test
+    void allBundledTemplateResourcesAreReadable() {
+        List<String> resources = List.of(
+            "templates/config/harness.toml.template",
+            "templates/config/harness-minimal.toml.template",
+            "templates/core/agents-md.template",
+            "templates/core/claude-md.template",
+            "templates/core/plans-generated.template",
+            "templates/core/plans-md.template",
+            "templates/core/readme-md.template",
+            "templates/memory/decisions-java.template",
+            "templates/memory/patterns-java.template",
+            "templates/rules/guardrail-rule.template",
+            "templates/rules/rule-md.template",
+            "templates/rules/security-rule.template"
+        );
+
+        for (String resource : resources) {
+            assertFalse(TemplateResourceLoader.load(resource).isBlank(), resource);
+        }
     }
 }

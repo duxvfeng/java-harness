@@ -12,7 +12,7 @@ file when you need the full rationale.
 1. **分类** — Lead 执行 `bash scripts/breezing-brief.sh classify "<args>"`。
    - 输出 `structured` → 现有的 structured 参数路径（Quick Reference）直接进入。
    - 输出 `free-text` → 进入下一步。
-2. **分解** — Lead 的 LLM 将自由文本分解为 **3〜7 个 subtasks**，构建 `brief-card.v1` JSON 卡片（schema: `templates/schemas/brief-card.v1.json`）。v0 中 `breezing-brief.sh` 不调用 LLM。
+2. **分解** — Lead 的 LLM 将自由文本分解为 **3〜7 个 subtasks**，构建 `brief-card.v1` JSON 卡片（schema: `scripts/templates/schemas/brief-card.v1.json`）。v0 中 `breezing-brief.sh` 不调用 LLM。
 3. **提示** — 向用户提示卡片（goal / subtasks[id,title,dod] / scope_files / risk_notes / confidence）。`confidence` 是 `high` | `medium` | `low` 中的任一个。
 4. **确定** — 用户 Yes/No 后，执行 `bash scripts/breezing-brief.sh confirm <yes|no> <card.json>`。
    - `yes` → 输出 `DISPATCH: <subtask 数>`，传递给现有的 team 路径（worktree-per-task）。

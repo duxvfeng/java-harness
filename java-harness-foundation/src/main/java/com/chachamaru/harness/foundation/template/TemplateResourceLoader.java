@@ -20,4 +20,5 @@ public final class TemplateResourceLoader {
             throw new IllegalStateException("Failed to load template resource: " + resourcePath, e);
         }
     }
+
 }

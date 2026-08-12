@@ -227,7 +227,7 @@ See [references/create.md](${CLAUDE_SKILL_DIR}/references/create.md)
 
 - 1 行的 `理由` 不得包含 secret 值。仅限于 path / 命令名 / 目标服务。
 - 计划批准时，一揽子提示事前确认章节的所有事项，获得用户的批准 / 否决。
-- 批准结果记录到 `.claude/state/plan-preapprovals.json`，格式为 `plan-preapproval.v2`。schema 参考 `templates/schemas/plan-preapproval.v2.json`。v1 仅用于现有记录的读取兼容。
+- 批准结果记录到 `.claude/state/plan-preapprovals.json`，格式为 `plan-preapproval.v2`。schema 参考 `scripts/templates/schemas/plan-preapproval.v2.json`。v1 仅用于现有记录的读取兼容。
 - 记录保持 `事项 + 理由 1 行 + scope (phase/task)`。在 `operations` 中列举 `secret-read` / `external-send` / `destructive`。在 `paths` / `commands` / `targets` 中列举对象。包含 `decision`、`approved_at`、RFC3339 格式的 `expires_at`。
 - `max_uses` 设置包含必要重试次数的上限。省略时为 10 次。`uses` 在新批准时设为 0。
 - 确认仅在计划批准时进行 1 次。在 `harness-work` / `breezing` 执行过程中，不得仅以已声明事项为由使用 `AskUserQuestion`。

@@ -29,7 +29,7 @@ user-invocable: true
 | 跨项目 | **不做** (Phase 65.3 以后用 `--cross-project-group <name>` flag opt-in 解禁) |
 | Plan Brief 联动 | 以 `user_request_hash` 为 join key read `personal-preference.v1` (Phase 65.1.4) |
 | 写入 | 不做 (验收批准后的 memory write 是 `accept-record-decision.sh` 的职责) |
-| recommendation 计算 | verified / 全 criteria 的比率用 0.8 / 0.5 阈值判定。逻辑在 `scripts/render-html.sh` 直前计算 |
+| recommendation 计算 | verified / 全 criteria 的比率用 0.8 / 0.5 阈值判定。逻辑在 `scripts/util/render-html.sh` 直前计算 |
 
 ## 输入
 
@@ -150,7 +150,7 @@ hash 一致基本因为同一 user request 由来，多项目的重复稀少，�
 因此 HTML 输出时**必须使用 `--with-redaction` flag**:
 
 ```bash
-bash scripts/render-html.sh --template accept ... --with-redaction
+bash scripts/util/render-html.sh --template accept ... --with-redaction
 ```
 
 详情参照 Go 版本的 `.claude/rules/cross-repo-handoff.md`；Java 版本不提供该
@@ -182,10 +182,10 @@ TDD 不需或 skip 时显示 `TDD verified: not-required` 或 `TDD verified: ski
 
 ### Step 6: 生成 HTML
 
-用 `templates/html/accept.html.template` 调用 `scripts/render-html.sh` (Phase 65.1.1):
+用 `scripts/templates/html/accept.html.template` 调用 `scripts/util/render-html.sh` (Phase 65.1.1):
 
 ```bash
-bash scripts/render-html.sh \
+bash scripts/util/render-html.sh \
   --template accept \
   --data "$CONTEXT_JSON" \
   --out "$HTML_OUT"
@@ -223,6 +223,6 @@ bash scripts/plan-brief-open.sh "$HTML_OUT"
 - `harness-plan-brief` (Phase 65.1.2) — 计划阶段的对构造技能。本技能用 `user_request_hash` join Plan Brief 时的 `personal-preference.v1` 进行 read
 - `scripts/accept-past-issues.sh` (Phase 65.2.2) — 获取过去问题模式 (read side)
 - `scripts/accept-record-decision.sh` (Phase 65.2.3) — 批准 memory write (`acceptance-decision.v1`)
-- `scripts/render-html.sh` (Phase 65.1.1) — HTML 模板引擎
+- `scripts/util/render-html.sh` (Phase 65.1.1) — HTML 模板引擎
 - `scripts/plan-brief-open.sh` (Phase 65.1.2) — 通用 OS browser dispatcher
 - `harness-progress` skill (Phase 65.4.1) — 进度管理技能 (3 surface 中的正中)

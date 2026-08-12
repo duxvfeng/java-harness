@@ -38,9 +38,9 @@ allowed-tools: ["Read", "Write", "Edit", "Bash"]
   - `CLAUDE.md`
   - `Plans.md`
 - 新格式参考模板:
-  - `templates/core/agents-md.template`
-  - `templates/core/claude-md.template`
-  - `templates/core/plans-md.template`
+  - `java-harness-foundation/src/main/resources/templates/core/agents-md.template`
+  - `java-harness-foundation/src/main/resources/templates/core/claude-md.template`
+  - `java-harness-foundation/src/main/resources/templates/core/plans-md.template`
 
 ---
 

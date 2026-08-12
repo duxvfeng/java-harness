@@ -144,7 +144,7 @@ for each project in MEMBERS_JSON:
 > 使用 `harness evidence` 记录跨仓库交接结果。
 
 跨项目结果必须经过 Layer 2/3 (Phase 65.3.2-65.3.4) 的 redaction:
-- HTML 渲染时使用 `bash scripts/render-html.sh ... --with-redaction`
+- HTML 渲染时使用 `bash scripts/util/render-html.sh ... --with-redaction`
 - 通过词典 + NER + final scan 的 3 阶段防止固有名词泄露
 
 ### Step 3: 构建 context JSON（Brainstorming 增强版）
@@ -221,13 +221,13 @@ jq -n \
 
 ### Step 4: 生成 HTML
 
-用 `templates/html/plan-brief.html.template` 调用 `scripts/render-html.sh` (Phase 65.1.1):
+用 `scripts/templates/html/plan-brief.html.template` 调用 `scripts/util/render-html.sh` (Phase 65.1.1):
 
 HTML 以 1 行显示 TDD 判定。
 形式为 `tdd_required: yes`、`tdd_required: no` 或 `tdd_required: skip:<reason>` 之一。
 
 ```bash
-bash scripts/render-html.sh \
+bash scripts/util/render-html.sh \
   --template plan-brief \
   --data "$CONTEXT_JSON" \
   --out "$HTML_OUT"
@@ -285,7 +285,7 @@ bash scripts/plan-brief-open.sh "$HTML_OUT"
 
 ## Related
 
-- `scripts/render-html.sh` (Phase 65.1.1) — HTML 模板引擎
+- `scripts/util/render-html.sh` (Phase 65.1.1) — HTML 模板引擎
 - `scripts/plan-brief-compile.sh` (Phase 65.1.3) — context compilation
 - `scripts/plan-brief-record-decision.sh` (Phase 65.1.4) — 批准 memory write
 - `harness-accept` skill (Phase 65.2.1) — 验收判断技能 (对结构)
