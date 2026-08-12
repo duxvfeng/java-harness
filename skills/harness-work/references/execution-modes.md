@@ -3,6 +3,12 @@
 `harness-work` chooses the lightest execution mode that still preserves review
 and validation.
 
+> **Java 版本边界**：本文件的完整自动化步骤和 Python 伪代码以 Go 版本
+> 为基线。Java 版本由宿主平台执行 worker、worktree、测试和 review；使用
+> `harness doctor`、`harness validate all`、`harness sprint-contract` 和
+> `harness evidence` 记录结果。下文中的 `HARNESS_PLUGIN_ROOT`、
+> `scripts/*.sh`、自动 runner 和 artifact writer 不属于 Java CLI，不要执行。
+
 ## Shared Preflight
 
 1. Read `Plans.md` and identify the selected task set.

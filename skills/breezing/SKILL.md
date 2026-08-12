@@ -22,6 +22,10 @@ user-invocable: true
 
 > **向后兼容别名**: 以团队执行模式运行 `harness-work`。
 
+## Java 版本边界
+
+本技能保留 Go 版本的团队编排说明。Java 版本使用宿主平台提供的 worker、worktree 和 review 能力，并通过 `harness sprint-contract`、`harness evidence` 和 `harness doctor` 记录与核验结果。文中的 Go helper、`scripts/*.sh`、`scripts/*.js` 和 prompt-cache 编排步骤不应在 Java 版本中执行。
+
 ## Default Pipeline（一个命令完成 plan → work → review → report）
 
 `/breezing` 在单次启动中完成「计划 → 实现 → 审查直到 OK → 报告」。
@@ -147,7 +151,7 @@ Lead 按 run 单位，从作业内容・量扁平选择 backend。选择时使�
 > input token コストが最大 12 倍になりうるため、長時間 team 実行では明示的に opt-in する。
 > `ENABLE_PROMPT_CACHING_1H` を読むが、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` が有効な場合は
 > 明示的に export を維持する shell wrapper が必要。詳細は
-> [`docs/long-running-harness.md`](../../docs/long-running-harness.md) を参照。
+> [`docs/harness-project/long-running-harness.md`](../../docs/harness-project/long-running-harness.md) を参照。
 
 ## Execution
 

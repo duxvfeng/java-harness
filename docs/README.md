@@ -7,19 +7,20 @@
 ```
 docs/
 ├── README.md                       # 文档导航和索引
-├── superpowers/                    # Superpowers 技能框架文档
-│   ├── reports/                    # Phase 完成报告
-│   │   ├── PHASE_7_COMPLETION_REPORT.md  # Phase 7 双平台支持
-│   │   └── PHASE_11_COMPLETION_REPORT.md # Phase 11 会话管理系统
-│   ├── plans/                      # 实现计划
-│   └── specs/                      # 技术规格
-├── reference/                      # 参考文档（已归档）
+├── harness-project/                # 技能直接消费的项目设计和策略文档
+│   ├── analysis/                   # 分析报告
+│   ├── architecture/              # 架构设计
+│   ├── dual-platform/             # Java/Go 能力边界
+│   ├── plans/                     # 计划与规格正本
+│   ├── superpowers/specs/         # 功能设计规格
+│   ├── user-guide/                # 用户指南
+│   └── user-guides/               # 专题用户指南
+├── reference/                      # API 与归档参考文档
 │   ├── backup/                    # 历史技术文档备份
 │   ├── multi-platform-hooks-backup/  # 多平台 Hooks 配置备份
 │   └── superpowers-archive/       # Superpowers 临时文档归档
-├── user-guide/                     # 用户指南
+├── user-guide/                     # 通用用户指南
 │   ├── installation.md            # 详细安装指南
-│   ├── session-management.md     # 会话管理指南
 │   ├── quick-start.md             # 快速入门指南
 │   ├── configuration.md           # 配置指南
 │   └── troubleshooting.md         # 故障排除指南
@@ -29,11 +30,8 @@ docs/
 │   ├── testing.md                 # 测试指南
 │   ├── contributing.md            # 贡献指南
 │   └── release-process.md         # 发布流程
-└── reference/                      # 参考文档
-    ├── cli-commands.md            # CLI 命令参考
-    ├── guardrail-rules.md         # 安全规则参考
-    ├── hook-protocol.md           # Hook 协议规范
-    └── api-reference.md           # API 参考文档
+├── dual-platform/                 # 双平台发布与安装文档
+└── superpowers/                   # 未迁移的历史报告和实现记录
 ```
 
 ## 📖 文档分类说明
@@ -143,4 +141,31 @@ docs/
 **文档结构版本**: 1.1  
 **最后更新**: 2026-08-09  
 **维护者**: Java Harness Team  
-**最近更新**: 添加Phase 11会话管理系统完成报告，更新会话管理用户指南
+**最近更新**: 添加 Phase 11 会话管理系统完成报告、平台策略文档和会话管理用户指南
+
+## 项目设计文档
+
+`harness-project/` 集中存放被 `skills/` 和 `skills-codex/` 直接引用的项目设计、规格、策略和操作文档。新增会被技能直接消费的文档，也应放在该目录或对应子目录。
+
+- [项目设计文档索引](harness-project/README.md)
+- [计划与规格正本](harness-project/plans/)
+- [架构与分析](harness-project/architecture/)
+- [双平台能力边界](harness-project/dual-platform/java-go-capability-boundary.md)
+- [会话管理用户指南](harness-project/user-guide/session-management.md)
+- [智能模型选择用户指南](harness-project/user-guides/smart-model-selection-guide.md)
+
+## 平台策略文档
+
+以下文档记录 Claude Code、Codex 和 Cursor 的配置责任边界。它们是 setup 技能的策略依据，不代表 Java Harness 自动拥有或修改对应平台能力。
+
+- [Claude Code 设置：MCP、Telemetry 与 Provider](harness-project/claude-code-setup-mcp-telemetry-provider.md)
+- [Codex Plugin 与 Workflow 策略](harness-project/codex-plugin-workflows-policy.md)
+- [Plugin Managed Settings 策略](harness-project/plugin-managed-settings-policy.md)
+- [Codex Provider 设置策略](harness-project/codex-provider-setup-policy.md)
+- [Codex MCP 诊断与 Plugin 加载](harness-project/codex-mcp-diagnostics.md)
+- [Codex Sandbox 与执行策略](harness-project/codex-sandbox-execution-policy.md)
+- [Sandbox Allowlist 配置配方](harness-project/sandbox-allowlist-recipe.md)
+
+## 双平台能力边界
+
+- [Java 与 Go 能力边界](harness-project/dual-platform/java-go-capability-boundary.md)

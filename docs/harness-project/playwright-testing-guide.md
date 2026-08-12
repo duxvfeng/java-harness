@@ -423,7 +423,7 @@ npx playwright show-report
 - [Playwright 官方文档](https://playwright.dev)
 - [Playwright 最佳实践](https://playwright.dev/docs/best-practices)
 - [VS Code Playwright 插件](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright)
-- [Harness 端到端检测文档](../architecture/e2e-detection-architecture.md)
+- [Harness 端到端检测文档](architecture/e2e-detection-architecture.md)
 
 ---
 

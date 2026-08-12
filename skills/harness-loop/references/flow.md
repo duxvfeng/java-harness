@@ -3,6 +3,12 @@
 `harness-loop` 各 wake-up 入口手续的详细版。
 补全 SKILL.md 摘要的实现参考。
 
+> **Java 版本边界**：本文件下方是 Go/Claude 宿主的 helper-script 参考
+> 实现。Java 版本没有这些脚本或调度 runner；请使用宿主的 background
+> task、resume/session 和 loop 能力，并使用 `harness sprint-contract`
+> 与 `harness evidence` 完成契约和证据记录。不要逐条执行下方的
+> `scripts/*.sh` 命令。
+
 ---
 
 ## 各 wake-up 的入口手续（详细）

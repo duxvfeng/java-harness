@@ -39,7 +39,7 @@ plugin 写入范围内，因此 Harness / AI 无法编辑。用户需要自己�
   需要向 `~/.cursor/projects/...` 和 `~/.cursor/cli-config.json.tmp` 写入状态，未授权会
   因 `EPERM` 失败）。⚠️ **键名为 `allowWrite`**: 如果命名为 `write` 会被作为未知键
   忽略，设置无效（实测确认）。`~/` 由 sandbox 侧展开（官方示例 `["~/.kube"]`）。
-  两者配置完成后，无需每次禁用 sandbox 即可运行。步骤按 `docs/sandbox-allowlist-recipe.md` 的 jq merge 配方和
+  两者配置完成后，无需每次禁用 sandbox 即可运行。步骤按 `docs/harness-project/sandbox-allowlist-recipe.md` 的 jq merge 配方和
   `.claude/rules/cursor-cli-only.md` 的「Sandbox 要求」。CC 完全重启后生效。
 
 ### 3. 边界（cursor 保持 candidate 状态）
@@ -47,4 +47,3 @@ plugin 写入范围内，因此 Harness / AI 无法编辑。用户需要自己�
 cursor 后端定位为 candidate。安全性不依赖 Cursor 的 allowlist（best-effort，可绕过），
 而是通过**专用 `.git` worktree 隔离执行 + Lead diff 审查 + cherry-pick 接入主流**来保证。
 cursor-agent 的输出在 Lead 审查前视为 untrusted。详情见 `.claude/rules/cursor-cli-only.md`。
-

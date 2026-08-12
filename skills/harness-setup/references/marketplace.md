@@ -6,7 +6,7 @@ This file is part of `${CLAUDE_SKILL_DIR}/references/` for `harness-setup`.
 
 v2.1.71 大幅改善了 Marketplace 的稳定性。
 Claude Code 2.1.117-2.1.118 以后的 plugin / managed settings 方针以
-`docs/plugin-managed-settings-policy.md` 为正本。
+`docs/harness-project/plugin-managed-settings-policy.md` 为正本。
 
 ### 推荐安装方式
 
@@ -52,4 +52,3 @@ Harness 的 project default 都不放入两者，需要的组织通过 managed s
 
 缺少依赖关系时，首先确认 Claude Code 的 `/plugin` Errors、`/doctor`、`claude plugin list --json`。
 如果是因未注册 marketplace，通过 `/plugin marketplace add` 或 `claude plugin marketplace add` 注册，交给本体的 auto-resolve。
-

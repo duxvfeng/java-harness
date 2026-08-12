@@ -375,4 +375,4 @@ cursor:do completed
 - `cursor:ask` — 読取専用の質問・調査・敵対的視点 (worktree 不要)
 - `breezing --cursor` — 複数タスクを team フローで cursor 委譲する場合
 - `harness-work` — claude backend の default フロー (Worker agent 経由)
-- `references/cursor-cli-only.md` — Cursor backend governance + Topology (旧 `.claude/rules/cursor-cli-only.md` の全文がここに移設済み)
+- `references/cursor-cli-only.md` — Cursor backend governance + Topology（Java 版本现有正本）

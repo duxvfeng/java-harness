@@ -21,6 +21,9 @@
       },
       {
         "pattern": ".*\\.properties$"
+      },
+      {
+        "pattern": "templates/.*"
       }
     ]
   }

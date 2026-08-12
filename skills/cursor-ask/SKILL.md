@@ -154,7 +154,7 @@ cursor 是不透明子进程，Harness 的护栏 (R01-R13) 不适用于内部。
 | Filesystem allowlist | 同样在 `sandbox.filesystem.allowWrite` 添加 `~/.cursor` (因为 cursor-agent 进行状态写入) | user settings |
 | permissions.json | `~/.cursor/permissions.json` 的 `terminalAllowlist` / `mcpAllowlist` 在 read mode 也有效 (allowlist 是 best-effort，不是 security boundary) | user config |
 
-详情参照 `.claude/rules/cursor-cli-only.md`。
+详情参照 `skills/cursor-do/references/cursor-cli-only.md`。
 
 ### ask mode 可省略的内容
 
@@ -185,4 +185,4 @@ Worker 介在なし。Reviewer 介在なし。`worker-report.v1` / `review-resul
 - `cursor-do` — 書込タスク委譲（worktree + Lead review + cherry-pick の full containment）
 - `breezing --cursor` — Reviewer のみ cursor に逃がす lean second-opinion レーン
 - `harness-review --cursor` — レビューを cursor (composer-2.5-fast) に second-opinion として依頼
-- `.claude/rules/cursor-cli-only.md` — Cursor backend governance (trust boundary, prohibited flags)
+- `skills/cursor-do/references/cursor-cli-only.md` — Cursor backend governance (trust boundary, prohibited flags)

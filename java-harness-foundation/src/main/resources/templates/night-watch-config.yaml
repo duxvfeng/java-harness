@@ -1,0 +1,6 @@
+# Night Watch patrol configuration. Opt-in remains disabled by default.
+night_watch:
+  NIGHT_WATCH_ENABLED: false
+  stale_task_hours: 72
+  open_decision_hours: 168
+  bridge_home: "~/.harness-bridge"

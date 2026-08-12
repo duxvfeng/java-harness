@@ -139,7 +139,9 @@ for each project in MEMBERS_JSON:
 
 > **D43 判断 1 的依据**: MCP tool schema 没有暴露 `projects: [array]` 也没有 `strict_project: false`，
 > 因此横断搜索只能用 client 端 N-call。
-> 详情请参考 `.claude/rules/cross-repo-handoff.md` 的「Phase 65.3 实施决定事项 (D43)」。
+> Go/Claude Code 版本详情参考 `.claude/rules/cross-repo-handoff.md` 的
+> 「Phase 65.3 实施决定事项 (D43)」。Java 版本不提供该宿主规则文件，
+> 使用 `harness evidence` 记录跨仓库交接结果。
 
 跨项目结果必须经过 Layer 2/3 (Phase 65.3.2-65.3.4) 的 redaction:
 - HTML 渲染时使用 `bash scripts/render-html.sh ... --with-redaction`

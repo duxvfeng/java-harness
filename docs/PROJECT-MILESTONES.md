@@ -71,7 +71,7 @@ Java Harness 是一个专业的 AI 辅助开发框架，为大型 Java 项目提
 - **Claude Code**: 🟢 完全支持 (Stable)
 - **Codex CLI**: 🟡 Beta 支持 (功能有限)
 
-**详细报告**: [Phase 7 完成报告](../superpowers/reports/PHASE_7_COMPLETION_REPORT.md)
+**详细报告**: [Phase 7 完成报告](dual-platform/PHASE_7_COMPLETION_REPORT.md)
 
 ---
 
@@ -145,9 +145,9 @@ Java Harness 是一个专业的 AI 辅助开发框架，为大型 Java 项目提
 - 压缩率: ~78% (目标>70%) ✅
 - 保存成功率: 99.8% (目标>99%) ✅
 
-**详细报告**: [Phase 11 完成报告](../superpowers/reports/PHASE_11_COMPLETION_REPORT.md)
+**详细报告**: [Phase 11 完成报告](superpowers/reports/PHASE_11_COMPLETION_REPORT.md)
 
-**用户指南**: [会话管理指南](../user-guide/session-management.md)
+**用户指南**: [会话管理指南](harness-project/user-guide/session-management.md)
 
 ---
 
@@ -330,16 +330,15 @@ Java Harness 是一个专业的 AI 辅助开发框架，为大型 Java 项目提
 
 ### 贡献指南
 我们欢迎社区贡献！请参考:
-- [贡献指南](../developer-guide/contributing.md)
-- [开发环境设置](../developer-guide/development.md)
-- [代码规范](../developer-guide/architecture.md)
+- [架构文档](developer-guide/architecture.md)
+- [文档索引](README.md)
 
 ---
 
 ## 📞 联系和支持
 
 ### 获取帮助
-- **文档**: [docs/](../README.md)
+- **文档**: [docs/](README.md)
 - **问题反馈**: GitHub Issues
 - **讨论区**: GitHub Discussions
 

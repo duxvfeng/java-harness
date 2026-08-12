@@ -26,7 +26,7 @@ Opus 4.8 中 thinking 默认为 off，effort 是推理深度的主要杠杆（�
 仅应用以下 2 个 lever：
 
 - **session `/effort`**：host 在进入复杂任务批次前设置 `/effort high` / `/effort xhigh`（session 单位有效的可靠 lever）。
-- **worker frontmatter**：`agents/worker.md` 的 `effort`（默认 `medium`）为 floor。CC 的 Agent / Task spawn API 不公开 per-spawn 的 effort 指定，因此没有逐个 worker 提高 effort 的机制。分数记录在 `worker-report.v1` 的 `task_complexity_note`，Lead 作为提高 session effort 的判断材料。
+- **worker frontmatter**：Go/Claude Code 版本的 `agents/worker.md` 的 `effort`（默认 `medium`）为 floor。Java 版本由宿主平台决定 worker effort，不提供该固定 agent 文件。
 
 | 分数 | code-risk（包含 core/guardrails/security/architecture/migration） | effort tier |
 |--------|-----------------------------------|-------------|
@@ -35,4 +35,4 @@ Opus 4.8 中 thinking 默认为 off，effort 是推理深度的主要杠杆（�
 | ≥ 3 | 有 | `xhigh` |
 
 breezing 模式也应用相同逻辑（harness-work 一体化管理）。
-Worker 因使用 Sonnet 4.6，`xhigh` 实际降级为 `high`，但 tier 提升本身有效（`docs/effort-level-policy.md`）。
+Worker 因使用 Sonnet 4.6，`xhigh` 实际降级为 `high`，但 tier 提升本身有效；Java 版本的宿主模型选择以宿主配置为准。

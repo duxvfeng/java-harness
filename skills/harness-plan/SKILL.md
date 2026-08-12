@@ -14,6 +14,11 @@ creative_exploration: true
 # Harness Plan
 
 Harness 的集成计划技能。
+
+## Java 版本边界
+
+Java CLI 的 `plan`、`add`、`update` 和 `sync` 命令负责路由到本技能文本，并不执行 Go 版本的 `plan-registry.sh`、`plans-issue-bridge.sh` 或其他 helper。Java 项目以 `Plans.md` 为任务正本，规格以 root `spec.md` 为产品正本，任务契约使用 `harness sprint-contract`，状态和健康检查使用 `harness status` 与 `harness doctor`。
+
 整合以下3个旧技能:
 
 - `planning` (plan-with-agent) — 构思 → Plans.md 落地
@@ -317,7 +322,7 @@ co-required planning output 意味着必须输出两者，precedence 仍维持 `
 
 参照:
 
-- `docs/plans/spec-ssot.md`
+- `docs/harness-project/plans/spec-ssot.md`
 
 ### create 完成时的会话启动指引（必須）
 
@@ -509,7 +514,7 @@ Plans.md 保持为正本，GitHub Issue 联动仅在 opt-in 的 team mode 中使
 
 参考:
 
-- `docs/plans/team-mode.md`
+- `docs/harness-project/plans/team-mode.md`
 
 ### named Plans
 
@@ -522,7 +527,7 @@ scripts/plans-issue-bridge.sh --plan roadmap --format markdown
 node scripts/generate-sprint-contract.js --plan roadmap 9.1.1
 ```
 
-参考: `docs/plans/named-plans.md`
+参考: `docs/harness-project/plans/named-plans.md`
 
 ## Plans.md 格式规约
 
@@ -562,8 +567,8 @@ Depends 为 `-`（无依赖）/ 任务编号 / 逗号分隔多个 / 阶段依赖
 
 参考:
 
-- `docs/plans/briefs-manifest.md`
-- `docs/plans/spec-ssot.md`
+- `docs/harness-project/plans/briefs-manifest.md`
+- `docs/harness-project/plans/spec-ssot.md`
 
 ### 标记一览
 

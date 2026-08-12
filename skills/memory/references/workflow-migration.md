@@ -38,9 +38,9 @@ allowed-tools: ["Read", "Write", "Edit", "Bash"]
   - `CLAUDE.md`
   - `Plans.md`
 - 新格式参考模板:
-  - `templates/AGENTS.md.template`
-  - `templates/CLAUDE.md.template`
-  - `templates/Plans.md.template`
+  - `templates/core/agents-md.template`
+  - `templates/core/claude-md.template`
+  - `templates/core/plans-md.template`
 
 ---
 

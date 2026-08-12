@@ -183,7 +183,7 @@ sandbox に **2 つ**の許可が要る (実測で確定):
 どちらかが欠けると sandbox 有効下では失敗する。allowlist を設定できない場合の代替は
 per-run の sandbox 無効化 (Risk Gate) だが、`*.cursor.sh` + `~/.cursor` の 2 点を
 allowlist する方が sandbox の他防御を保てるため推奨。設定手順は
-`docs/sandbox-allowlist-recipe.md` と `harness-setup` の導入動線を参照。
+`docs/harness-project/sandbox-allowlist-recipe.md` と `harness-setup` の導入動線を参照。
 
 ## Role scope
 

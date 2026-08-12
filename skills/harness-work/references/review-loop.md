@@ -1,5 +1,9 @@
 # Review Loop
 
+> **Java 版本边界**：Java 版本通过宿主的 `harness-review` skill 完成审查，
+> 并使用 `harness evidence` 保存结果。下方 `scripts/review-ai-residuals.sh`
+> 等命令是 Go 版本的可选 helper，Java CLI 不提供这些脚本。
+
 The review loop is shared by Solo, Parallel, and Breezing. Parallel runs it once
 per Worker; Breezing runs it from the Lead (see below).
 

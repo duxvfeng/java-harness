@@ -49,7 +49,7 @@ Harness 的集成设置技能。
 > MCP `alwaysLoad`、`${CLAUDE_EFFORT}`、`claude plugin prune`、`claude project purge`、
 > `ANTHROPIC_BEDROCK_SERVICE_TIER`、`claude_code.skill_activated.invocation_trigger`、
 > Windows PowerShell primary shell、forked skills / subagents 的 deferred tools 以
-> `docs/claude-code-setup-mcp-telemetry-provider.md` 为正本。
+> `docs/harness-project/claude-code-setup-mcp-telemetry-provider.md` 为正本。
 
 > **Codex plugin workflows**:
 > 不双重管理 Codex `/goal` 和 `Plans.md`。
@@ -59,28 +59,28 @@ Harness 的集成设置技能。
 > Codex `0.130.0` stable 的 `codex remote-control`、large thread pagination、
 > selected-environment `view_image`、live app-server config refresh、
 > accurate turn diffs、plugin details bundled hooks、sharing discoverability controls 以
-> `docs/codex-plugin-workflows-policy.md` 为正本。
-> 详情参见 `docs/codex-plugin-workflows-policy.md` 和 `${CLAUDE_SKILL_DIR}/references/codex.md`。
+> `docs/harness-project/codex-plugin-workflows-policy.md` 为正本。
+> 详情参见 `docs/harness-project/codex-plugin-workflows-policy.md` 和 `${CLAUDE_SKILL_DIR}/references/codex.md`。
 
 ## Execution
 
 1. 选择对应用户目的的 Quick Reference 行。
 2. 读取对应的 `${CLAUDE_SKILL_DIR}/references/*.md`。
 3. 遵循参照文件的步骤，有 dry-run 的操作先执行 dry-run。
-4. setup 后根据需要通过 `harness doctor`、`bash scripts/sync-skill-mirrors.sh --check`、`bash scripts/ci/check-consistency.sh` 确认。
+4. Java 版本 setup 后通过 `harness doctor` 和 `harness validate all` 确认；`sync-skill-mirrors.sh` 与 `check-consistency.sh` 是 Go 版本 helper，Java 版本不要执行。
 
 ## Upstream Policy Anchors
 
-- `docs/plugin-managed-settings-policy.md` — plugin managed settings policy; normal defaults must not inherit managed marketplace restrictions.
-- `docs/codex-provider-setup-policy.md` — Codex provider setup policy, including `amazon-bedrock` and `model_provider = "amazon-bedrock"` examples.
-- Codex `0.123.0` 以降的 MCP diagnostics / plugin MCP loading guidance: use `/mcp verbose` and `docs/codex-mcp-diagnostics.md` for diagnostics.
-- Codex sandbox / execution policy (0.123.0+): see `docs/codex-sandbox-execution-policy.md` for `remote_sandbox_config` and execution constraints.
+- `docs/harness-project/plugin-managed-settings-policy.md` — plugin managed settings policy; normal defaults must not inherit managed marketplace restrictions.
+- `docs/harness-project/codex-provider-setup-policy.md` — Codex provider setup policy, including `amazon-bedrock` and `model_provider = "amazon-bedrock"` examples.
+- Codex `0.123.0` 以降的 MCP diagnostics / plugin MCP loading guidance: use `/mcp verbose` and `docs/harness-project/codex-mcp-diagnostics.md` for diagnostics.
+- Codex sandbox / execution policy (0.123.0+): see `docs/harness-project/codex-sandbox-execution-policy.md` for `remote_sandbox_config` and execution constraints.
 
 ## Cursor 实现后端引入
 
 详细步骤请阅读 `${CLAUDE_SKILL_DIR}/references/cursor.md`。
-契约锚点：`set-impl-backend.sh` 允许 AI 执行。`permissions.json`、`.cursorignore`、`*.cursor.sh` allowlist 由用户手动操作，作为 AI 无法编辑的受保护路径处理。
-依据规则是 `.claude/rules/cursor-cli-only.md` 和 `docs/sandbox-allowlist-recipe.md`。
+契约锚点：Java 版本不执行 `set-impl-backend.sh`。Cursor backend 只在 `harness.toml` 中记录，`permissions.json`、`.cursorignore`、`*.cursor.sh` allowlist 由用户手动操作，作为 AI 无法编辑的受保护路径处理。
+依据规则是 `.claude/rules/cursor-cli-only.md` 和 `docs/harness-project/sandbox-allowlist-recipe.md`。
 
 ## Reference Index
 

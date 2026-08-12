@@ -107,6 +107,20 @@ class TemplateServiceTest {
     }
 
     @Test
+    void testLoadsCanonicalPlanAndReadmeTemplates() {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("PROJECT_NAME", "CanonicalProject");
+
+        String plans = templateService.generateContent("plans-md", variables);
+        String readme = templateService.generateContent("readme-md", variables);
+
+        assertTrue(plans.contains("Plans.md - Task Tracking"));
+        assertTrue(readme.contains("CanonicalProject"));
+        assertFalse(plans.contains("Generated content for plans-md.template"));
+        assertFalse(readme.contains("Generated content for readme-md.template"));
+    }
+
+    @Test
     void testHasTemplate() {
         assertTrue(templateService.hasTemplate("claude-md"));
         assertTrue(templateService.hasTemplate("agents-md"));

@@ -427,9 +427,9 @@ if (result.isSuccess()) {
 
 ## 🔗 相关文档
 
-- [Hook 协议规范](hook-protocol.md) - 详细的 Hook 协议说明
-- [Guardrail 规则参考](guardrail-rules.md) - 27个安全规则详细说明
-- [CLI 命令参考](cli-commands.md) - 86个命令完整参考
+- Hook 协议规范：待补充独立参考文档；当前以本文的 Hook 协议章节和源码测试为准。
+- Guardrail 规则参考：待补充独立参考文档；当前以 Java CLI 的 guardrail 模块和测试为准。
+- CLI 命令参考：待补充独立参考文档；当前以 `java-harness-cli` 的帮助输出和命令测试为准。
 - [架构设计文档](../developer-guide/architecture.md) - 系统架构和设计决策
 
 ---

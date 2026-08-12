@@ -82,9 +82,9 @@ steps:
     skill: harness-init
     input:
       templates:
-        - templates/AGENTS.md.template
-        - templates/CLAUDE.md.template
-        - templates/Plans.md.template
+        - templates/core/agents-md.template
+        - templates/core/claude-md.template
+        - templates/core/plans-md.template
       context_from:
         - project_context
     output:
@@ -100,8 +100,8 @@ steps:
     skill: memory
     input:
       templates:
-        - templates/memory/decisions.md.template
-        - templates/memory/patterns.md.template
+        - templates/memory/decisions-md.template
+        - templates/memory/patterns-md.template
         - templates/memory/session-log.md.template
     output:
       create_files:

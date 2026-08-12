@@ -3250,11 +3250,11 @@ git commit -m "test(session): add end-to-end integration tests"
 ### Task 12: 编写用户指南
 
 **Files:**
-- Create: `docs/user-guide/session-management.md`
+- Create: `docs/harness-project/user-guide/session-management.md`
 
 - [ ] **Step 1: 创建用户指南**
 
-创建 `docs/user-guide/session-management.md`:
+创建 `docs/harness-project/user-guide/session-management.md`:
 ```markdown
 # 会话管理用户指南
 
@@ -3522,7 +3522,7 @@ async_save = true            # 后台保存，不阻塞
 
 1. 查看日志：`.claude/logs/harness.log`
 2. 运行诊断：`/harness-doctor`
-3. 查看文档：`docs/user-guide/session-management.md`
+3. 查看文档：`docs/harness-project/user-guide/session-management.md`
 4. 提交问题：GitHub Issues
 
 ## 更新日志
@@ -3539,7 +3539,7 @@ async_save = true            # 后台保存，不阻塞
 - [ ] **Step 2: 提交用户指南**
 
 ```bash
-git add docs/user-guide/session-management.md
+git add docs/harness-project/user-guide/session-management.md
 git commit -m "docs(session): add user guide for session management"
 ```
 

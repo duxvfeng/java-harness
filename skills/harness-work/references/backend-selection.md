@@ -40,7 +40,7 @@ Reviewer 和 Advisor 两个角色始终固定为 brain（`--host claude`）。
 ```
 
 cursor 的 write 委托在拥有专用 `.git` 的 worktree 内执行，Lead 将其 cherry-pick 到 main（在 cherry-pick 路径中应用 R01-R13）。
-治理详情请参考 `.claude/rules/cursor-cli-only.md`。
+治理详情请参考 `skills/cursor-do/references/cursor-cli-only.md`。
 
 ## Lead 的 cherry-pick 前关卡（必须执行 contract grep）
 

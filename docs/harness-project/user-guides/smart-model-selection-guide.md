@@ -436,8 +436,8 @@ tail -f .claude/logs/model-selection.log
 
 ## 相关文档
 
-- **设计文档**: `docs/superpowers/specs/2026-08-10-smart-model-selection-design.md`
-- **实施计划**: `docs/superpowers/plans/2026-08-10-smart-model-selection.md`
+- **设计文档**: `docs/harness-project/superpowers/specs/2026-08-10-smart-model-selection-design.md`
+- **实施计划**: `docs/harness-project/superpowers/plans/2026-08-10-smart-model-selection.md`
 - **技能文档**: `skills/harness-work/SKILL.md`
 - **API 文档**: `java-harness-workflow/src/main/java/com/chachamaru/harness/model/`
 

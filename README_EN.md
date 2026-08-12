@@ -292,7 +292,7 @@ autoCleanup = true           # Auto cleanup old sessions
 keepRecentSessions = 10      # Keep recent sessions count
 ```
 
-📖 **Complete User Guide**: [Session Management User Guide](docs/user-guide/session-management.md)  
+📖 **Complete User Guide**: [Session Management User Guide](docs/harness-project/user-guide/session-management.md)
 📊 **Technical Report**: [Phase 11 Completion Report](docs/superpowers/reports/PHASE_11_COMPLETION_REPORT.md)
 
 ### Smart Execution Mode Recommendation System 🆕
@@ -402,7 +402,7 @@ The system automatically learns user preferences:
 - **Cache Acceleration**: LRU cache avoids redundant computation
 - **Storage Path**: `.claude/mode-learning/user-feedback.dat`
 
-📖 **Design Spec**: [Smart Mode Recommendation Design Doc](docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md)
+📖 **Design Spec**: [Smart Mode Recommendation Design Doc](docs/harness-project/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md)
 
 ## 🏗️ Architecture Design
 

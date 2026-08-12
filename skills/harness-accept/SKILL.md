@@ -153,7 +153,8 @@ hash 一致基本因为同一 user request 由来，多项目的重复稀少，�
 bash scripts/render-html.sh --template accept ... --with-redaction
 ```
 
-详情参照 `.claude/rules/cross-repo-handoff.md` 的"Phase 65.3 实现决定事项 (D43)"。
+详情参照 Go 版本的 `.claude/rules/cross-repo-handoff.md`；Java 版本不提供该
+宿主规则文件，跨仓库交接以 `harness evidence` 和宿主平台的 review 记录为准。
 
 ### Step 3: 获取过去的问题模式 (Phase 65.2.2 委托)
 

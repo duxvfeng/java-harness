@@ -172,7 +172,7 @@ docs/spec/00-project-spec.md
 
 最初的 spec 可以简短。最低包含 Purpose、Users And Workflows、Core Rules、Data And Contracts、Non-Goals、Open Decisions、Links。
 
-详细说明: `docs/plans/spec-ssot.md`
+详细说明: `docs/harness-project/plans/spec-ssot.md`
 
 ## Step 4.6: lint / formatter baseline 检查
 

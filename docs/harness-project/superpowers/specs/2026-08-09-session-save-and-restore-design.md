@@ -833,9 +833,9 @@ public class SessionRestoreManager {
 ## 附录
 
 ### 相关文档
-- [Harness 项目规格](../../spec.md)
-- [Plans.md 当前状态](../../Plans.md)
-- [Hook 系统文档](../developer-guide/hook-system.md)
+- [Harness 项目规格](../../../../spec.md)
+- [Plans.md 当前状态](../../../../Plans.md)
+- [Hook 系统文档](../../../../docs/reference/api-reference.md)
 
 ### 变更历史
 - 2026-08-09: 初始设计创建

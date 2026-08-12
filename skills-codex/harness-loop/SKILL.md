@@ -20,6 +20,12 @@ disable-model-invocation: true
 
 # Harness Loop
 
+> **Java 版本边界**：本文件的 `harness codex-loop`、runner state、
+> `codex-companion.sh`、自动 checkpoint 流程只适用于 Go 版本。Java 长任务
+> 使用宿主 Codex 的 background task、resume/session 或 `/loop`，并用
+> `harness status`、`harness sprint-contract validate --strict`、
+> `harness evidence report` 和 `harness doctor` 核验结果。
+
 Codex 版的 `harness-loop` 不是仅作说明的伪循环，
 而是启动**实际在后台运行的 runner**。
 

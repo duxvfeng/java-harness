@@ -358,7 +358,7 @@
 | 11.9 | 创建会话管理技能 `[tdd:skip:docs-only]` | 创建 skills/harness-session/SKILL.md 和参考文档，定义技能命令接口 | 技能定义完整，命令格式正确，参考文档详细，符合技能规范 | 11.8 | cc:TODO |
 | 11.10 | 注册会话管理命令 `[tdd:required]` | 在 CommandRegistry 中注册会话管理命令，实现 save, restore, list, show, cleanup 命令 | 命令注册正确，功能完整，参数解析正常，测试通过 | 11.9 | cc:TODO |
 | 11.11 | 端到端集成测试 `[tdd:required]` | 编写完整的端到端测试，验证保存、恢复、清理的完整流程 | 端到端测试覆盖所有场景，性能指标达标，测试通过 | 11.10 | cc:TODO |
-| 11.12 | 编写用户指南 `[tdd:skip:docs-only]` | 创建 docs/user-guide/session-management.md，包含快速开始、配置说明、故障排除 | 用户指南完整，示例清楚，故障排除有效，文档验证通过 | 11.11 | cc:TODO |
+| 11.12 | 编写用户指南 `[tdd:skip:docs-only]` | 创建 docs/harness-project/user-guide/session-management.md，包含快速开始、配置说明、故障排除 | 用户指南完整，示例清楚，故障排除有效，文档验证通过 | 11.11 | cc:TODO |
 | 11.13 | 系统集成和验收测试 `[tdd:required]` | 运行完整测试套件，功能验证清单，性能验证，兼容性测试 | 所有测试通过，功能完整性达标，性能指标满足，兼容性正常 | 11.12 | cc:TODO |
 
 ---
@@ -380,7 +380,7 @@
   - `skills/harness-session/SKILL.md` 及参考文档
   - `java-harness-workflow/src/main/java/com/chachamaru/harness/session/` 完整包结构
   - `java-harness-workflow/src/main/java/com/chachamaru/harness/hook/extensions/` Hook 扩展
-  - `docs/user-guide/session-management.md` 用户指南
+  - `docs/harness-project/user-guide/session-management.md` 用户指南
   
 - **修改文件**：
   - `java-harness-workflow/src/main/java/com/chachamaru/harness/hook/HookRegistry.java`

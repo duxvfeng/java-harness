@@ -20,6 +20,11 @@ effort: high
 # Harness Work
 
 Harness 的集成执行技能。
+
+## Java 版本边界
+
+本技能的完整自动编排段落来自 Go 版本。Java CLI 负责命令路由、契约、证据、健康检查和状态记录；实际的 worker、worktree、测试和 review 由宿主平台执行。本文中的 `scripts/*.sh`、`scripts/*.js`、`HARNESS_PLUGIN_ROOT`、companion、checkpoint 和 review runner 仅供 Go 版本参考，不应作为 Java 版本的可执行命令。
+
 整合以下旧技能:
 
 - `work` — Plans.md 任务的实现（范围自动判断）
@@ -384,9 +389,9 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 | effort tier 的多要素得分详情 | `references/effort-routing.md` |
 | Solo / Breezing 完成报告的生成 | `references/completion-report.md` |
 | 测试/CI 失败时的重新票决命令 | `references/failure-reticketing.md` |
-| 规格权威版本检查的基准 | `docs/plans/spec-ssot.md` |
+| 规格权威版本检查的基准 | `docs/harness-project/plans/spec-ssot.md` |
 | **智能执行模式推荐、评分算法、学习机制** | 本文件「智能执行模式推荐系统」章节 |
-| 智能推荐的设计规格 | `docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md` |
+| 智能推荐的设计规格 | `docs/harness-project/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md` |
 
 ### 重要停止条件
 
@@ -1298,8 +1303,8 @@ export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-20250514"
 
 ### 相关文档
 
-- **设计文档**: `docs/superpowers/specs/2026-08-10-smart-model-selection-design.md`
-- **实施计划**: `docs/superpowers/plans/2026-08-10-smart-model-selection.md`
+- **设计文档**: `docs/harness-project/superpowers/specs/2026-08-10-smart-model-selection-design.md`
+- **实施计划**: `docs/harness-project/superpowers/plans/2026-08-10-smart-model-selection.md`
 - **参考文档**: `skills/harness-work/references/effort-routing.md`
 
 ## Completion Report Output Contract
@@ -1493,10 +1498,10 @@ if verdict == "APPROVE":
 
 ### 相关文档
 
-- **架构设计**: `docs/architecture/e2e-detection-architecture.md`
-- **分析报告**: `docs/analysis/e2e-detection-analysis-report.md`
-- **Playwright指南**: `docs/playwright-testing-guide.md`
-- **配置参考**: `docs/playwright-default-config.md`
+- **架构设计**: `docs/harness-project/architecture/e2e-detection-architecture.md`
+- **分析报告**: `docs/harness-project/analysis/e2e-detection-analysis-report.md`
+- **Playwright指南**: `docs/harness-project/playwright-testing-guide.md`
+- **配置参考**: `docs/harness-project/playwright-default-config.md`
 
 ## 相关技能
 

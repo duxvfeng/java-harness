@@ -23,6 +23,10 @@ user-invocable: true
 Harness 的集成审查技能。
 此 `SKILL.md` 是薄的 dispatcher，详细的质量标准参见 `references/`。
 
+## Java 版本边界
+
+Java CLI 的 `review` 命令负责路由到本技能文本，不会自动运行 Go 版本的 review runner 或 artifact writer。实际审查由宿主平台执行；结果可以通过 `harness evidence collect` 和 `harness evidence report` 记录。本文中的 `scripts/*.sh` 审查命令仅作 Go 版本参考。
+
 if $ARGUMENTS == "":
   → 解释为「到目前为止工作的审查」，执行 Review target detection
   → 仅在 review target 能确定为 1 个时自动开始
@@ -517,7 +521,7 @@ enabled = false
 ### 相关文档
 
 - **完整流程**: `skills/harness-work/SKILL.md#端到端检测集成`
-- **架构设计**: `docs/architecture/e2e-detection-architecture.md`
+- **架构设计**: `docs/harness-project/architecture/e2e-detection-architecture.md`
 - **配置参考**: `java-harness-cli/harness.toml`
 
 ## Codex Environment

@@ -395,8 +395,8 @@ hw-codex "实现简单的接口"
 
 ## 📚 更多资源
 
-- 📖 [架构设计文档](docs/dual-platform-compatibility.md)
-- 📖 [配置指南](docs/dual-platform-config.md)
+- 📖 [架构设计文档](dual-platform-compatibility.md)
+- 📖 [配置指南](dual-platform-config.md)
 - 🔗 [Gitee 仓库](https://gitee.com/duxvfeng/java-harness)
 
 ## 🎉 实现状态

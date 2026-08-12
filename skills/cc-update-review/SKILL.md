@@ -18,7 +18,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Bash"]
 以下情况触发此技能:
 
 - Claude Code / Codex upstream update 集成 PR 审查时
-- 检测到 `docs/CLAUDE-feature-table.md` 有新增行的 diff 时
+- Go/Claude Code 版本检测 `docs/CLAUDE-feature-table.md` 有新增行的 diff 时
 - `/harness-review` 判定为 upstream update 集成 PR 时的内部调用
 - `claude-codex-upstream-update` 技能更新审查时
 
@@ -33,7 +33,9 @@ allowed-tools: ["Read", "Grep", "Glob", "Bash"]
 此技能专用于 diff-aware review，必须通过以下任一确定审查对象差分。
 
 1. 调用方的 `/harness-review` 传递 PR diff / changed files / Feature Table 新增行
-2. 此技能自身通过 read-only Bash 执行 `git status --short`, `git diff --name-only`, `git diff -- docs/CLAUDE-feature-table.md`, `git show --stat --name-only` 等确认
+2. 此技能自身通过 read-only Bash 执行 `git status --short`、`git diff --name-only`、
+   `git diff -- docs/CLAUDE-feature-table.md`、`git show --stat --name-only` 等确认。
+   `docs/CLAUDE-feature-table.md` 是 Go/Claude Code 版本的可选文件，Java 版本没有该文件时跳过。
 
 Bash 仅用于 read-only git inspection。不执行测试、format、生成、网络访问、文件更改的命令。
 无法获取 diff 时，不推测为 `B: 仅书写 0 件`，而是作为"未提供差分无法分类"停止审查。
@@ -165,7 +167,7 @@ Bash 仅用于 read-only git inspection。不执行测试、format、生成、�
 - [ ] 有 alpha / stable / docs-only 区别
 
 ### 2. Feature Table 差分
-- [ ] 列举 `docs/CLAUDE-feature-table.md` 新增行
+- [ ] Go/Claude Code 版本列举 `docs/CLAUDE-feature-table.md` 新增行；Java 版本无该文件时记录 skipped
 - [ ] 各行附带 A / C / P 任一
 - [ ] B 为 0 件
 

@@ -1,0 +1,59 @@
+---
+_harness_version: 4.1.1
+_harness_template:
+  name: plans-md
+  version: 1.0.0
+  category: core
+---
+
+# Plans.md - Task Tracking
+
+> **Project**: {{PROJECT_NAME}}
+> **Last updated**: {{DATE}}
+> **Updated by**: Java Harness
+
+---
+
+## In Progress
+
+<!-- Add tasks with cc:WIP here. -->
+
+(none)
+
+---
+
+## Not Started
+
+<!-- Add tasks with cc:TODO or pm:requested here. -->
+
+- [ ] Initial project setup `cc:TODO`
+  - Create the basic directory structure
+  - Install dependencies
+
+---
+
+## Completed
+
+<!-- Add tasks with cc:done or pm:approved here. -->
+
+(none)
+
+---
+
+## Status Marker Legend
+
+| Marker | Meaning |
+|--------|---------|
+| `pm:requested` | PM requested work |
+| `cc:TODO` | Not started |
+| `cc:WIP` | Work in progress |
+| `cc:done` | Completed and awaiting confirmation |
+| `pm:approved` | PM confirmed completion |
+| `blocked` | Blocked; include the reason next to the task |
+
+---
+
+## Last Update
+
+- **Updated at**: {{DATE}}
+- **Project**: {{PROJECT_NAME}}

@@ -1,0 +1,22 @@
+# 架构决策记录 (Architecture Decision Records)
+
+## 决策 {{decision_number}}: {{title}}
+
+**日期**: {{date}}
+**状态**: {{status}} (提议|已接受|已弃用|已替代)
+**决策者**: {{author}}
+
+### 上下文
+{{context}}
+
+### 决策
+{{decision}}
+
+### 后果
+{{consequences}}
+
+### 相关决策
+- {{related_decision_1}}
+- {{related_decision_2}}
+
+---

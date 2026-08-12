@@ -25,58 +25,41 @@ cursor:setup --unset
 
 - Do not change distribution defaults or plugin manifests to make Cursor the shipped fallback.
 - Treat `~/.cursor/permissions.json`, `.cursorignore`, and Claude sandbox allowlists as manual/user-owned setup surfaces unless the user explicitly asks to edit a local file.
+- Java 版本不提供 Go 版本的 `setup-cursor.sh`、`set-impl-backend.sh` 或 companion wrapper。不要执行这些路径。
+- Java 版本只记录项目配置，不会因为设置 `backend = "cursor"` 就自动启动 `cursor-agent`。
 
 ## Flow
 
-First resolve the Harness helper root. Keep the current working directory as the target project so project-scoped `env.local` writes still land in the user's repo:
+在 Java 版本中，先确认 CLI 和 Cursor 本身可用：
 
 ```bash
-HARNESS_PLUGIN_ROOT="${HARNESS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
-if [ -z "$HARNESS_PLUGIN_ROOT" ] && [ -n "${CLAUDE_SKILL_DIR:-}" ]; then
-  probe="$(cd "${CLAUDE_SKILL_DIR}" && pwd)"
-  while [ "$probe" != "/" ] && [ ! -d "$probe/scripts" ]; do
-    probe="$(cd "$probe/.." && pwd)"
-  done
-  [ -d "$probe/scripts" ] && HARNESS_PLUGIN_ROOT="$probe"
-fi
-if [ -z "$HARNESS_PLUGIN_ROOT" ]; then
-  echo "ERROR: HARNESS_PLUGIN_ROOT is not set and could not be derived from CLAUDE_PLUGIN_ROOT or CLAUDE_SKILL_DIR" >&2
-  exit 2
-fi
+harness --version
+harness doctor
+cursor-agent --version
 ```
 
 1. For `--check`, run:
 
    ```bash
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/setup-cursor.sh" --check
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --show
-   CURSOR_AGENT_BIN="${CURSOR_AGENT_BIN:-}"
-   if [ -z "$CURSOR_AGENT_BIN" ]; then
-     if command -v cursor-agent >/dev/null 2>&1; then
-       CURSOR_AGENT_BIN="$(command -v cursor-agent)"
-     elif [ -x "$HOME/.local/bin/cursor-agent" ]; then
-       CURSOR_AGENT_BIN="$HOME/.local/bin/cursor-agent"
-     fi
-   fi
-   if [ -z "$CURSOR_AGENT_BIN" ]; then
-     echo "ERROR: cursor-agent not found in PATH or $HOME/.local/bin" >&2
-     exit 3
-   fi
-   "$CURSOR_AGENT_BIN" --version
+   harness doctor
+   cursor-agent --version
    ```
 
 2. For `--user-default`, run:
 
    ```bash
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --user cursor
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --show
+   # Edit the user-owned Harness configuration and set:
+   # [harness]
+   # backend = "cursor"
    ```
 
 3. For `--project-default`, run:
 
    ```bash
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" cursor
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --show
+   # Edit the project harness.toml and set:
+   # [harness]
+   # backend = "cursor"
+   harness doctor
    ```
 
 4. For `--unset`, ask whether the target is user or project scope if not clear from the request, then run exactly one matching unset command:
@@ -84,13 +67,13 @@ fi
    Project scope:
 
    ```bash
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --unset
+   # Remove the project-level [harness].backend value from harness.toml.
    ```
 
    User scope:
 
    ```bash
-   bash "${HARNESS_PLUGIN_ROOT}/scripts/set-impl-backend.sh" --unset --user
+   # Remove the user-level backend override from the user-owned config.
    ```
 
 ## Output
@@ -98,5 +81,5 @@ fi
 Report three facts only:
 
 - resolved backend (`claude` / `codex` / `cursor`)
-- Cursor package readiness (`setup-cursor.sh --check`)
+- Cursor package readiness (`cursor-agent --version`)
 - next manual step if Cursor is not ready

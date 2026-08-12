@@ -19,7 +19,7 @@ TIMEOUT=$(command -v timeout || command -v gtimeout || echo "")
 ### Codex provider / model metadata policy (0.123.0+ / 0.130.0)
 
 Codex `0.123.0` 以降の provider / model guidance と、Codex `0.130.0` stable の Bedrock `aws login` guidance は
-`docs/codex-provider-setup-policy.md` を正本として扱う。
+`docs/harness-project/codex-provider-setup-policy.md` を正本として扱う。
 
 要点:
 
@@ -42,14 +42,14 @@ profile = "codex-bedrock"
 ```
 
 Claude Code 侧的 provider / MCP / telemetry guidance 请参考
-`docs/claude-code-setup-mcp-telemetry-provider.md`。
+`docs/harness-project/claude-code-setup-mcp-telemetry-provider.md`。
 特别是 `ANTHROPIC_BEDROCK_SERVICE_TIER` 只在 Bedrock 使用者的 provider 环境中处理，
 不放入 Harness 的 plugin default / template / shared project settings。
 
 ### Codex app-server / plugin workflow policy (0.130.0)
 
 Codex `0.130.0` stable (`rust-v0.130.0`, published `2026-05-08T23:09:55Z`) の app-server / plugin workflow guidance は
-`docs/codex-plugin-workflows-policy.md` を正本として扱う。
+`docs/harness-project/codex-plugin-workflows-policy.md` を正本として扱う。
 
 要点:
 
@@ -68,7 +68,7 @@ Codex `0.130.0` stable (`rust-v0.130.0`, published `2026-05-08T23:09:55Z`) の a
 ### Codex MCP diagnostics / plugin loading (0.123.0+)
 
 Codex `0.123.0` 以降の MCP diagnostics / plugin MCP loading guidance は
-`docs/codex-mcp-diagnostics.md` を正本として扱う。
+`docs/harness-project/codex-mcp-diagnostics.md` を正本として扱う。
 
 要点:
 
@@ -107,7 +107,7 @@ top-level server map 形式:
 ### Codex sandbox / execution policy (0.123.0+)
 
 Codex `0.123.0` 以降の `remote_sandbox_config` と `codex exec` shared flags guidance は
-`docs/codex-sandbox-execution-policy.md` を正本として扱う。
+`docs/harness-project/codex-sandbox-execution-policy.md` を正本として扱う。
 
 要点:
 
@@ -132,4 +132,3 @@ allowed_sandbox_modes = ["read-only", "workspace-write"]
 ```bash
 # 或者通过 stdin
 ```
-

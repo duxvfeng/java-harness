@@ -204,7 +204,7 @@ cleanupIntervalHours = 24
 
 ### 新增文档
 
-1. ✅ **会话管理用户指南** (`docs/user-guide/session-management.md`)
+1. ✅ **会话管理用户指南** (`docs/harness-project/user-guide/session-management.md`)
    - 快速开始指南
    - 核心概念说明
    - 配置指南（基础+高级）

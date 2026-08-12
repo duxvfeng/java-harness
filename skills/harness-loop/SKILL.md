@@ -20,6 +20,16 @@ user-invocable: true
 
 # harness-loop
 
+## Java 版本执行方式
+
+本技能的 `/loop`、`ScheduleWakeup`、checkpoint 和 helper-script 流程是
+Go/Claude 宿主的实现说明。Java CLI 当前没有 `codex-loop` runner、
+`ScheduleWakeup` 调度器或 Go helper；长任务由宿主平台的 background task、
+`/loop`、resume 或 session 能力负责。Java 侧使用 `harness status`、
+`harness doctor`、`harness sprint-contract validate --strict` 和
+`harness evidence report` 做核验。本文后续的 `scripts/*.sh` 命令不要在
+Java 版本中执行。
+
 将 `/loop`（CC dynamic mode）与 `ScheduleWakeup` 结合，
 对长时间任务 **在每次 wake-up 时以 fresh context 重新执行** 的元技能。
 
@@ -113,15 +123,15 @@ wake-up
   ▼
 [Step 2] sprint-contract 存在确认 & 生成
   确认 .claude/state/contracts/${task_id}.sprint-contract.json 的有无
-  无则通过 node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" ${task_id} 生成
-  生成后（仅首次）: bash "${HARNESS_PLUGIN_ROOT}/scripts/enrich-sprint-contract.sh" <contract-path> \
+  Java 版本无契约时通过 `harness sprint-contract generate --task ${task_id}` 生成
+  Java 版本没有 `enrich-sprint-contract.sh`；由 reviewer 手动补充契约字段
     --check "wake-up 自动批准（harness-loop 用 DoD 以 reviewer 视点确认）" \
     --approve  ← draft → approved 升级
   （既有 contract 已 approved 因此跳过）
   │
   ▼
 [Step 3] contract readiness 检查
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/ensure-sprint-contract-ready.sh" <contract-path>
+  使用 `harness sprint-contract validate --contract <contract-path> --strict`
   │
   ▼
 [Step 4] Resume pack 重新读取
@@ -160,7 +170,7 @@ wake-up
   │
   ▼
 [Step 6] plateau 判定
-  bash "${HARNESS_PLUGIN_ROOT}/scripts/detect-review-plateau.sh" ${current_task_id}
+  Java 版本没有 `detect-review-plateau.sh`；根据连续 review 结果人工停止或升级
   │
   ├── PIVOT_REQUIRED（exit 2）  → 循环停止 + 用户升级
   ├── INSUFFICIENT_DATA（exit 1）→ 继续

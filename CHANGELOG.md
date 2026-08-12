@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 更新 Quick Reference 表格添加 `--auto-mode` 行
   - 更新 Options 表格中 `--auto-mode` 说明
   - 更新 Progressive Disclosure 表格添加智能推荐参考链接
-  - 创建设计规格文档 `docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md`
+  - 创建设计规格文档 `docs/harness-project/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md`
 - **📖 Task 13.12 文档更新**: 更新用户文档和 README
   - 在 README.md 中添加智能执行模式推荐系统功能介绍（约 100 行）
   - 在 README_EN.md 中添加英文版功能介绍（约 100 行）
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 测试通过率：100%，性能表现优秀
 - **📖 文档更新**:
   - 更新 `skills/harness-work/SKILL.md` 添加智能模型选择章节
-  - 创建用户配置指南（`docs/user-guides/smart-model-selection-guide.md`）
+  - 创建用户配置指南（`docs/harness-project/user-guides/smart-model-selection-guide.md`）
   - 更新 README.md 添加智能模型选择功能说明
   - 更新 CHANGELOG.md 记录 Phase 12 变更
 - **⚡ 性能优化**:

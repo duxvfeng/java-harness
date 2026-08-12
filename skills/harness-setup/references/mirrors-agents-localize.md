@@ -6,16 +6,19 @@ This file is part of `${CLAUDE_SKILL_DIR}/references/` for `harness-setup`.
 
 在 Windows 的 `core.symlinks=false` 环境下，repository 符号链接会变成普通文件，`harness-*` skill 可能不会出现在命令列表中。公开 bundle 作为实际目录 mirror 同步。
 
+Java 版本不提供 Go 版的 `sync-skill-mirrors.sh`。手动维护 `skills/` 与
+`skills-codex/` 后，使用以下命令验证项目结构：
+
 ```bash
-./scripts/sync-skill-mirrors.sh
-./scripts/sync-skill-mirrors.sh --check
+harness validate all
+harness doctor
 ```
 
 更新目标:
 
 - `skills/`
 - `codex/.codex/skills/`
-- `opencode/skills/`
+- `opencode/skills/`（仅 Go 版本）
 
 ### agents — 代理配置
 

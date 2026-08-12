@@ -169,7 +169,8 @@ Task tool:
 ```
 
 ci-cd-fixer は安全第一で動作（デフォルト dry-run モード）。
-詳細は `agents/ci-cd-fixer.md` を参照。
+Go/Claude Code 版本可参照 `agents/ci-cd-fixer.md`；Java 版本不包含该宿主
+agent 文件，失败分析由宿主平台执行并用 `harness evidence` 记录。
 
 ---
 

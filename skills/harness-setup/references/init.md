@@ -1,5 +1,7 @@
 # Harness Setup Reference: init
 
+> Java 版本不提供 Go 版的 `harness sync` mirror 同步流程。初始化或修改技能后，使用 `harness validate all` 和 `harness doctor` 验证。
+
 This file is part of `${CLAUDE_SKILL_DIR}/references/` for `harness-setup`.
 
 ## 子命令详细说明
@@ -133,7 +135,7 @@ framework = "auto"
 
 1. **项目根目录 harness.toml**（最高优先级）
 2. **用户配置目录** `~/.config/harness/harness.toml`
-3. **安装目录示例配置** `java-harness-cli/harness.toml.example`
+3. **仓库示例配置** `harness.toml.example`
 4. **内置默认配置**（最低优先级）
 
 **手动生成配置**（如需重新生成）：
@@ -148,7 +150,7 @@ java -cp target/java-harness-cli.jar \
 /harness-setup init --force
 
 # 方法3：手动复制模板
-cp java-harness-cli/harness.toml.example harness.toml
+cp harness.toml.example harness.toml
 ```
 
 **配置验证**：

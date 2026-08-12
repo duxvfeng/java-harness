@@ -316,7 +316,7 @@ cat .claude/logs/harness.log
 
 ### 获取帮助
 
-- **文档**: 查看 [README.md](../../README.md) 和 [故障排除指南](troubleshooting.md)
+- **文档**: 查看 [README.md](../../README.md) 和 [文档索引](../README.md)
 - **Issues**: [GitHub Issues](https://github.com/your-org/java-harness/issues)
 - **讨论**: [GitHub Discussions](https://github.com/your-org/java-harness/discussions)
 
@@ -345,7 +345,7 @@ harness --version
 
 - **[项目 README](../../README.md)** - 项目概述和快速开始
 - **[架构文档](../developer-guide/architecture.md)** - 系统架构和设计决策
-- **[开发指南](../developer-guide/development.md)** - 开发环境设置
+- **[架构文档](../developer-guide/architecture.md)** - 系统架构和设计决策
 - **[API 参考](../reference/api-reference.md)** - API 接口文档
 - **[文档索引](../README.md)** - 完整文档导航
 

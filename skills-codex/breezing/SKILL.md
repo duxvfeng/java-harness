@@ -21,6 +21,15 @@ effort: high
 
 # Breezing — Team Execution Mode (Codex Host)
 
+## Java 版本边界
+
+本 Codex mirror 保留 Go 版本的完整 breezing 编排说明。Java 版本没有
+backend resolver、companion、review artifact、checkpoint 和 sprint-contract
+enrich helper；请由宿主 Codex 直接使用 worker/worktree/review，并使用
+`harness sprint-contract`、`harness evidence` 和 `harness doctor` 记录结果。
+本文中 `scripts/*.sh`、`scripts/*.js` 和 `harness codex-loop` 相关步骤仅适用于
+Go 版本，不要在 Java 版本中执行。
+
 > **本 SKILL.md 是 Codex 宿主版。**
 > Claude Code 版请参考 `skills/breezing/SKILL.md`。
 > 后端通过 resolver 选择。分发插件的无标志默认保持 `claude` 兼容。

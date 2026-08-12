@@ -4,8 +4,15 @@
 
 `sprint-contract` 是一个小契约文件，将"如何判定此任务合格"以人类和机器都能以相同含义理解的形式表示。默认保存位置为 `.claude/state/contracts/<task-id>.sprint-contract.json`。
 
+> **Java 版本路径**：Java CLI 使用 `harness sprint-contract generate
+> --task <task-id>` 生成契约，并使用 `harness sprint-contract validate
+> --contract <path> --strict` 校验。本文中的 `generate-sprint-contract.js`、
+> `harness-pr-closeout.sh` 和其他 `scripts/*.sh` 是 Go 版本实现，不属于
+> Java 版本可执行入口。
+
 ```bash
-node "${HARNESS_PLUGIN_ROOT}/scripts/generate-sprint-contract.js" 32.1.1
+harness sprint-contract generate --task 32.1.1
+harness sprint-contract validate --contract .claude/state/contracts/32.1.1.sprint-contract.json --strict
 ```
 
 生成物包含以下内容：

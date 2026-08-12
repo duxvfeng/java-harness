@@ -153,7 +153,7 @@ cursor 的 write 委托在持有专用 `.git` 的 worktree 内执行，Lead 将�
 | companion review、Reviewer fallback、AI Residuals、修正循环 | `references/review-loop.md` |
 | 完成报告的生成 | `references/completion-report.md` |
 | 测试/CI 失败时的再票决化 | `references/failure-reticketing.md` |
-| 规格正本检查的标准 | `docs/plans/spec-ssot.md` |
+| 规格正本检查的标准 | `docs/harness-project/plans/spec-ssot.md` |
 
 ### 重要停止条件
 

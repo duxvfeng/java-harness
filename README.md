@@ -482,7 +482,7 @@ autoCleanup = true           # 自动清理过期会话
 keepRecentSessions = 10      # 保留最近会话数量
 ```
 
-📖 **完整用户指南**: [会话管理系统用户指南](docs/user-guide/session-management.md)
+📖 **完整用户指南**: [会话管理系统用户指南](docs/harness-project/user-guide/session-management.md)
 📊 **技术报告**: [Phase 11 完成报告](docs/superpowers/reports/PHASE_11_COMPLETION_REPORT.md)
 
 ### 智能模型选择系统 🆕
@@ -601,7 +601,7 @@ export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-opus-4-20250514"
 # 复杂度分数：≥7
 ```
 
-📖 **完整用户指南**: [智能模型选择系统用户指南](docs/user-guides/smart-model-selection-guide.md)
+📖 **完整用户指南**: [智能模型选择系统用户指南](docs/harness-project/user-guides/smart-model-selection-guide.md)
 📊 **技术报告**: [Phase 12 完成报告](docs/superpowers/reports/PHASE_12_COMPLETION_REPORT.md)
 
 ### 智能执行模式推荐系统 🆕
@@ -711,7 +711,7 @@ Java Harness 现在支持智能执行模式推荐，通过分析任务四维度�
 - **缓存加速**: LRU 缓存避免重复计算
 - **存储路径**: `.claude/mode-learning/user-feedback.dat`
 
-📖 **设计规格**: [智能模式推荐设计文档](docs/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md)
+📖 **设计规格**: [智能模式推荐设计文档](docs/harness-project/superpowers/specs/2026-08-11-mode-recommendation-docs-design.md)
 
 ### 智能分支隔离检测 🆕
 

@@ -16,67 +16,11 @@ import java.util.HashMap;
  */
 public class MemoryTemplate extends Template {
 
-    private static final String DECISIONS_TEMPLATE = """
-# 架构决策记录 (Architecture Decision Records)
+    private static final String DECISIONS_TEMPLATE = TemplateResourceLoader.load(
+        "templates/memory/decisions-java.template");
 
-## 决策 {{decision_number}}: {{title}}
-
-**日期**: {{date}}
-**状态**: {{status}} (提议|已接受|已弃用|已替代)
-**决策者**: {{author}}
-
-### 上下文
-{{context}}
-
-### 决策
-{{decision}}
-
-### 后果
-{{consequences}}
-
-### 相关决策
-- {{related_decision_1}}
-- {{related_decision_2}}
-
----
-""";
-
-    private static final String PATTERNS_TEMPLATE = """
-# 设计模式文档
-
-## 模式: {{pattern_name}}
-
-**分类**: {{category}} (创建型|结构型|行为型)
-**意图**: {{intent}}
-**适用场景**: {{applicability}}
-
-### 结构
-{{structure}}
-
-### 参与者
-- {{participant_1}}: {{role_1}}
-- {{participant_2}}: {{role_2}}
-
-### 协作
-{{collaboration}}
-
-### 效果
-{{consequences}}
-
-### 实现
-{{implementation_notes}}
-
-### 示例代码
-```java
-{{example_code}}
-```
-
-### 相关模式
-- {{related_pattern_1}}
-- {{related_pattern_2}}
-
----
-""";
+    private static final String PATTERNS_TEMPLATE = TemplateResourceLoader.load(
+        "templates/memory/patterns-java.template");
 
     public MemoryTemplate() {
         super();

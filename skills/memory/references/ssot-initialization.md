@@ -30,8 +30,8 @@ allowed-tools: ["Read", "Write"]
 
 模板:
 
-- `templates/memory/decisions.md.template`
-- `templates/memory/patterns.md.template`
+- `templates/memory/decisions-md.template`
+- `templates/memory/patterns-md.template`
 - `templates/memory/session-log.md.template`
 
 `{{DATE}}` 替换为当日（例: `2025-12-13`）生成。

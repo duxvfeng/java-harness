@@ -364,8 +364,8 @@ cleanupIntervalHours = 24
 
 ## 相关文档
 
-- [会话管理系统设计文档](../../docs/user-guide/session-management.md)
-- [会话保存和恢复系统规格说明](../../docs/superpowers/specs/2026-08-09-session-save-and-restore-design.md)
+- [会话管理系统设计文档](../../docs/harness-project/user-guide/session-management.md)
+- [会话保存和恢复系统规格说明](../../docs/harness-project/superpowers/specs/2026-08-09-session-save-and-restore-design.md)
 - [SessionRestoreManager API文档](../../java-harness-workflow/src/main/java/com/chachamaru/harness/session/restore/SessionRestoreManager.java)
 
 ## 参考命令

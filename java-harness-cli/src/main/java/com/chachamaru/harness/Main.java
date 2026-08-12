@@ -2,6 +2,7 @@ package com.chachamaru.harness;
 
 import com.chachamaru.harness.handler.CommandHandler;
 import com.chachamaru.harness.handler.CommandRegistry;
+import com.chachamaru.harness.hook.HookDispatcher;
 import com.chachamaru.harness.skill.SkillExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,9 @@ public class Main {
 
         try {
             handler.execute(commandArgs);
+            if (handler instanceof HookDispatcher hookDispatcher) {
+                return hookDispatcher.lastExitCode();
+            }
             return 0;
         } catch (Exception e) {
             System.err.println("Error executing command: " + e.getMessage());

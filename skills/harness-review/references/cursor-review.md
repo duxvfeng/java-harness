@@ -94,7 +94,7 @@ cursor 官方明言"Allowlists are best-effort convenience. They are not a secur
 
 ## Related
 
-- `.claude/rules/cursor-cli-only.md` — Cursor backend governance + Read mode delegation
+- `skills/cursor-do/references/cursor-cli-only.md` — Cursor backend governance + Read mode delegation
 - `references/dual-review.md` — dual / triple review 的合格线整合
 - `references/governance.md` — review 整体的合格线
 - `skills/cursor-ask/SKILL.md` — read-only delegate 的通用版（审查以外的提问・调查）

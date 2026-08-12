@@ -39,6 +39,12 @@
             <version>2.2</version>
         </dependency>
 
+        <!-- SQLite mailbox access for read-only monitoring -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+        </dependency>
+
         <!-- Jackson YAML for safe YAML processing -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>

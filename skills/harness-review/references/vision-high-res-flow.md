@@ -3,7 +3,7 @@
 在 harness-review 中充分利用 Opus 4.7 的高分辨率 vision 功能（短边最大 2576px）的典型场景流程。
 
 > **分辨率上限**: 短边 2576px 为运营安全上限。超过此限制的图像建议预先调整大小。
-> 详细指南请参考 [`docs/opus-4-7-vision-usage.md`](../../../docs/opus-4-7-vision-usage.md)。
+> 详细指南请参考 [`docs/harness-project/opus-4-7-vision-usage.md`](../../../docs/harness-project/opus-4-7-vision-usage.md)。
 
 ---
 
