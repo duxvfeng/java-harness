@@ -3,7 +3,6 @@ package com.chachamaru.harness.cli.command;
 import com.chachamaru.harness.cli.command.hook.HookCommand;
 import com.chachamaru.harness.cli.command.plan.PlanGroupCommand;
 import com.chachamaru.harness.cli.command.evidence.CollectCommand;
-import com.chachamaru.harness.handler.session.SessionCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -50,7 +49,6 @@ import picocli.CommandLine.Command;
              ReleaseCommand.class,
              GenCommand.class,
              // Session commands
-             SessionCommand.class,
              SessionRegisterCommand.class,
              SessionUnregisterCommand.class,
              // Audit commands
