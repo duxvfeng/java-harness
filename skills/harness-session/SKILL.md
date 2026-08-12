@@ -1,11 +1,11 @@
 ---
 name: harness-session
-description: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
-description-en: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
-description-zh: "HAR：会话管理命令，用于保存、恢复和管理 Claude Code 会话。命令：/harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions"
+description: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-session save, /harness-session restore, /harness-session list, /harness-session show, /harness-session cleanup"
+description-en: "HAR: Session management commands for saving, restoring, and managing Claude Code sessions. Commands: /harness-session save, /harness-session restore, /harness-session list, /harness-session show, /harness-session cleanup"
+description-zh: "HAR：会话管理命令，用于保存、恢复和管理 Claude Code 会话。命令：/harness-session save, /harness-session restore, /harness-session list, /harness-session show, /harness-session cleanup"
 kind: utility
 purpose: "Manage Claude Code sessions to prevent context loss"
-trigger: "/harness-save-session, /harness-restore-session, /harness-list-sessions, /harness-show-session, /harness-cleanup-sessions, save session, restore session, list sessions, show session, cleanup sessions, session management, context full, token usage, session save, session restore"
+trigger: "/harness-session, /harness-session save, /harness-session restore, /harness-session list, /harness-session show, /harness-session cleanup, save session, restore session, list sessions, show session, cleanup sessions, session management, context full, token usage, session save, session restore"
 shape: command
 role: utility
 owner: harness-core
@@ -15,26 +15,75 @@ argument-hint: "<command> [args]"
 user-invocable: true
 effort: medium
 commands:
-  - name: "/harness-save-session"
+  - name: "/harness-session"
+    description: "Session management hub - shows help when called without arguments"
+    usage: "/harness-session [save|restore|list|show|cleanup] [args]"
+  - name: "/harness-session save"
     description: "Save current Claude Code session state"
-    usage: "/harness-save-session [summary] [--force]"
-  - name: "/harness-restore-session"
+    usage: "/harness-session save [summary] [--force]"
+  - name: "/harness-session restore"
     description: "Restore saved session state"
-    usage: "/harness-restore-session <saveId> [--full] [--summary-only]"
-  - name: "/harness-list-sessions"
+    usage: "/harness-session restore <saveId> [--full] [--summary-only]"
+  - name: "/harness-session list"
     description: "List all saved sessions"
-    usage: "/harness-list-sessions [--recent N] [--all]"
-  - name: "/harness-show-session"
+    usage: "/harness-session list [--recent N] [--all]"
+  - name: "/harness-session show"
     description: "Show detailed session information"
-    usage: "/harness-show-session <saveId>"
-  - name: "/harness-cleanup-sessions"
+    usage: "/harness-session show <saveId>"
+  - name: "/harness-session cleanup"
     description: "Clean up old session saves"
-    usage: "/harness-cleanup-sessions [--keep N] [--dry-run]"
+    usage: "/harness-session cleanup [--keep N] [--dry-run]"
 ---
 
 # Harness Session Management
 
 会话管理技能 - 提供会话保存、恢复、清理等完整会话生命周期管理功能。
+
+## 无参数时的帮助提示
+
+当用户输入 `/harness-session` 不带任何子命令参数时，**必须**显示以下帮助提示：
+
+```text
+# Harness Session - 会话管理技能
+
+💾 save — 保存会话
+  用途: 保存当前会话状态到本地存储
+  触发: `/harness-session save` 或 `/harness-session save "摘要"`
+  参数: [summary] [--force]
+
+📋 restore — 恢复会话
+  用途: 从保存的会话中恢复工作状态
+  触发: `/harness-session restore <saveId>`
+  参数: <saveId> [--full] [--summary-only]
+
+📑 list — 列出会话
+  用途: 列出所有保存的会话
+  触发: `/harness-session list`
+  参数: [--recent N] [--all]
+
+📄 show — 查看详情
+  用途: 显示特定会话的详细信息
+  触发: `/harness-session show <saveId>`
+  参数: <saveId>
+
+🧹 cleanup — 清理会话
+  用途: 清理旧的会话保存文件
+  触发: `/harness-session cleanup`
+  参数: [--older-than HOURS] [--keep N] [--dry-run]
+
+---
+
+示例：
+• 保存当前会话 → `/harness-session save "完成Task 11.8"`
+• 查看会话列表 → `/harness-session list`
+• 恢复会话 → `/harness-session restore 20260809-174530-abc123`
+• 清理旧会话 → `/harness-session cleanup --dry-run`
+```
+
+**输出规则**:
+- **必须**使用上述格式，包括 emoji 图标
+- **必须**在用户仅输入 `/harness-session` 时自动显示，无需额外确认
+- 显示后等待用户选择下一步操作
 
 ## 功能概述
 

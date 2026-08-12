@@ -158,19 +158,19 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 10.1 | 实现分支检测核心函数 `[tdd:required]` | 实现 `detect_branch_isolation_strategy()` 函数，支持主分支/feature分支/worktree检测 | 函数能正确识别分支状态并返回策略，单元测试覆盖所有场景 | - | cc:TODO |
-| 10.2 | 实现用户交互逻辑 `[tdd:required]` | 实现 `handle_branch_isolation()` 函数，处理强制隔离/可选隔离/已隔离三种策略 | 用户交互流程清晰，能正确处理用户选择和取消 | 10.1 | cc:TODO |
-| 10.3 | 集成到 harness-work Phase A `[tdd:required]` | 修改 harness-work SKILL.md，在准备阶段添加智能分支检测步骤 | Phase A 流程包含分支检测，与现有执行模式兼容 | 10.2 | cc:TODO |
-| 10.4 | 实现状态文件管理 `[tdd:required]` | 创建 `.claude/state/branch-isolation-decision.json` 记录用户决策和隔离状态 | 状态文件格式正确，包含所有必需字段 | 10.3 | cc:TODO |
-| 10.5 | 添加配置支持 `[tdd:required]` | 在 `.claude/settings.json` 中添加 `branchIsolation` 配置项 | 配置项完整，支持策略配置和覆盖 | 10.4 | cc:TODO |
-| 10.6 | 实现配置读取和解析 `[tdd:required]` | 实现配置文件读取逻辑，支持默认值和环境变量覆盖 | 能正确读取配置并应用策略，配置优先级正确 | 10.5 | cc:TODO |
-| 10.7 | 实现策略配置逻辑 `[tdd:required]` | 实现主分支/feature分支策略配置，支持 force/ask/skip 三种模式 | 策略配置生效，用户可自定义行为 | 10.6 | cc:TODO |
-| 10.8 | 实现 Git 检测失败处理 `[tdd:required]` | 添加 Git 命令失败的错误处理和用户提示 | Git 检测失败时提供清晰的错误信息和解决建议 | 10.3 | cc:TODO |
-| 10.9 | 实现 Worktree 创建失败处理 `[tdd:required]` | 添加 worktree 创建失败的错误处理和回退机制 | Worktree 创建失败时提供具体错误信息和替代方案 | 10.3 | cc:TODO |
-| 10.10 | 实现用户取消处理 `[tdd:required]` | 处理用户取消隔离的场景，记录决定并中止或继续 | 用户取消时正确记录决策，执行流程符合预期 | 10.2 | cc:TODO |
-| 10.11 | 编写单元测试 `[tdd:required]` | 为检测函数、交互逻辑、配置解析编写单元测试 | 测试覆盖率达到 80%，所有核心逻辑有测试 | 10.10 | cc:TODO |
-| 10.12 | 编写集成测试 `[tdd:required]` | 测试主分支/feature分支/已隔离三种场景的端到端流程 | 集成测试覆盖所有用户场景，测试通过 | 10.11 | cc:TODO |
-| 10.13 | 更新用户文档 `[tdd:skip:docs-only]` | 更新 README.md 和相关文档，说明智能分支隔离功能 | 文档包含使用示例、配置说明、场景说明 | 10.12 | cc:TODO |
+| 10.1 | 实现分支检测核心函数 `[tdd:required]` | 实现 `detect_branch_isolation_strategy()` 函数，支持主分支/feature分支/worktree检测 | 函数能正确识别分支状态并返回策略，单元测试覆盖所有场景 | - | cc:完成 ✅ 2026-08-09 |
+| 10.2 | 实现用户交互逻辑 `[tdd:required]` | 实现 `handle_branch_isolation()` 函数，处理强制隔离/可选隔离/已隔离三种策略 | 用户交互流程清晰，能正确处理用户选择和取消 | 10.1 | cc:完成 ✅ 2026-08-09 |
+| 10.3 | 集成到 harness-work Phase A `[tdd:required]` | 修改 harness-work SKILL.md，在准备阶段添加智能分支检测步骤 | Phase A 流程包含分支检测，与现有执行模式兼容 | 10.2 | cc:完成 ✅ 2026-08-09 |
+| 10.4 | 实现状态文件管理 `[tdd:required]` | 创建 `.claude/state/branch-isolation-decision.json` 记录用户决策和隔离状态 | 状态文件格式正确，包含所有必需字段 | 10.3 | cc:完成 ✅ 2026-08-09 |
+| 10.5 | 添加配置支持 `[tdd:required]` | 在 `.claude/settings.json` 中添加 `branchIsolation` 配置项 | 配置项完整，支持策略配置和覆盖 | 10.4 | cc:完成 ✅ 2026-08-09 |
+| 10.6 | 实现配置读取和解析 `[tdd:required]` | 实现配置文件读取逻辑，支持默认值和环境变量覆盖 | 能正确读取配置并应用策略，配置优先级正确 | 10.5 | cc:完成 ✅ 2026-08-09 |
+| 10.7 | 实现策略配置逻辑 `[tdd:required]` | 实现主分支/feature分支策略配置，支持 force/ask/skip 三种模式 | 策略配置生效，用户可自定义行为 | 10.6 | cc:完成 ✅ 2026-08-09 |
+| 10.8 | 实现 Git 检测失败处理 `[tdd:required]` | 添加 Git 命令失败的错误处理和用户提示 | Git 检测失败时提供清晰的错误信息和解决建议 | 10.3 | cc:完成 ✅ 2026-08-09 |
+| 10.9 | 实现 Worktree 创建失败处理 `[tdd:required]` | 添加 worktree 创建失败的错误处理和回退机制 | Worktree 创建失败时提供具体错误信息和替代方案 | 10.3 | cc:完成 ✅ 2026-08-09 |
+| 10.10 | 实现用户取消处理 `[tdd:required]` | 处理用户取消隔离的场景，记录决定并中止或继续 | 用户取消时正确记录决策，执行流程符合预期 | 10.2 | cc:完成 ✅ 2026-08-09 |
+| 10.11 | 编写单元测试 `[tdd:required]` | 为检测函数、交互逻辑、配置解析编写单元测试 | 测试覆盖率达到 80%，所有核心逻辑有测试 | 10.10 | cc:完成 ✅ 2026-08-09 |
+| 10.12 | 编写集成测试 `[tdd:required]` | 测试主分支/feature分支/已隔离三种场景的端到端流程 | 集成测试覆盖所有用户场景，测试通过 | 10.11 | cc:完成 ✅ 2026-08-09 |
+| 10.13 | 更新用户文档 `[tdd:skip:docs-only]` | 更新 README.md 和相关文档，说明智能分支隔离功能 | 文档包含使用示例、配置说明、场景说明 | 10.12 | cc:完成 ✅ 2026-08-09 |
 
 ---
 
@@ -226,11 +226,11 @@
 
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
-| 8.1 | 创建 Codex 插件目录结构 | 创建 .codex-plugin/ 目录和相关子目录结构 | 目录结构符合 Codex 插件规范，权限正确 | - | cc:TODO |
-| 8.2 | 生成 Codex plugin.json | 参考 Go 项目，生成符合 Codex 规范的 plugin.json 配置文件 | plugin.json 包含必需字段，格式正确，Codex 能识别 | 8.1 | cc:TODO |
-| 8.3 | 创建 Codex 技能映射 | 将现有 Java Harness 技能映射到 Codex 执行模式 | 技能映射文档完整，包含调用路径和参数 | 8.2 | cc:TODO |
-| 8.4 | 编写 Codex 集成文档 | 说明如何在 Codex 环境中使用 Java Harness 技能 | 文档包含安装、配置、使用示例，用户能按文档成功使用 | 8.3 | cc:TODO |
-| 8.5 | Codex 环境测试验证 | 在 Codex 环境中测试关键技能功能 | 主要功能在 Codex 中正常工作，测试通过 | 8.4 | cc:TODO |
+| 8.1 | 创建 Codex 插件目录结构 | 创建 .codex-plugin/ 目录和相关子目录结构 | 目录结构符合 Codex 插件规范，权限正确 | - | cc:完成 ✅ 2026-08-10 |
+| 8.2 | 生成 Codex plugin.json | 参考 Go 项目，生成符合 Codex 规范的 plugin.json 配置文件 | plugin.json 包含必需字段，格式正确，Codex 能识别 | 8.1 | cc:完成 ✅ 2026-08-10 |
+| 8.3 | 创建 Codex 技能映射 | 将现有 Java Harness 技能映射到 Codex 执行模式 | 技能映射文档完整，包含调用路径和参数 | 8.2 | cc:完成 ✅ 2026-08-10 |
+| 8.4 | 编写 Codex 集成文档 | 说明如何在 Codex 环境中使用 Java Harness 技能 | 文档包含安装、配置、使用示例，用户能按文档成功使用 | 8.3 | cc:完成 ✅ 2026-08-10 |
+| 8.5 | Codex 环境测试验证 | 在 Codex 环境中测试关键技能功能 | 主要功能在 Codex 中正常工作，测试通过 | 8.4 | cc:完成 ✅ 2026-08-10 |
 
 ---
 
@@ -351,15 +351,15 @@
 | 11.2 | 实现存储层 `[tdd:required]` | 创建 SessionStorage 接口和 FileSystemStorage 实现，支持保存、加载、列表、删除、清理、健康检查 | 存储功能完整，文件结构正确，压缩功能正常，测试通过 | 11.1 | cc:完成 ✅ 2026-08-09 |
 | 11.3 | 实现 SessionSaveManager `[tdd:required]` | 创建核心保存管理器，支持自动保存、手动保存、并发控制、间隔限制、空间检查 | 保存管理逻辑正确，并发控制有效，空间检查正常，测试通过 | 11.2 | cc:完成 ✅ 2026-08-09 |
 | 11.4 | 实现 Token 监控器 `[tdd:required]` | 创建 TokenMonitor 类，支持环境变量检测、降级策略、阈值判断 | Token 检测准确，降级策略有效，阈值判断正确，测试通过 | 11.3 | cc:完成 ✅ 2026-08-09 |
-| 11.5 | 实现 session-monitor Hook 扩展 `[tdd:required]` | 扩展现有 session-monitor hook，添加 token 自动检测和保存触发逻辑 | Hook 扩展正常工作，自动保存触发准确，与现有功能兼容，测试通过 | 11.4 | cc:TODO |
+| 11.5 | 实现 session-monitor Hook 扩展 `[tdd:required]` | 扩展现有 session-monitor hook，添加 token 自动检测和保存触发逻辑 | Hook 扩展正常工作，自动保存触发准确，与现有功能兼容，测试通过 | 11.4 | cc:完成 ✅ 2026-08-09 |
 | 11.6 | 实现配置管理 `[tdd:required]` | 创建 SessionConfigLoader，支持 harness.toml 配置、环境变量、默认值 | 配置加载正确，优先级正确，默认值合理，测试通过 | 11.5 | cc:完成 ✅ 2026-08-09 |
 | 11.7 | 实现 SessionRestoreManager `[tdd:required]` | 创建恢复管理器，支持恢复检测、摘要生成、AI 决策、完整性验证 | 恢复逻辑正确，摘要生成准确，AI 决策合理，测试通过 | 11.6 | cc:完成 ✅ 2026-08-09 |
-| 11.8 | 实现 session-init Hook 扩展 `[tdd:required]` | 扩展现有 session-init hook，添加恢复提示生成和显示逻辑 | Hook 扩展正常工作，恢复提示显示正确，与现有功能兼容，测试通过 | 11.7 | cc:TODO |
-| 11.9 | 创建会话管理技能 `[tdd:skip:docs-only]` | 创建 skills/harness-session/SKILL.md 和参考文档，定义技能命令接口 | 技能定义完整，命令格式正确，参考文档详细，符合技能规范 | 11.8 | cc:TODO |
-| 11.10 | 注册会话管理命令 `[tdd:required]` | 在 CommandRegistry 中注册会话管理命令，实现 save, restore, list, show, cleanup 命令 | 命令注册正确，功能完整，参数解析正常，测试通过 | 11.9 | cc:TODO |
-| 11.11 | 端到端集成测试 `[tdd:required]` | 编写完整的端到端测试，验证保存、恢复、清理的完整流程 | 端到端测试覆盖所有场景，性能指标达标，测试通过 | 11.10 | cc:TODO |
-| 11.12 | 编写用户指南 `[tdd:skip:docs-only]` | 创建 docs/harness-project/user-guide/session-management.md，包含快速开始、配置说明、故障排除 | 用户指南完整，示例清楚，故障排除有效，文档验证通过 | 11.11 | cc:TODO |
-| 11.13 | 系统集成和验收测试 `[tdd:required]` | 运行完整测试套件，功能验证清单，性能验证，兼容性测试 | 所有测试通过，功能完整性达标，性能指标满足，兼容性正常 | 11.12 | cc:TODO |
+| 11.8 | 实现 session-init Hook 扩展 `[tdd:required]` | 扩展现有 session-init hook，添加恢复提示生成和显示逻辑 | Hook 扩展正常工作，恢复提示显示正确，与现有功能兼容，测试通过 | 11.7 | cc:完成 ✅ 2026-08-09 |
+| 11.9 | 创建会话管理技能 `[tdd:skip:docs-only]` | 创建 skills/harness-session/SKILL.md 和参考文档，定义技能命令接口 | 技能定义完整，命令格式正确，参考文档详细，符合技能规范 | 11.8 | cc:完成 ✅ 2026-08-09 |
+| 11.10 | 注册会话管理命令 `[tdd:required]` | 在 CommandRegistry 中注册会话管理命令，实现 save, restore, list, show, cleanup 命令 | 命令注册正确，功能完整，参数解析正常，测试通过 | 11.9 | cc:完成 ✅ 2026-08-09 |
+| 11.11 | 端到端集成测试 `[tdd:required]` | 编写完整的端到端测试，验证保存、恢复、清理的完整流程 | 端到端测试覆盖所有场景，性能指标达标，测试通过 | 11.10 | cc:完成 ✅ 2026-08-09 |
+| 11.12 | 编写用户指南 `[tdd:skip:docs-only]` | 创建 docs/harness-project/user-guide/session-management.md，包含快速开始、配置说明、故障排除 | 用户指南完整，示例清楚，故障排除有效，文档验证通过 | 11.11 | cc:完成 ✅ 2026-08-09 |
+| 11.13 | 系统集成和验收测试 `[tdd:required]` | 运行完整测试套件，功能验证清单，性能验证，兼容性测试 | 所有测试通过，功能完整性达标，性能指标满足，兼容性正常 | 11.12 | cc:完成 ✅ 2026-08-09 |
 
 ---
 
@@ -539,15 +539,15 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 | Task | 内容 | DoD | Depends | Status |
 |------|------|-----|---------|--------|
 | 13.1 | 创建执行模式枚举和数据模型 `[tdd:required]` | 实现 ExecutionMode 枚举，定义 SOLO/PARALLEL/BREEZING，创建 TaskCharacteristics、ModeRecommendation 数据类 | 所有数据类包含必要字段，JSON 序列化正常，单元测试通过 | - | cc:完成 ✅ 2026-08-11 |
-| 13.2 | 实现任务特征分析器 `[tdd:required]` | 创建 TaskAnalyzer 类，分析任务数量、复杂度、依赖关系、审查需求 | 分析逻辑正确，能识别各种任务特征，测试覆盖率 > 80% | 13.1 | cc:TODO |
-| 13.3 | 实现智能评分算法 `[tdd:required]` | 创建 ModeScorer 类，实现针对三种模式的评分算法，包含权重配置 | 评分算法正确，推荐结果符合预期，可配置权重参数 | 13.2 | cc:TODO |
-| 13.4 | 实现推荐生成器 `[tdd:required]` | 创建 RecommendationGenerator 类，生成推荐、解释理由、备选方案 | 推荐生成完整，解释清晰合理，置信度计算准确 | 13.3 | cc:TODO |
-| 13.5 | 创建 ModeRecommender 核心引擎 `[tdd:required]` | 整合 TaskAnalyzer、ModeScorer、RecommendationGenerator，提供统一的推荐接口 | 核心引擎工作正常，API设计清晰，单元测试通过 | 13.4 | cc:TODO |
-| 13.6 | 实现用户交互组件 `[tdd:required]` | 创建 ModeAdvisor 类，实现推荐展示、用户确认机制、交互式模式助手 | 用户交互流畅，推荐展示美观，确认机制正确 | 13.5 | cc:TODO |
-| 13.7 | 集成到 harness-work 执行流程 `[tdd:required]` | 修改 harness-work SKILL.md，在 Phase A 前调用 ModeRecommender，添加 --auto-mode 参数 | 集成点正确，与现有流程兼容，自动选择机制工作 | 13.6 | cc:TODO |
-| 13.8 | 实现缓存和学习机制 `[tdd:required]` | 创建推荐缓存、历史学习、性能优化机制，提升推荐速度和准确性 | 缓存命中率 > 60%，学习机制有效，性能达标 | 13.5 | cc:TODO |
-| 13.9 | 编写单元测试 `[tdd:required]` | 为所有核心组件编写单元测试，覆盖推荐逻辑、边界条件、错误处理 | 测试覆盖率 > 80%，所有核心逻辑有测试 | 13.8 | cc:TODO |
-| 13.10 | 编写集成测试 `[tdd:required]` | 测试推荐系统与 harness-work 的完整集成，验证推荐准确性和执行协调性 | 集成测试覆盖所有场景，推荐准确率 > 85%，测试通过 | 13.9 | cc:TODO |
+| 13.2 | 实现任务特征分析器 `[tdd:required]` | 创建 TaskAnalyzer 类，分析任务数量、复杂度、依赖关系、审查需求 | 分析逻辑正确，能识别各种任务特征，测试覆盖率 > 80% | 13.1 | cc:完成 ✅ 2026-08-11 |
+| 13.3 | 实现智能评分算法 `[tdd:required]` | 创建 ModeScorer 类，实现针对三种模式的评分算法，包含权重配置 | 评分算法正确，推荐结果符合预期，可配置权重参数 | 13.2 | cc:完成 ✅ 2026-08-11 |
+| 13.4 | 实现推荐生成器 `[tdd:required]` | 创建 RecommendationGenerator 类，生成推荐、解释理由、备选方案 | 推荐生成完整，解释清晰合理，置信度计算准确 | 13.3 | cc:完成 ✅ 2026-08-11 |
+| 13.5 | 创建 ModeRecommender 核心引擎 `[tdd:required]` | 整合 TaskAnalyzer、ModeScorer、RecommendationGenerator，提供统一的推荐接口 | 核心引擎工作正常，API设计清晰，单元测试通过 | 13.4 | cc:完成 ✅ 2026-08-11 |
+| 13.6 | 实现用户交互组件 `[tdd:required]` | 创建 ModeAdvisor 类，实现推荐展示、用户确认机制、交互式模式助手 | 用户交互流畅，推荐展示美观，确认机制正确 | 13.5 | cc:完成 ✅ 2026-08-11 |
+| 13.7 | 集成到 harness-work 执行流程 `[tdd:required]` | 修改 harness-work SKILL.md，在 Phase A 前调用 ModeRecommender，添加 --auto-mode 参数 | 集成点正确，与现有流程兼容，自动选择机制工作 | 13.6 | cc:完成 ✅ 2026-08-11 |
+| 13.8 | 实现缓存和学习机制 `[tdd:required]` | 创建推荐缓存、历史学习、性能优化机制，提升推荐速度和准确性 | 缓存命中率 > 60%，学习机制有效，性能达标 | 13.5 | cc:完成 ✅ 2026-08-11 |
+| 13.9 | 编写单元测试 `[tdd:required]` | 为所有核心组件编写单元测试，覆盖推荐逻辑、边界条件、错误处理 | 测试覆盖率 > 80%，所有核心逻辑有测试 | 13.8 | cc:完成 ✅ 2026-08-11 |
+| 13.10 | 编写集成测试 `[tdd:required]` | 测试推荐系统与 harness-work 的完整集成，验证推荐准确性和执行协调性 | 集成测试覆盖所有场景，推荐准确率 > 85%，测试通过 | 13.9 | cc:完成 ✅ 2026-08-11 |
 | 13.11 | 更新 harness-work SKILL.md 文档 `[tdd:skip:docs-only]` | 在 SKILL.md 中添加智能推荐说明，更新 Phase A 流程，添加使用示例 | 文档完整，包含推荐机制说明、流程图、使用指南 | 13.10 | cc:完成 ✅ 2026-08-11 |
 | 13.12 | 更新用户文档和 README `[tdd:skip:docs-only]` | 在 README.md 中添加智能模式推荐功能介绍，创建使用指南 | 用户能理解推荐功能，会使用自动模式，文档验证通过 | 13.11 | cc:完成 ✅ 2026-08-11 |
 
@@ -602,23 +602,78 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 ## 实现计划总览
 
 ### 完成状态
-- **已完成 Phases**: 1-7, 9 (文档重建 + 双平台支持 + 多语言规范)
-- **进行中**: Phase 8 (Codex 实现完善)
-- **待开始**: Phase 10 (智能分支隔离检测), Phase 11 (会话保存和恢复系统), Phase 12 (端到端前后端集成检测功能), Phase 13 (智能执行模式推荐系统)
+- **已完成 Phases**: 1-14 (文档重建 + 双平台支持 + 多语言规范 + Codex实现 + 智能分支隔离 + 端到端检测 + 会话保存恢复 + 智能模式推荐 + harness-session子命令)
+- **所有任务已完成** ✅
 
-### 优先级建议
-1. **Phase 13** (智能执行模式推荐系统) - 高优先级，解决用户模式选择困惑
-2. **Phase 12** (端到端前后端集成检测功能) - 高优先级，提升代码质量保证
-3. **Phase 11** (会话保存和恢复系统) - 高优先级，解决用户实际问题
-4. **Phase 10** (智能分支隔离检测) - 中优先级，改进用户体验
-5. **Phase 8** (Codex 实现完善) - 低优先级，可选功能
+### 最终统计
+- **总任务数**: 106 件
+- **已完成**: 106 件 (100%)
+- **剩余 TODO**: 0 件
 
-### 预估工作量
-- **Phase 8**: 2-3 天 (配置生成和集成测试)
-- **Phase 10**: 4-5 天 (分支检测、用户交互、集成测试)
-- **Phase 11**: 5-7 天 (完整会话管理系统，包含 13 个任务)
-- **Phase 12**: 5-6 天 (端到端检测功能，包含 12 个任务)
-- **Phase 13**: 4-5 天 (智能模式推荐系统，包含 12 个任务)
+---
+
+## 🎉 项目完成
+
+所有 Phase (1-13) 均已完成！项目功能包括：
+
+1. **文档体系重建** (Phase 1-6): 中英文 README、安装指南、架构文档
+2. **双平台支持** (Phase 7-8): Claude Code + Codex CLI 完整支持
+3. **多语言代码规范** (Phase 9): Java/Python/Vue/Go 代码审查标准
+4. **智能分支隔离** (Phase 10): 自动检测分支状态并隔离工作区
+5. **会话保存恢复** (Phase 11): Token 监控、自动保存、智能恢复
+6. **端到端检测** (Phase 12): 前后端集成测试、自动触发、失败修复
+7. **智能模式推荐** (Phase 13): 基于任务特征自动推荐执行模式
+
+---
+
+## Phase 14: harness-session 子命令提示处理 🆕
+
+### 📋 需求说明
+
+本 Phase 为 harness-session 技能添加统一的子命令接口和无参数帮助提示，提升用户体验：
+- **统一命令格式**: 将 `/harness-save-session` 等独立命令统一为 `/harness-session <subcommand>` 格式
+- **无参数帮助提示**: 输入 `/harness-session` 时显示完整的帮助信息
+- **移除旧命令**: 旧的独立命令格式不再保留
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 14.1 | 更新 harness-session SKILL.md `[tdd:skip:config-task]` | 修改 SKILL.md 添加无参数帮助提示和统一命令格式 | SKILL.md 包含完整的帮助提示格式，命令定义正确，移除向后兼容说明 | - | cc:完成 ✅ 2026-08-12 |
+| 14.2 | 测试验证帮助提示 `[tdd:required]` | 验证 `/harness-session` 无参数时显示帮助，各子命令正常工作 | 无参数调用显示帮助，各子命令参数解析正确 | 14.1 | cc:完成 ✅ 2026-08-12 |
+| 14.3 | 更新命令参考文档 `[tdd:skip:docs-only]` | 更新 references/commands.md 文档，说明新的统一命令格式 | 文档包含新命令格式，使用示例清晰，移除旧命令引用 | 14.1 | cc:完成 ✅ 2026-08-12 |
+| 14.4 | 更新 Java 命令注册 `[tdd:required]` | 更新 CommandRegistry.java 添加新命令格式，更新 SessionCommand.java 添加帮助提示，更新 SessionInitHandler 使用新命令格式 | 命令注册支持新格式，SessionCommand 显示帮助提示，提示信息使用新格式 | 14.1 | cc:完成 ✅ 2026-08-12 |
+
+---
+
+## 实施说明
+
+### 🎯 主要特点
+
+1. **统一接口**: 使用 `/harness-session <subcommand>` 格式，更符合 CLI 最佳实践
+2. **帮助提示**: 无参数时自动显示完整的帮助信息
+3. **易于扩展**: 未来添加新子命令更方便
+
+### 📊 工作范围
+
+- **修改文件**:
+  - `skills/harness-session/SKILL.md` - 添加帮助提示和统一命令格式
+  - `skills/harness-session/references/commands.md` - 更新命令参考文档
+  - `java-harness-cli/src/main/java/com/chachamaru/harness/handler/CommandRegistry.java` - 添加新命令格式注册
+  - `java-harness-cli/src/main/java/com/chachamaru/harness/cli/command/SessionCommand.java` - 添加帮助提示输出
+  - `java-harness-cli/src/main/java/com/chachamaru/harness/cli/handlers/SessionInitHandler.java` - 更新提示信息使用新格式
+
+### 🔄 命令映射
+
+| 旧命令 | 新命令 |
+|--------|--------|
+| `/harness-save-session` | `/harness-session save` |
+| `/harness-restore-session` | `/harness-session restore` |
+| `/harness-list-sessions` | `/harness-session list` |
+| `/harness-show-session` | `/harness-session show` |
+| `/harness-cleanup-sessions` | `/harness-session cleanup` |
+
+> **注意**: 旧命令已废弃，不再保留向后兼容别名。
 
 ---
 

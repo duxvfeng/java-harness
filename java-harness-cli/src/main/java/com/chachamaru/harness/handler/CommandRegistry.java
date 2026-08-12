@@ -39,12 +39,13 @@ public class CommandRegistry {
         // Hook dispatcher (essential)
         handlers.put("hook", new HookDispatcher());
 
-        // Session management commands
-        handlers.put("harness-save-session", new SaveSessionCommand());
-        handlers.put("harness-restore-session", new RestoreSessionCommand());
-        handlers.put("harness-list-sessions", new ListSessionsCommand());
-        handlers.put("harness-show-session", new ShowSessionCommand());
-        handlers.put("harness-cleanup-sessions", new CleanupSessionsCommand());
+        // Session management commands (unified format: /harness-session <subcommand>)
+        handlers.put("harness-session", new SessionCommand());
+        handlers.put("harness-session save", new SaveSessionCommand());
+        handlers.put("harness-session restore", new RestoreSessionCommand());
+        handlers.put("harness-session list", new ListSessionsCommand());
+        handlers.put("harness-session show", new ShowSessionCommand());
+        handlers.put("harness-session cleanup", new CleanupSessionsCommand());
     }
 
     /**

@@ -4,23 +4,69 @@
 
 ## 命令概览
 
+### 统一命令格式（推荐）
+
+使用 `/harness-session <subcommand>` 格式：
+
 | 命令 | 功能 | 类别 |
 |------|------|------|
-| `/harness-save-session` | 保存当前会话状态 | 保存操作 |
-| `/harness-restore-session` | 恢复已保存的会话 | 恢复操作 |
-| `/harness-list-sessions` | 列出所有保存的会话 | 查询操作 |
-| `/harness-show-session` | 显示会话详细信息 | 查询操作 |
-| `/harness-cleanup-sessions` | 清理旧的会话保存 | 维护操作 |
+| `/harness-session` | 显示帮助信息 | 帮助 |
+| `/harness-session save` | 保存当前会话状态 | 保存操作 |
+| `/harness-session restore` | 恢复已保存的会话 | 恢复操作 |
+| `/harness-session list` | 列出所有保存的会话 | 查询操作 |
+| `/harness-session show` | 显示会话详细信息 | 查询操作 |
+| `/harness-session cleanup` | 清理旧的会话保存 | 维护操作 |
+
+### 帮助提示
+
+输入 `/harness-session` 不带任何参数时，会显示完整的帮助信息：
+
+```text
+# Harness Session - 会话管理技能
+
+💾 save — 保存会话
+  用途: 保存当前会话状态到本地存储
+  触发: `/harness-session save` 或 `/harness-session save "摘要"`
+  参数: [summary] [--force]
+
+📋 restore — 恢复会话
+  用途: 从保存的会话中恢复工作状态
+  触发: `/harness-session restore <saveId>`
+  参数: <saveId> [--full] [--summary-only]
+
+📑 list — 列出会话
+  用途: 列出所有保存的会话
+  触发: `/harness-session list`
+  参数: [--recent N] [--all]
+
+📄 show — 查看详情
+  用途: 显示特定会话的详细信息
+  触发: `/harness-session show <saveId>`
+  参数: <saveId>
+
+🧹 cleanup — 清理会话
+  用途: 清理旧的会话保存文件
+  触发: `/harness-session cleanup`
+  参数: [--older-than HOURS] [--keep N] [--dry-run]
+
+---
+
+示例：
+• 保存当前会话 → `/harness-session save "完成Task 11.8"`
+• 查看会话列表 → `/harness-session list`
+• 恢复会话 → `/harness-session restore 20260809-174530-abc123`
+• 清理旧会话 → `/harness-session cleanup --dry-run`
+```
 
 ## 详细命令说明
 
-### /harness-save-session
+### /harness-session save
 
 保存当前会话状态到本地存储。
 
 #### 用法
 ```bash
-/harness-save-session [summary] [--force]
+/harness-session save [summary] [--force]
 ```
 
 #### 参数
@@ -30,13 +76,13 @@
 #### 示例
 ```bash
 # 基本保存
-/harness-save-session
+/harness-session save
 
 # 带摘要的保存
-/harness-save-session "完成Task 11.8的session-init Hook实现"
+/harness-session save "完成Task 11.8的session-init Hook实现"
 
 # 强制保存
-/harness-save-session --force
+/harness-session save --force
 ```
 
 #### 输出格式
@@ -54,13 +100,13 @@ Token使用率: 85%
 - 默认有保存间隔限制（默认30分钟），使用 `--force` 可绕过
 - 大型会话可能需要较长时间（通常<3秒）
 
-### /harness-restore-session
+### /harness-session restore
 
 从保存的会话中恢复工作状态。
 
 #### 用法
 ```bash
-/harness-restore-session <saveId> [--full] [--summary-only]
+/harness-session restore <saveId> [--full] [--summary-only]
 ```
 
 #### 参数
@@ -71,13 +117,13 @@ Token使用率: 85%
 #### 示例
 ```bash
 # 基本恢复
-/harness-restore-session 20260809-174530-abc123
+/harness-session restore 20260809-174530-abc123
 
 # 完整恢复
-/harness-restore-session 20260809-174530-abc123 --full
+/harness-session restore 20260809-174530-abc123 --full
 
 # 仅查看摘要
-/harness-restore-session 20260809-174530-abc123 --summary-only
+/harness-session restore 20260809-174530-abc123 --summary-only
 ```
 
 #### 输出格式
@@ -109,13 +155,13 @@ AI决策: 建议恢复完整上下文以继续复杂任务
 - **完整恢复** (`--full`): 恢复所有对话历史和详细上下文
 - **摘要查看** (`--summary-only`): 不实际恢复，仅显示会话信息
 
-### /harness-list-sessions
+### /harness-session list
 
 列出所有保存的会话。
 
 #### 用法
 ```bash
-/harness-list-sessions [--recent N] [--all]
+/harness-session list [--recent N] [--all]
 ```
 
 #### 参数
@@ -125,13 +171,13 @@ AI决策: 建议恢复完整上下文以继续复杂任务
 #### 示例
 ```bash
 # 显示最近5个会话
-/harness-list-sessions
+/harness-session list
 
 # 显示最近10个会话
-/harness-list-sessions --recent 10
+/harness-session list --recent 10
 
 # 显示所有会话
-/harness-list-sessions --all
+/harness-session list --all
 ```
 
 #### 输出格式
@@ -161,13 +207,13 @@ AI决策: 建议恢复完整上下文以继续复杂任务
 - **Token使用率**: 保存时的Token使用情况
 - **任务进度**: 当前任务和完成度
 
-### /harness-show-session
+### /harness-session show
 
 显示特定会话的详细信息。
 
 #### 用法
 ```bash
-/harness-show-session <saveId>
+/harness-session show <saveId>
 ```
 
 #### 参数
@@ -175,7 +221,7 @@ AI决策: 建议恢复完整上下文以继续复杂任务
 
 #### 示例
 ```bash
-/harness-show-session 20260809-174530-abc123
+/harness-session show 20260809-174530-abc123
 ```
 
 #### 输出格式
@@ -212,13 +258,13 @@ Git状态:
 - 了解会话的任务进度
 - 验证会话文件完整性
 
-### /harness-cleanup-sessions
+### /harness-session cleanup
 
 清理旧的会话保存文件。
 
 #### 用法
 ```bash
-/harness-cleanup-sessions [--older-than HOURS] [--keep N] [--dry-run]
+/harness-session cleanup [--older-than HOURS] [--keep N] [--dry-run]
 ```
 
 #### 参数
@@ -229,19 +275,19 @@ Git状态:
 #### 示例
 ```bash
 # 基本清理（删除超过7天的会话，保留最近10个）
-/harness-cleanup-sessions
+/harness-session cleanup
 
 # 删除超过1天的会话
-/harness-cleanup-sessions --older-than 24
+/harness-session cleanup --older-than 24
 
 # 保留最近20个会话
-/harness-cleanup-sessions --keep 20
+/harness-session cleanup --keep 20
 
 # 预览将要删除的会话
-/harness-cleanup-sessions --dry-run
+/harness-session cleanup --dry-run
 
 # 组合条件：保留最近15个，删除超过3天的
-/harness-cleanup-sessions --keep 15 --older-than 72
+/harness-session cleanup --keep 15 --older-than 72
 ```
 
 #### 输出格式

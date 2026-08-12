@@ -159,7 +159,7 @@ public class SessionInitHandler implements HookHandler {
         prompt.append("🚀 恢复命令 (Restore Command)\n");
         prompt.append("─────────────────────────────────────────────────────────────\n");
         prompt.append("使用以下命令恢复会话:\n");
-        prompt.append("  /harness-restore-session ").append(suggestion.getSaveId()).append("\n\n");
+        prompt.append("  /harness-session restore ").append(suggestion.getSaveId()).append("\n\n");
 
         return prompt.toString();
     }
