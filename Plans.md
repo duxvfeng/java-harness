@@ -660,7 +660,7 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
   - `skills/harness-session/SKILL.md` - 添加帮助提示和统一命令格式
   - `skills/harness-session/references/commands.md` - 更新命令参考文档
   - `java-harness-cli/src/main/java/com/chachamaru/harness/handler/CommandRegistry.java` - 添加新命令格式注册
-  - `java-harness-cli/src/main/java/com/chachamaru/harness/cli/command/SessionCommand.java` - 添加帮助提示输出
+  - `java-harness-cli/src/main/java/com/chachamaru/harness/handler/session/SessionCommand.java` - 统一入口命令
   - `java-harness-cli/src/main/java/com/chachamaru/harness/cli/handlers/SessionInitHandler.java` - 更新提示信息使用新格式
 
 ### 🔄 命令映射
