@@ -1,312 +1,104 @@
 package com.chachamaru.harness.service.integration;
 
+import com.chachamaru.harness.cli.guardrail.GuardrailEngine;
+import com.chachamaru.harness.cli.guardrail.rules.R01NoSudo;
+import com.chachamaru.harness.cli.guardrail.rules.R07CodexDirectWrite;
+import com.chachamaru.harness.cli.handlers.PreToolUseHandler;
 import com.chachamaru.harness.cli.hook.HookCodec;
 import com.chachamaru.harness.cli.hook.HookInput;
 import com.chachamaru.harness.cli.hook.HookOutput;
-import com.chachamaru.harness.cli.handlers.PreToolUseHandler;
-import com.chachamaru.harness.cli.guardrail.GuardrailEngine;
-import com.chachamaru.harness.cli.guardrail.rules.*;
 import com.chachamaru.harness.cli.router.HookRouter;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration tests for Hook processing through the complete pipeline.
- *
- * <p>Tests Hook events from receiving input, through guardrail checks,
- * routing to handlers, and generating output responses.</p>
- *
- * @spec_reference spec.md#Hook Processing
+ * Integration tests for the current CLI hook processing contracts.
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@DisplayName("Hook Processing Integration Tests")
-public class HookProcessingTest {
-
-    @Autowired(required = false)
-    private HookRouter router;
+class HookProcessingTest {
 
     @Test
-.shouldDisplayCludeName
-    void hookProcessingSetup() {
-        assertNotNull(router, "HookRouter should be available");
-    }
-
-    @Test
-    @DisplayName("应该解析Hook输入")
-    void shouldParseHookInput() {
-        String hookInputJson = """
+    void hookInputCanBeParsedFromJson() throws Exception {
+        String json = """
             {
-              "hookEventName": "pre-tool-use",
-              "toolName": "bashed",
-              "toolVersion": "0.0.1",
-              "connection": {
-                "socketPath": "/tmp/harness.sock"
-              },
-              "parameters": {
-                "files": ["src/main/java/Example.java"]
-              },
-              "cwd": "/project/java-harness"
+              "session_id": "session-1",
+              "hook_event_name": "pre-tool-use",
+              "tool_name": "Bash",
+              "tool_input": {"command": "mvn test"},
+              "cwd": "/project"
             }
             """;
 
-        assertDoesNotThrow(() -> {
-            HookCodec codec = new HookCodec();
-            HookInput input = codec.parse(hookInputJson);
+        HookInput input = new HookCodec().parse(new StringReader(json));
 
-            assertEquals("pre-tool-use", input.hookEventName());
-            assertEquals("bashed", input.toolName());
-            assertNotNull(input.connection());
-            assertEquals("/tmp/harness.sock", input.connection().socketPath());
-            assertFalse(input.files().isEmpty());
-        });
+        assertEquals("pre-tool-use", input.hookEventName());
+        assertEquals("Bash", input.toolName());
+        assertEquals("mvn test", input.toolInput().get("command"));
+        assertTrue(input.isValid());
     }
 
     @Test
-    @DisplayName("应该生成Hook输出")
-    void shouldGenerateHookOutput() {
-        HookInput input = new HookInput(
-            "pre-tool-use",
-            "bashed",
-            "0.0.1",
-            new com.chachamaru.harness.cli.hook.Connection("/tmp/harness.sock"),
-            java.util.List.of("src/main/java/Example.java"),
-            "/project/java-harness",
-            java.util.Map.of()
-        );
+    void hookOutputCanBeSerialized() throws Exception {
+        StringWriter writer = new StringWriter();
 
-        assertDoesNotThrow(() -> {
-            HookOutput output = HookOutput.allow("Tool execution allowed");
+        new HookCodec().serialize(HookOutput.allow(), writer);
 
-            assertNotNull(output);
-            assertEquals("allow", output.permissionDecision());
-            assertNotNull(output.message());
-        });
+        assertTrue(writer.toString().contains("allow"));
     }
 
     @Test
-    @DisplayName("应该序列化和反序列化Hook数据")
-    void shouldSerializeAndDeserializeHookData() {
-        // Create input
-        HookInput originalInput = new HookInput(
-            "post-tool-use",
-            "bashed",
-            "0.0.1",
-            new com.chachamaru.harness.cli.hook.Connection("/tmp/harness.sock"),
-            java.util.List.of("src/main/java/Example.java"),
-            "/project/java-harness",
-            java.util.Map.of("testKey", "testValue")
-        );
+    void guardrailRulesCanBeRegisteredAndRouted() throws Exception {
+        GuardrailEngine engine = new GuardrailEngine();
+        engine.registerRule(new R01NoSudo());
+        engine.registerRule(new R07CodexDirectWrite());
 
-        assertDoesNotThrow(() -> {
-            // Serialize
-            HookCodec codec = new HookCodec();
-            String serialized = codec.serializeToString(originalInput);
+        HookRouter router = new HookRouter();
+        router.registerHandler(new PreToolUseHandler(engine));
 
-            assertNotNull(serialized);
-            assertTrue(serialized.contains("\"hookEventName\":\"post-tool-use\""));
-            assertTrue(serialized.contains("\"testKey\":\"testValue\""));
-
-            // Deserialize
-            HookInput deserialized = codec.parse(serialized);
-
-            assertEquals(originalInput.hookEventName(), deserialized.hookEventName());
-            assertEquals(originalInput.toolName(), deserialized.toolName());
-            assertEquals(originalInput.connection().socketPath(),
-                        deserialized.connection().socketPath());
-            assertEquals(originalInput.files().size(), deserialized.files().size());
-        });
+        assertTrue(router.getRegistry().getHandlerCount() > 0);
+        assertEquals("PreToolUse", router.route(validInput()).getEventName());
+        assertNotNull(router.route(validInput()).handle(validInput()));
     }
 
     @Test
-    @DisplayName("应该路由Hook事件到正确处理器")
-    void shouldRouteHookEventsToCorrectHandlers() {
-        assertDoesNotThrow(() -> {
-            HookRouter router = new HookRouter();
+    void denyOutputContainsTheReason() {
+        HookOutput output = HookOutput.deny("Access denied");
 
-            // Register handlers
-            GuardrailEngine guardrailEngine = new GuardrailEngine();
-            guardrailEngine.registerRule(new R07CodexDirectWrite());
-
-            router.registerHandler(new PreToolUseHandler(guardrailEngine));
-
-            // Verify routing
-            assertNotNull(router.getRegistry());
-            assertTrue(router.getRegistry().getHandlerCount() > 0);
-        });
+        assertEquals("deny", output.permissionDecision());
+        assertEquals("Access denied", output.permissionDecisionReason());
     }
 
     @Test
-    @DisplayName("应该应用Guardrail规则")
-    void shouldApplyGuardrailRules() {
-        assertDoesNotThrow(() -> {
-            GuardrailEngine engine = new GuardrailEngine();
-
-            // Register a sample rule
-            engine.registerRule(new R01NoSudo());
-
-            // Verify rule is registered
-            assertNotNull(engine);
-            // In actual implementation, would check rule application
-        });
+    void invalidJsonIsRejected() {
+        assertThrows(Exception.class,
+            () -> new HookCodec().parse(new StringReader("{invalid json}")));
     }
 
     @Test
-    @iology
-    void hookProcessingShouldHandleAllEventTypes() {
-        String[] hookEvents = {
-            "pre-tool-use",
-            "post-tool-use",
-            "session-start",
-            "session-end",
-            "pre-compact",
-            "post-compact"
-        };
+    void sudoCommandIsDeniedByGuardrail() {
+        GuardrailEngine engine = new GuardrailEngine();
+        engine.registerRule(new R01NoSudo());
 
-        assertDoesNotThrow(() -> {
-            for (String event : hookEvents) {
-                // Verify each event type can be handled
-                HookInput input = new HookInput(
-                    event,
-                    "test-tool",
-                    "1.0.0",
-                    new com.chachamaru.harness.cli.hook.Connection("/tmp/test.sock"),
-                    java.util.List.of(),
-                    "/project",
-                    java.util.Map.of()
-                );
+        var result = engine.evaluate(new HookInput(
+            "session-1", null, "/project", null, "pre-tool-use", "Bash",
+            Map.of("command", "sudo rm -rf /"), null));
 
-                assertNotNull(input);
-                assertEquals(event, input.hookEventName());
-            }
-        });
+        assertTrue(result.isDenied());
+        assertFalse(result.decision().reason().isBlank());
     }
 
-    @Test
-    @DisplayName("应该处理deny决定")
-    void shouldHandleDenyDecision() {
-        HookOutput denyOutput = HookOutput.deny("Access denied by Guardrail rule");
-
-        assertEquals("deny", denyOutput.permissionDecision());
-        assertNotNull(denyOutput.message());
-        assertFalse(denyOutput.message().isEmpty());
-    }
-
-    @Test
-    @DisplayName("集成测试应该验证Hook处理完整流程")
-    void integrationShouldVerifyCompleteHookProcessingFlow() {
-        // This test verifies the complete Hook processing pipeline:
-        // 1. Receive Hook input
-        // 2. Parse JSON to HookInput
-        3. Apply Guardrail rules
-        // 4. Route to appropriate handler
-        // 5. Generate HookOutput
-        // 6. Serialize output to JSON
-
-        assertDoesNotThrow(() -> {
-            // Setup components
-            HookCodec codec = new HookCodec();
-            HookRouter router = new HookRouter();
-            GuardrailEngine guardrailEngine = new GuardrailEngine();
-
-            // Register rule
-            guardrailEngine.registerRule(new R07CodexDirectWrite());
-
-            // Register handler
-            router.registerHandler(new PreToolUseHandler(guardrailEngine));
-
-            // Create test input
-            HookInput input = new HookInput(
-                "pre-tool-use",
-                "codex",
-                "1.0.0",
-                new com.chamarar.harness.cli.hook.Connection("/tmp/harness.sock"),
-                java.util.List.of("src/main/java/Test.java"),
-                "/project",
-                java.util.Map.of()
-            );
-
-            // Route to handler
-            var handler = router.route(input);
-
-            assertNotNull(handler);
-            assertEquals("pre-tool-use", handler.getEventName());
-
-            System.out.println("✓ Complete Hook processing flow verified");
-        });
-    }
-
-    @Test
-    @DisplayName("应该验证错误处理机制")
-    void shouldVerifyErrorHandlingMechanisms() {
-        assertDoesNotThrow(() -> {
-            // Test error handling in codec
-            HookCodec codec = new HookCodec();
-
-            // Test with invalid JSON
-            assertThrows(Exception.class, () -> {
-                codec.parse("{invalid json}");
-            });
-
-            // Test with incomplete input
-            HookInput incompleteInput = new HookInput(
-                "test-event",
-                "test-tool",
-                "1.0.0",
-                null,
-                java.util.List.of(),
-                "/project",
-                java.util.Map.of()
-            );
-
-            assertNotNull(incompleteInput);
-
-            System.out.println("✓ Error handling mechanisms verified");
-        });
-    }
-
-    @Test
-    @DisplayName("应该验证性能要求")
-    void shouldVerifyPerformanceRequirements() {
-        HookCodec codec = new HookCodec();
-
-        assertDoesNotThrow(() -> {
-            // Test codec performance
-            HookInput input = new HookInput(
-                "test-event",
-                "test-tool",
-                "1.0.0",
-                new com.chachamararharness.cli.hook.Connection("/tmp/harness.sock"),
-                java.util.List.of("src/main/java/PerformanceTest.java"),
-                "/project",
-                java.util.Map.of()
-            );
-
-            long startTime = System.nanoTime();
-            String serialized = codec.serializeToString(input);
-            long endTime = System.nanoTime();
-
-            // Serialization should be fast (<10ms)
-            long durationMs = (endTime - startTime) / 1_000_000;
-            assertTrue(durationMs < 10,
-                "Serialization should be fast, took: " + durationMs + "ms");
-
-            // Deserialization should also be fast
-            startTime = System.nanoTime();
-            codec.parse(serialized);
-            endTime = System.nanoTime();
-
-            durationMs = (endTime - startTime) / 1_000_000;
-            assertTrue(durationMs < 10,
-                "Deserialization should be fast, took: " + durationMs + "ms");
-
-            System.out.println("✓ Hook processing performance verified (serialize: " +
-                             ((endTime - startTime) / 1_000_000) + "ms)");
-        });
+    private HookInput validInput() {
+        return new HookInput(
+            "session-1", null, "/project", null, "PreToolUse", "Bash",
+            Map.of("command", "mvn test"), null);
     }
 }

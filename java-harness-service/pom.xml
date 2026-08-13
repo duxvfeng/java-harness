@@ -40,6 +40,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- CLI hook processing types used by service integration tests -->
+        <dependency>
+            <groupId>com.chachamaru</groupId>
+            <artifactId>java-harness-cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
