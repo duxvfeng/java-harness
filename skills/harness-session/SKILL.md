@@ -11,28 +11,9 @@ role: utility
 owner: harness-core
 since: "2026-08-09"
 allowed-tools: ["Read", "Write", "Bash", "Glob"]
-argument-hint: "<command> [args]"
+argument-hint: "[save|restore|list|show|cleanup] [args]"
 user-invocable: true
 effort: medium
-commands:
-  - name: "/harness-session"
-    description: "Session management hub - shows help when called without arguments"
-    usage: "/harness-session [save|restore|list|show|cleanup] [args]"
-  - name: "/harness-session save"
-    description: "Save current Claude Code session state"
-    usage: "/harness-session save [summary] [--force]"
-  - name: "/harness-session restore"
-    description: "Restore saved session state"
-    usage: "/harness-session restore <saveId> [--full] [--summary-only]"
-  - name: "/harness-session list"
-    description: "List all saved sessions"
-    usage: "/harness-session list [--recent N] [--all]"
-  - name: "/harness-session show"
-    description: "Show detailed session information"
-    usage: "/harness-session show <saveId>"
-  - name: "/harness-session cleanup"
-    description: "Clean up old session saves"
-    usage: "/harness-session cleanup [--keep N] [--dry-run]"
 ---
 
 # Harness Session Management
