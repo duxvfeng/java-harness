@@ -20,18 +20,18 @@ public class SeriesInfo {
     private String seriesId;
 
     @JsonProperty("startDate")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer.class)
     private LocalDateTime startDate;
 
     @JsonProperty("lastActivityDate")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer.class)
     private LocalDateTime lastActivityDate;
 
     @JsonProperty("lastCommitDate")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer.class)
     private LocalDateTime lastCommitDate;
 
     @JsonProperty("taskSequence")
@@ -149,6 +149,13 @@ public class SeriesInfo {
 
     public SeriesContext getSeriesContext() {
         return seriesContext;
+    }
+
+    public Integer getEstimatedTasks() {
+        if (seriesContext != null) {
+            return seriesContext.getEstimatedTasks();
+        }
+        return null;
     }
 
     public void setSeriesContext(SeriesContext seriesContext) {
