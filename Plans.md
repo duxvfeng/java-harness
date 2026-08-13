@@ -713,6 +713,7 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 | 16.5 | 创建配置最佳实践指南 `[tdd:skip:docs-task]` | 创建 configuration-best-practices.md，说明配置建议、常见问题、故障排除 | 最佳实践指南完整，包含推荐配置、常见场景示例 | 16.4 | cc:完成 ✅ 2026-08-13 [配置文档] |
 | 16.6 | 创建配置迁移指南 `[tdd:skip:docs-task]` | 为从旧版本升级的用户创建配置迁移指南 | 迁移指南完整，包含版本差异说明、迁移步骤 | 16.5 | cc:完成 ✅ 2026-08-13 [配置文档] |
 | 16.7 | 更新主文档引用 `[tdd:skip:docs-task]` | 更新 README.md 和 CLAUDE.md，添加配置文档的引用链接 | 主文档包含配置文档链接，用户能轻松找到配置信息 | 16.6 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.8 | 汇总"案例→部署路径"映射 `[tdd:skip:docs-task]` | 在 config/README.md「模块配置案例」表新增"实际部署路径"列：e2e→`.claude/config/e2e-detection.config.json`、session→`.claude/config/session.properties`、review→合并入根 `harness.toml` 的 `[review]` 或环境变量、multilang→无独立配置文件 | 新增列覆盖全部模块，路径与 SessionConfigLoader/E2EDetectionConfig 案例文件头注释一致，所有链接有效 | 16.7 | cc:完成 ✅ 2026-08-13 [配置文档] |
 
 ---
 

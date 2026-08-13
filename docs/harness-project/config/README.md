@@ -102,14 +102,14 @@ harness sync validate   # 校验同步结果
 
 ## 🧩 模块配置案例
 
-需要某个功能模块的独立配置时，参考对应子目录：
+需要某个功能模块的独立配置时，参考对应子目录。注意：**案例文件只是模板，真正生效需要放到下表"实际部署路径"**：
 
-| 模块 | 案例文件 | 实际格式 | 读取者 |
-|------|----------|----------|--------|
-| 代码审查 | [`review/review.config.toml`](review/review.config.toml) | TOML（约定层） | 技能 / 脚本 |
-| 端到端检测 | [`e2e-detection/e2e-detection.config.json`](e2e-detection/e2e-detection.config.json) | JSON | `HarnessConfigManager` |
-| 会话管理 | [`session/session.properties`](session/session.properties) | .properties | `SessionConfigLoader` |
-| 多语言规范 | [`multilang/README.md`](multilang/README.md) | 说明 | 技能路由 |
+| 模块 | 案例文件（config/ 下） | 实际格式 | 实际部署路径（运行时读取） | 读取者 |
+|------|----------------------|----------|--------------------------|--------|
+| 代码审查 | [`review/review.config.toml`](review/review.config.toml) | TOML（约定层） | 合并入根 `harness.toml` 的 `[review]` + 环境变量 | 技能 / 脚本 |
+| 端到端检测 | [`e2e-detection/e2e-detection.config.json`](e2e-detection/e2e-detection.config.json) | JSON | `.claude/config/e2e-detection.config.json` | `HarnessConfigManager` |
+| 会话管理 | [`session/session.properties`](session/session.properties) | .properties | `.claude/config/session.properties` | `SessionConfigLoader` |
+| 多语言规范 | [`multilang/README.md`](multilang/README.md) | 说明 | 无独立配置（由技能路由） | 技能路由 |
 
 > 模块案例的格式（JSON / .properties）与"配置模板"（TOML）不同，这是由实现决定的：
 > E2E 与会话模块在 Java 中分别用 JSON 与 .properties 加载，详见各案例文件头注释。
