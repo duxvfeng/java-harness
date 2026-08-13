@@ -677,6 +677,108 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 
 ---
 
+## Phase 16: 配置文档和案例整理（配置管理优化）🆕
+
+### 📋 需求说明
+
+本 Phase 创建统一的配置文档和案例，帮助用户更好地理解和使用 Harness 的各种配置选项：
+- **统一配置目录**：创建 `harness-project/config/` 目录，集中管理所有配置案例
+- **完整配置模板**：创建 `harness.toml.default` 包含所有 harness 配置项及详细说明
+- **模块化配置**：为各个模块（审查、检测、会话等）创建独立配置案例
+- **配置说明文档**：详细解释每个配置项的作用、默认值、适用场景
+
+### 事前确认章节
+
+**Phase 16 涉及配置文件创建和文档编写，需要在计划批准时预先确认以下事项：**
+
+#### 计划时批准事项
+
+- **事项**: 创建配置目录和文件
+  - **理由**: Task 16.1-16.7 需要创建 `harness-project/config/` 目录和相关配置文件
+  - **scope**: Phase 16 / Task 16.1-16.7
+
+#### 说明
+- 所有文件创建仅限于项目文档目录
+- 配置文件为模板和示例，不包含敏感信息
+- 文档内容基于现有配置和最佳实践
+
+---
+
+| Task | 内容 | DoD | Depends | Status |
+|------|------|-----|---------|--------|
+| 16.1 | 创建配置目录结构 `[tdd:skip:docs-task]` | 创建 `harness-project/config/` 目录及其子目录结构 | 目录结构清晰，分类合理，包含所有必要的子目录 | - | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.2 | 创建完整配置模板 `[tdd:skip:docs-task]` | 创建 `harness.toml.default` 包含所有 harness 配置项，每项都有详细说明和示例 | 配置模板完整，包含所有配置节点，每项都有说明、默认值、示例 | 16.1 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.3 | 创建模块化配置案例 `[tdd:skip:docs-task]` | 为各模块创建独立配置文件：review.config.toml、e2e-detection.config.toml、session.config.toml 等 | 每个模块配置独立完整，包含模块特定配置，有详细注释 | 16.2 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.4 | 创建环境变量配置文档 `[tdd:skip:docs-task]` | 创建 environment-variables.md 文档，说明所有支持的环境变量及优先级 | 环境变量文档完整，包含优先级说明、使用示例 | 16.1 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.5 | 创建配置最佳实践指南 `[tdd:skip:docs-task]` | 创建 configuration-best-practices.md，说明配置建议、常见问题、故障排除 | 最佳实践指南完整，包含推荐配置、常见场景示例 | 16.4 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.6 | 创建配置迁移指南 `[tdd:skip:docs-task]` | 为从旧版本升级的用户创建配置迁移指南 | 迁移指南完整，包含版本差异说明、迁移步骤 | 16.5 | cc:完成 ✅ 2026-08-13 [配置文档] |
+| 16.7 | 更新主文档引用 `[tdd:skip:docs-task]` | 更新 README.md 和 CLAUDE.md，添加配置文档的引用链接 | 主文档包含配置文档链接，用户能轻松找到配置信息 | 16.6 | cc:完成 ✅ 2026-08-13 [配置文档] |
+
+---
+
+## 实施说明
+
+### 🎯 主要特点
+
+1. **统一管理**: 所有配置案例集中在 `harness-project/config/` 目录
+2. **完整说明**: 每个配置项都有详细说明、默认值、使用场景
+3. **模块化**: 各功能模块有独立配置文件，便于理解和引用
+4. **实用导向**: 提供最佳实践和常见场景配置示例
+
+### 📊 工作范围
+
+- **新增目录**: `harness-project/config/`
+- **新增文件**:
+  - `harness-project/config/harness.toml.default` - 完整配置模板
+  - `harness-project/config/review.config.toml` - 审查模块配置
+  - `harness-project/config/e2e-detection.config.toml` - 端到端检测配置
+  - `harness-project/config/session.config.toml` - 会话管理配置
+  - `harness-project/config/environment-variables.md` - 环境变量文档
+  - `docs/harness-project/configuration/best-practices.md` - 最佳实践指南
+  - `docs/harness-project/configuration/migration-guide.md` - 迁移指南
+
+### 🔧 配置覆盖范围
+
+#### 核心配置 (harness.toml.default)
+- 项目基本信息（name, version, description）
+- 审查配置（review.*）
+- 执行模式配置（execution.*）
+- 端到端检测配置（e2e_detection.*）
+- 会话管理配置（session.*）
+- 分支隔离配置（branch_isolation.*）
+- 多语言支持配置（multilang.*）
+
+#### 模块配置
+- **review.config.toml**: 强制审查、自动修复、多语言标准
+- **e2e-detection.config.toml**: 前端测试、后端测试、集成测试
+- **session.config.toml**: 自动保存、Token监控、恢复策略
+
+#### 环境变量
+- HARNESS_REVIEW_MODE
+- HARNESS_MAX_REVIEW_ITERATIONS
+- HARNESS_REVIEW_TIMEOUT
+- HARNESS_E2E_ENABLED
+- HARNESS_SKIP_REVIEW
+
+### 📋 配置说明格式
+
+每个配置项包含：
+```toml
+## 配置项名称
+# 说明：详细说明配置项的作用和目的
+# 默认值：默认值
+# 适用场景：什么情况下需要修改此配置
+# 相关配置：与哪些配置项相关联
+
+配置键 = 配置值
+
+# 示例说明
+# 示例1：场景1的配置值
+# 示例2：场景2的配置值
+```
+
+---
+
 ## Phase 15: 技能边界清晰化（架构优化）🆕
 
 ### 📋 需求说明

@@ -1,0 +1,206 @@
+# ============================================================================
+# Java Harness 完整配置模板（权威版）
+# ============================================================================
+# 本文件是 Java Harness 的"完整配置参考"。与早期草稿不同，本版本严格对照
+# Java 源码标注每一节的"真实状态"，避免记录实现中并不存在的配置项。
+#
+# 使用方法：
+#   cp docs/harness-project/config/harness.toml.default harness.toml
+#   # 按需修改后用以下命令校验：
+#   harness validate config harness.toml
+#
+# 状态图例（每节标题前的标记）：
+#   ✅ 已实现  — 由 Java CLI 真正解析，生产可用
+#   🟡 约定层  — 由技能（skills）/ shell 脚本读取，或仅被测试用例覆盖；非 Java CLI 解析
+#   🔴 规划中  — 尚未实现，当前没有任何解析器读取（保留以备未来扩展）
+#
+# 架构说明：Java Harness 的"配置"不是单一 schema，而是按职责分成几块：
+#   1. 插件同步 schema（[project]/[agent]/[env]/[safety.*]）—— harness sync 读取，
+#      生成 .claude-plugin/settings.json 与 plugin.json
+#   2. 平台/后端声明（[harness]）—— harness sync 校验
+#   3. 功能开关（[plan]/[work]/[review]/[hooks]）—— 技能层约定
+#   4. E2E 检测 —— 实际为 JSON 文件（见 e2e-detection/ 模块案例）
+#   5. 会话管理 —— 实际为 .properties 文件（见 session/ 模块案例）
+# ============================================================================
+
+
+# ============================================================================
+# ✅ 已实现：插件同步 schema（harness sync 读取，生成 .claude-plugin/ 文件）
+# ============================================================================
+# 以下 [project]/[agent]/[env]/[safety.*] 由 ConfigReader（tomlj）解析，
+# 经 SettingsGenerator 输出到 .claude-plugin/settings.json + plugin.json。
+# 所有键同时支持 snake_case 与 camelCase（例如 author_name 与 authorName 等价）。
+
+[project]
+# 项目名称（必填）
+# 说明：写入 plugin.json 的 name 字段
+name = "my-plugin"
+
+# 项目版本（必填）
+# 说明：写入 plugin.json 的 version 字段
+version = "1.0.0"
+
+# 项目描述（可选）
+description = "My Claude Code plugin"
+
+# 作者信息（可选，snake_case 或 camelCase 均可）
+author_name = "Your Name"          # 等价：authorName
+author_url = "https://github.com/yourname"  # 等价：authorUrl
+
+# 项目链接（可选）
+homepage = "https://github.com/yourname/my-plugin"
+repository = "https://github.com/yourname/my-plugin.git"
+
+# 许可证（可选）
+license = "MIT"
+
+# 关键词（可选，字符串数组）
+keywords = ["claude", "plugin", "tool"]
+
+# 输出格式（可选，字符串数组；snake_case 或 camelCase）
+output_styles = ["markdown"]       # 等价：outputStyles
+
+
+[agent]
+# 默认 AI 代理（可选）
+# 说明：写入 settings.json 的 agent 字段
+default = "claude-sonnet-5"
+
+
+[env]
+# 环境变量（可选，自由字符串键值对）
+# 说明：原样写入 settings.json 的 env 字段；键名任意
+NODE_ENV = "development"
+API_ENDPOINT = "https://api.example.com"
+
+
+[safety.permissions]
+# 权限配置（可选）
+# allow : 允许的工具/命令（自动批准）
+# deny  : 拒绝的工具/命令（自动阻止）
+# ask   : 需要确认的工具/命令
+allow = ["Read", "Write", "Glob", "Grep"]
+deny = ["Bash(rm -rf *)"]
+ask = ["Bash"]
+
+
+[safety.sandbox]
+# 沙箱配置（可选）
+# 沙箱不可用时是否直接失败（snake_case 或 camelCase）
+fail_if_unavailable = true         # 等价：failIfUnavailable
+
+
+[safety.sandbox.network]
+# 网络沙箱（可选）
+# 拒绝访问的域名列表（snake_case 或 camelCase）
+denied_domains = [                 # 等价：deniedDomains
+    "malicious.com",
+    "tracking.example.com"
+]
+
+
+[safety.sandbox.filesystem]
+# 文件系统沙箱（可选）
+# 拒绝读取的路径（snake_case 或 camelCase）
+deny_read = ["/etc/shadow", "~/.ssh"]   # 等价：denyRead
+
+# 允许读取的路径（默认允许当前目录；snake_case 或 camelCase）
+allow_read = [".", "./src"]             # 等价：allowRead
+
+
+# ============================================================================
+# ✅ 已实现：平台 / 后端声明（harness sync 校验）
+# ============================================================================
+# ConfigSync.validateConfig 要求顶层 [harness] 必须同时包含 version 与 backend，
+# 且 backend 必须是 auto / codex / cursor 之一。校验失败会报错。
+# 注意：Claude Code 是默认原生平台（通过 CLAUDE_CODE_HARNESS 环境变量检测），
+#       无需在此声明；backend 用于选择"委托实现"的伴随后端。
+
+[harness]
+# Harness 版本（必填）
+# 说明：用于兼容性检查
+version = "4.1.1"
+
+# 后端（必填，取值：auto | codex | cursor）
+# 说明：选择非默认的伴随后端；auto 表示自动选择
+backend = "auto"
+
+
+# ============================================================================
+# 🟡 约定层：功能开关（技能 / 测试读取，非 Java CLI 主路径）
+# ============================================================================
+# 这些顶层小节在 ConfigCompatLayer 中有默认值，用于跨平台兼容层与技能约定。
+# Java 生产命令不依赖它们的具体取值，但技能与测试会读取 [section].enable 之类开关。
+# 仅保留确有默认值的键；其它草稿中出现的子键（如 review.mode/max_iterations）无解析器。
+
+[plan]
+enable = true          # 是否启用规划技能（harness-plan）
+
+[work]
+enable = true          # 是否启用实现技能（harness-work）
+default_effort = "medium"  # 默认推理强度：low | medium | high | xhigh
+
+[review]
+enable = true          # 是否启用审查环节
+
+[hooks]
+enable = true          # 是否启用 Hook 系统
+
+
+# ============================================================================
+# 🟡 约定层：E2E 检测（TOML 形式仅为占位，实际配置为 JSON）
+# ============================================================================
+# 注意：模板里可以写 [e2e_detection] 段，但 Java 的 loadFromToml 当前是"桩"
+#       （打印 "TOML parsing to be implemented"，返回默认值）。
+#       真正被 HarnessConfigManager.loadFromJson 读取的是 JSON 文件：
+#           .claude/config/e2e-detection.config.json
+#       完整字段请见 docs/harness-project/config/e2e-detection/e2e-detection.config.json
+#       以下仅列出实际生效的顶层字段（供 JSON 文件参考），以注释形式呈现：
+
+# [e2e_detection]
+# enabled = true                 # 是否启用端到端检测
+# mode = "strict"                # strict | lenient
+# timeout = 120                  # 单次测试超时（秒）
+# retry_on_failure = true        # 失败是否重试
+# max_retries = 3                # 最大重试次数
+# # auto_fix、test_types.*、triggers、smart_skip 等子结构见模块案例 JSON
+
+
+# ============================================================================
+# 🔴 规划中：以下小节目前没有任何 Java 解析器读取
+# ============================================================================
+# 这些能力有的以"代码功能"存在（如多语言审查 MultiLanguageDocSystem、分支隔离由技能 +
+# shell 脚本处理），但都不通过 harness.toml 的这些键来配置。保留键名仅供未来扩展，
+# 当前修改它们不会产生任何效果。如需启用对应行为，请改用环境变量 / settings.json /
+# 技能参数（详见 configuration/environment-variables.md 与 configuration/best-practices.md）。
+
+# [harness.review]          # 草稿曾定义 mode/max_iterations/timeout/auto_fix... → 无解析器
+# [harness.multilang]       # 多语言审查由技能 SKILL.md 路由实现，不读此节
+# [harness.severity]        # 无解析器
+# [harness.branch_isolation]# 分支隔离由 .claude/settings.json 的 branchIsolation + 技能处理
+# [harness.execution]       # 执行模式由 harness-work 根据任务数自动选择，不读此节
+# [harness.tdd]             # TDD 由任务标签 [tdd:required]/[tdd:skip:*] 控制
+# [harness.model_selection] # 模型选择加载器返回 null → 恒用默认；经 ANTHROPIC_* 环境变量配置
+# [harness.ci_integration]  # 无解析器
+# [harness.notifications]   # 无解析器（含 .slack / .triggers）
+# [harness.reporting]       # 无解析器
+# [harness.monitoring]      # 无解析器
+# [harness.debug]           # 无解析器（HARNESS_DEBUG 环境变量也未被 Java 读取）
+# [harness.experimental]    # 无解析器
+# [harness.compatibility]   # 无解析器
+
+
+# ============================================================================
+# 配置加载优先级与文件位置
+# ============================================================================
+# 1. 环境变量（最高） —— 见 configuration/environment-variables.md
+# 2. 平台特定配置（.claude/config.toml 或 .codex/config.toml）
+# 3. 标准配置文件（项目根 harness.toml）
+# 4. 代码内置默认值
+#
+# 备注：
+#   - 真正会被 Java 读取的非 TOML 配置：
+#       * E2E 检测：.claude/config/e2e-detection.config.json
+#       * 会话管理：.properties 文件（由 SessionConfigLoader 读取，见 session/ 案例）
+#   - .claude/settings.json 中 Java 真正读取的键只有 hooks（SelfAudit）；
+#     branchIsolation / modelSelection / i18n.language 等由技能层与宿主读取，非 Java CLI。

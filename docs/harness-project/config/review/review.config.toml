@@ -1,0 +1,69 @@
+# ============================================================================
+# 代码审查模块配置（约定层 + 环境变量）
+# ============================================================================
+# 重要：Java CLI 当前并不解析 [review.*] 下的多数子键。代码审查的"配置"实际上由
+#   两部分组成：
+#     1) 顶层 [review].enable —— 跨平台兼容层（ConfigCompatLayer）与技能约定的开关
+#     2) HARNESS_REVIEW_* / HARNESS_SKIP_REVIEW 环境变量 —— 由审查技能与
+#        scripts/review/forced-review-gate.sh 等"强制审查门"脚本读取
+#   下方带 🔴 的子节为规划中/约定层，记录以便团队沿用统一命名；Java 暂不解析。
+#
+# 使用方法：将需要的键合并进项目根 harness.toml，或仅参考其中的环境变量。
+# ============================================================================
+
+[review]
+# 是否启用审查环节（约定层；默认 true）
+enable = true
+
+
+# ============================================================================
+# 环境变量（技能 / 脚本层读取；非 Java CLI 读取）
+# ============================================================================
+# 这些变量由 harness-review 技能与强制审查门脚本消费。设置示例：
+#   export HARNESS_SKIP_REVIEW=false       # 紧急跳过审查（仅限紧急，会记录在审计）
+#   export HARNESS_REVIEW_MODE=strict       # strict | lenient
+#   export HARNESS_MAX_REVIEW_ITERATIONS=3  # 自动修复最大轮次
+#   export HARNESS_REVIEW_TIMEOUT=30        # 单次审查超时（秒）
+#
+# 说明：Java 进程本身不读取上述变量；它们作用于宿主 LLM 执行的技能/脚本层。
+# 详见 docs/harness-project/configuration/environment-variables.md。
+
+
+# ============================================================================
+# 🔴 规划中 / 约定层：以下子键当前无 Java 解析器
+# ============================================================================
+# 保留命名以供未来扩展与团队约定统一。修改它们目前不会改变 Java CLI 行为。
+
+# [review.auto_fix]
+# enabled = true
+# max_iterations = 3
+# commit_on_fix = true
+
+# [review.failure_handling]
+# strategy = "escalate"   # escalate | continue | stop
+
+# [review.multilang]
+# 多语言审查实际由技能路由实现，详见 ../multilang/README.md
+# enabled = true
+
+# [review.reporting]
+# detail_level = "detailed"   # minimal | summary | detailed
+# formats = ["console", "json"]
+
+# [review.performance]
+# parallel_workers = 4
+
+# [review.ci_integration]
+# system = "github"           # github | gitlab | jenkins | circleci
+# block_on_failure = true
+# minimum_level = "minor"     # critical | major | minor
+
+# [review.custom_rules]
+# 见 scripts/review 与 skills/harness-review/references/code-standards/
+
+# [review.behavior]
+# mode = "thorough"           # thorough | focused
+# review_tests = "summary"    # full | summary | skip
+
+# [review.compliance]
+# enabled = false

@@ -1,0 +1,67 @@
+{
+  "enabled": true,
+  "mode": "strict",
+  "timeout": 120,
+  "retry_on_failure": true,
+  "max_retries": 3,
+
+  "auto_fix": {
+    "enabled": true,
+    "max_iterations": 3,
+    "fix_timeout": 60,
+    "commit_on_fix": true
+  },
+
+  "test_types": {
+    "frontend": {
+      "enabled": true,
+      "framework": "playwright",
+      "test_paths": [],
+      "test_scenarios": []
+    },
+    "backend": {
+      "enabled": true,
+      "framework": "auto",
+      "test_paths": [],
+      "test_scenarios": []
+    },
+    "integration": {
+      "enabled": true,
+      "framework": "auto",
+      "test_paths": [],
+      "test_scenarios": []
+    },
+    "performance": {
+      "enabled": false,
+      "framework": "auto",
+      "test_paths": [],
+      "test_scenarios": []
+    },
+    "security": {
+      "enabled": true,
+      "framework": "auto",
+      "test_paths": [],
+      "test_scenarios": []
+    }
+  },
+
+  "triggers": {
+    "auto_trigger_on_review_pass": true,
+    "require_clean_workspace": true,
+    "skip_on_draft_pr": true,
+    "skip_on_wip_branch": true,
+    "branch_patterns": {
+      "include": ["feature/*", "bugfix/*", "hotfix/*"],
+      "exclude": ["draft/*", "wip/*", "experimental/*"]
+    }
+  },
+
+  "smart_skip": {
+    "enabled": true,
+    "detect_project_type": true,
+    "skip_frontend_if_missing": true,
+    "skip_backend_if_missing": false,
+    "min_confidence_threshold": 0.7,
+    "fallback_strategy": "run_backend"
+  }
+}

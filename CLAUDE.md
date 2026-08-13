@@ -189,3 +189,15 @@ bash tests/code-standards/validate.sh
 - 与静态分析工具集成
 
 ---
+
+# 配置文档参考
+
+Java Harness 的配置分布在多种载体（TOML / JSON / .properties / 环境变量），且以 Java 源码为权威。完整说明见：
+
+- **[配置模板](docs/harness-project/config/harness.toml.default)** — 完整配置模板，每个小节标注 ✅ 已实现 / 🟡 约定层 / 🔴 规划中
+- **[配置目录](docs/harness-project/config/README.md)** — 目录结构、快速开始、模块案例入口
+- **[环境变量参考](docs/harness-project/configuration/environment-variables.md)** — 区分 Java CLI 读取 vs 技能/脚本层读取
+- **[配置最佳实践](docs/harness-project/configuration/best-practices.md)** — E2E / 会话字段表、推荐配置、故障排除
+- **[配置迁移指南](docs/harness-project/configuration/migration-guide.md)** — 键名纠错与格式迁移
+
+要点：插件同步 schema（`[project]/[agent]/[env]/[safety.*]`）与 `[harness]` 后端声明由 `harness sync` 读取；E2E 配置为 JSON，会话配置为 `.properties`。配置校验命令为 `harness validate config`。

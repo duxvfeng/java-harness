@@ -303,18 +303,18 @@ default_effort = "max"
 
 ### 配置验证
 
-验证配置文件是否正确：
+验证配置文件是否正确（`harness validate config` 是唯一的配置类 CLI 命令）：
 
 ```bash
-# 验证配置文件语法
-harness config validate
+# 校验单个配置文件
+harness validate config harness.toml
 
-# 查看当前配置
-harness config show
-
-# 查看配置路径
-harness config path
+# 校验所有配置文件
+harness validate config --all
 ```
+
+> 完整配置参考见 [配置模板](docs/harness-project/config/harness.toml.default)。
+> 注意：不存在 `harness config show`、`harness config path`、`harness config test` 等命令。
 
 ## 📖 核心功能
 
@@ -946,6 +946,14 @@ public class MyCommand implements Runnable {
 - **[架构文档](docs/developer-guide/architecture.md)** - 完整的架构设计和模块说明
 - **[API 参考](docs/reference/api-reference.md)** - API 接口详细说明
 - **[文档索引](docs/README.md)** - 完整文档导航
+
+### 配置文档
+
+- **[配置模板](docs/harness-project/config/harness.toml.default)** - 完整配置模板（已实现/约定层/规划中标注）
+- **[配置目录](docs/harness-project/config/README.md)** - 配置案例与环境变量入口
+- **[环境变量参考](docs/harness-project/configuration/environment-variables.md)** - Java CLI 与技能层变量分层说明
+- **[配置最佳实践](docs/harness-project/configuration/best-practices.md)** - 推荐配置、场景与故障排除
+- **[配置迁移指南](docs/harness-project/configuration/migration-guide.md)** - 从旧 schema 迁移到权威配置
 
 ### 参考文档
 
