@@ -1,0 +1,149 @@
+---
+_harness_template: "CLAUDE.md.template"
+_harness_version: "4.0.0"
+---
+
+# CLAUDE.md - Claude Code 执行指示
+
+> **项目**: {{PROJECT_NAME}}
+> **创建日期**: {{DATE}}
+> **语言**: {{LANGUAGE}}
+
+---
+
+## ⚠️ 首先阅读
+
+**必须首先参考 `AGENTS.md`**
+
+- 开发流程概览
+- 角色分工
+- 禁止事项
+
+本文件仅记录 **Claude Code 特定设置**
+
+---
+
+## 1. Claude Code 的职责范围
+
+### ✅ 负责的工作
+
+- 涉及4个文件以上、超过100行的实现
+- 复杂的重构
+- 架构设计
+- 性能优化
+- 安全增强
+
+### ❌ 不负责的工作
+
+- 简单的单行修改
+- 仅读取文件的工作
+- 理解现有代码的确认
+
+---
+
+## 2. Java Harness 特定配置
+
+### 项目结构
+
+```
+java-harness/
+├── java-harness-foundation/     # 基础层
+├── java-harness-protocol/       # 协议层
+├── java-harness-security/       # 安全层
+├── java-harness-workflow/       # 工作流层
+├── java-harness-collaboration/  # 协作层
+├── java-harness-tools/          # 工具层
+├── java-harness-cli/            # CLI 层
+├── java-harness-service/        # 服务层
+└── java-harness-ci/             # CI 集成层
+```
+
+### Maven 命令
+
+- 构建: `mvn clean package`
+- 测试: `mvn test`
+- 运行: `java -jar cli/target/harness-cli-*.jar`
+
+---
+
+## 3. 国际化支持
+
+本项目支持多语言：
+
+```bash
+# 设置日语
+I18nSupport.setLanguage("ja");
+
+# 设置中文
+I18nSupport.setLanguage("zh");
+
+# 设置英语（默认）
+I18nSupport.setLanguage("en");
+```
+
+---
+
+## 4. 模板系统
+
+### 模板类型
+
+1. **核心项目模板**
+   - CLAUDE.md
+   - AGENTS.md
+   - Plans.md
+
+2. **规则模板**
+   - 12个规则文件
+
+3. **内存模板**
+   - decisions.md（架构决策记录）
+   - patterns.md（设计模式）
+
+### 模板变量
+
+- `{{PROJECT_NAME}}` - 项目名称
+- `{{DATE}}` - 创建日期
+- `{{AUTHOR}}` - 作者
+- `{{VERSION}}` - 版本
+
+---
+
+## 5. 工作流执行
+
+### Solo 模式
+
+执行单个任务：
+
+```bash
+/harness-work 3
+```
+
+### Breezing 模式
+
+4个或更多任务时，自动选择 Breezing 模式：
+
+```
+Lead (当前代理)
+├── Worker (实现担当)
+├── Advisor (方针建议)
+└── Reviewer (审查担当)
+```
+
+---
+
+## 6. 成功定义
+
+### 功能完整性
+- ✅ 与 Go 版本功能完全对等
+- ✅ API 和命令行接口一致
+- ✅ 配置文件格式兼容
+
+### 质量标准
+- ✅ 测试覆盖率 > 85%
+- ✅ 性能差异 < 20%
+- ✅ 零已知严重 bug
+- ✅ 文档完整准确
+
+---
+
+_此文档适用于 Harness 版本 4.0.0_

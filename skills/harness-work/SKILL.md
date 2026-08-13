@@ -25,6 +25,144 @@ Harness 的集成执行技能。
 
 本技能的完整自动编排段落来自 Go 版本。Java CLI 负责命令路由、契约、证据、健康检查和状态记录；实际的 worker、worktree、测试和 review 由宿主平台执行。本文中的 `scripts/*.sh`、`scripts/*.js`、`HARNESS_PLUGIN_ROOT`、companion、checkpoint 和 review runner 仅供 Go 版本参考，不应作为 Java 版本的可执行命令。
 
+## 技能职责定义（实现执行者）
+
+### 🎯 核心职责范围
+
+**harness-work 是实现执行技能，负责从任务到代码实现的执行过程。**
+
+**明确的职责边界**: 本技能负责代码实现、构建测试、工作区管理等实现相关工作。**不进行规划决策或任务定义修改**。规划和技术选型由 `harness-plan` 负责。
+
+### ✅ 允许的操作
+
+**代码实现**:
+- ✅ **修改源代码文件** (`src/`、`app/`、`lib/`、`pkg/` 等)
+- ✅ **执行构建命令** (`mvn`、`npm`、`gradle` 等)
+- ✅ **运行测试** (`mvn test`、`npm test` 等)
+- ✅ **修改配置文件** (`.env`、`config/`、`pom.xml`、`package.json` 等)
+- ✅ **管理依赖** 和构建配置
+
+**状态分析**:
+- ✅ **Git 状态深度分析** (`git status`、`git log`、`git diff`)
+- ✅ **Agent trace 分析** (实现历史和代码变更)
+- ✅ **代码结构分析** 和依赖关系检查
+- ✅ **测试结果分析** 和覆盖率检查
+
+**状态同步**:
+- ✅ **更新 Plans.md 任务状态** (基于实际完成情况)
+- ✅ **分析实现进度** 和识别偏差
+- ✅ **同步代码与规划** 状态
+- ✅ **执行回顾分析** 和精度评估
+
+**工作区管理**:
+- ✅ **创建和管理 worktree** (隔离工作环境)
+- ✅ **分支操作** (创建、切换、合并)
+- ✅ **提交和推送** (git commit, git push)
+- ✅ **PR 创建和管理** (代码审查流程)
+
+### ❌ 禁止的操作
+
+**规划决策**:
+- ❌ **严禁修改任务定义** (Task 名称、内容、DoD)
+- ❌ **严禁改变任务优先级** 或依赖关系
+- ❌ **严禁添加新任务** (这是 `harness-plan` 的职责)
+- ❌ **严禁修改产品规格** (`spec.md` 内容)
+
+**架构决策**:
+- ❌ **严禁改变技术选型** (未经规划批准)
+- ❌ **严禁修改系统架构** (未经规划批准)
+- ❌ **严禁重构项目结构** (未经规划批准)
+
+### 🔵 灰色地带处理规则
+
+**实现中的规划修正**:
+- ✅ 允许: **发现技术债务时记录到 Plans.md** (添加注释或标记)
+- ⚠️ 限制: **不能修改任务定义** (Task 名称、内容、DoD)
+- ❌ 禁止: **改变任务优先级** 或删除任务
+
+**紧急架构调整**:
+- ✅ 允许: **记录架构问题** 到 Plans.md 或 issue
+- ⚠️ 限制: **标记任务为 blocked** 并说明原因
+- ❌ 禁止: **直接修改架构** (需要重新规划)
+
+**状态更新权限**:
+- ✅ 允许: **更新任务状态标记** (`cc:TODO` → `cc:WIP` → `cc:完成`)
+- ⚠️ 限制: **仅基于实际完成情况**，不能主观判断
+- ❌ 禁止: **修改任务的其他字段** (名称、内容、DoD)
+
+### 🔄 规划→实现交接协议
+
+**接收条件** (从 `harness-plan` 接收已批准的 Plans.md):
+1. ✅ Plans.md 格式正确，包含完整的任务定义
+2. ✅ 每个任务有明确的 DoD 和依赖关系
+3. ✅ 任务状态标记为 `cc:TODO`
+4. ✅ 用户已批准计划
+5. ✅ 实现前置条件已识别
+
+**交接验证**:
+```bash
+# 接收前检查
+- Plans.md 格式验证
+- 任务完整性检查
+- 依赖关系验证
+- DoD 可测试性验证
+```
+
+**实施过程中的状态更新**:
+```bash
+# 执行过程中可以更新
+- 任务状态: cc:TODO → cc:WIP → cc:完成
+- 添加实现注释（不修改任务定义）
+- 记录发现的问题（标记为 blocked 或添加注释）
+```
+
+**完成后交接回 `harness-sync`**:
+```bash
+# 实现完成后
+- 更新 Plans.md 状态标记
+- 调用 harness-sync 进行完整状态同步
+- 执行回顾分析（精度评估）
+```
+
+### 📋 职责分离表
+
+| 活动 | harness-plan | harness-work | harness-sync |
+|------|-------------|--------------|--------------|
+| 任务定义和分解 | ✅ 主责 | ❌ 禁止 | ❌ 禁止 |
+| 代码实现 | ❌ 禁止 | ✅ 主责 | ❌ 禁止 |
+| 构建测试 | ❌ 禁止 | ✅ 主责 | ❌ 禁止 |
+| Git 状态分析 | ❌ 禁止 | ✅ 主责 | ✅ 主责 |
+| 状态标记更新 | ❌ 禁止 | ✅ 主责 | ✅ 主责 |
+| 进度同步 | ❌ 禁止 | ⚠️ 执行中更新 | ✅ 主责 |
+| 回顾分析 | ❌ 禁止 | ⚠️ 可选 | ✅ 主责 |
+
+### 🚨 越界检测机制
+
+**自动检测规则**:
+- 修改 Plans.md 的 Task/内容/DoD 字段 → **违规**
+- 修改 spec.md → **严重违规**
+- 改变任务依赖关系 → **违规**
+- 添加或删除任务 → **违规**
+
+**违规处理**:
+- 检测到违规操作时，警告并记录
+- 如果影响规划完整性，建议重新规划
+- 将违规记录到日志文件用于审计
+
+### 📋 边界检查清单
+
+每次执行实现后，自动检查：
+- [ ] 没有修改任务定义（Task 名称、内容、DoD）
+- [ ] 没有改变任务优先级或依赖关系
+- [ ] 没有修改产品规格
+- [ ] 代码修改符合任务 DoD
+- [ ] 状态更新基于实际完成情况
+- [ ] 发现的问题已正确记录或标记
+
+**检查失败处理**: 如果检查失败，记录偏差并可能需要重新规划。
+
+---
+
 整合以下旧技能:
 
 - `work` — Plans.md 任务的实现（范围自动判断）
@@ -727,6 +865,274 @@ class AutoFixReviewLoop:
                 "error": str(e)
             }
 ```
+
+### 强制审查集成 (v2.3.0+)
+
+**Purpose**: 确保所有 harness-work 执行都强制经过代码审查，实现质量门控。
+
+#### 核心原则
+
+1. **强制审查**: 所有执行模式（Solo/Parallel/Breezing）完成后必须通过审查
+2. **统一标准**: 所有后端（claude/cursor/codex）使用相同的审查流程
+3. **完成门控**: 审查不通过时阻止任务标记为完成
+4. **自动修复**: 尝试自动修复审查问题，达到最大重试次数后升级到用户
+
+#### 集成点
+
+**Solo 模式集成**:
+```python
+# 在任务完成后，标记 cc:完了 之前
+def complete_task_solo(task_id, worktree_path):
+    # 1. 执行任务实现
+    implementation_result = implement_task(task_id)
+
+    # 2. 强制代码审查
+    review_result = forced_review_gate(
+        base_ref=implementation_result.base_commit,
+        worktree_path=worktree_path,
+        mode="strict"
+    )
+
+    # 3. 审查不通过时阻止完成
+    if review_result["verdict"] != "APPROVE":
+        handle_review_failure(review_result, task_id)
+        return  # 不标记为完成
+
+    # 4. 审查通过后才标记完成
+    mark_task_completed(task_id)
+```
+
+**Parallel 模式集成**:
+```python
+# 在每个任务完成后，汇总结果之前
+def complete_task_parallel(task_id, worktree_path):
+    # 每个任务独立审查
+    review_result = forced_review_gate(
+        base_ref=task_base_commit,
+        worktree_path=worktree_path,
+        mode="strict"
+    )
+
+    # 记录审查结果到任务状态
+    task_statuses[task_id]["review"] = review_result
+
+    # 汇总时检查所有任务是否都通过审查
+    if all(t["review"]["verdict"] == "APPROVE" for t in task_statuses.values()):
+        aggregate_and_complete()
+```
+
+**Breezing 模式集成**:
+```python
+# 在每个 Worker 任务完成后，cherry-pick 之前
+def handle_worker_completion(worker_result):
+    # Worker 完成后立即审查
+    review_result = forced_review_gate(
+        base_ref=worker_result.baseCommit,
+        worktree_path=worker_result.worktreePath,
+        mode="strict"
+    )
+
+    # 只有审查通过才 cherry-pick 到 trunk
+    if review_result["verdict"] == "APPROVE":
+        git_cherry_pick_to_trunk(worker_result)
+    else:
+        # 审查失败，进入修复循环
+        enter_review_fix_loop(worker_result, review_result)
+```
+
+#### 强制审查门控函数
+
+```python
+def forced_review_gate(base_ref: str, worktree_path: str, mode: str = "strict") -> dict:
+    """
+    强制代码审查门控 - 所有完成路径必须经过此门控
+
+    Args:
+        base_ref: 基准 commit SHA
+        worktree_path: 工作树路径
+        mode: 审查模式 (strict|lenient)
+
+    Returns:
+        审查结果字典，必须包含 verdict 字段
+    """
+    # 检查是否启用了跳过审查（仅用于紧急情况）
+    if should_skip_review():
+        logger.warning("⚠️  审查被跳过（紧急模式）")
+        return {
+            "verdict": "APPROVE",
+            "skip_reason": "emergency_skip",
+            "findings": []
+        }
+
+    # 调用 harness-review --auto
+    verdict_result = call_harness_review_auto(
+        base_ref=base_ref,
+        worktree_path=worktree_path,
+        mode=mode
+    )
+
+    if not verdict_result["success"]:
+        # 如果自动审查失败，使用降级方案
+        logger.warning(f"harness-review --auto 失败: {verdict_result.get('error')}")
+        return {
+            "verdict": "REQUEST_CHANGES",
+            "error": verdict_result.get("error"),
+            "findings": []
+        }
+
+    return verdict_result["result"]
+
+def should_skip_review() -> bool:
+    """
+    检查是否应该跳过审查（仅用于紧急情况）
+
+    跳过条件（必须全部满足）：
+    1. 环境变量 HARNESS_SKIP_REVIEW=true
+    2. 或 harness.toml 中 skip_review=true
+    3. 或用户显式确认跳过
+    """
+    import os
+
+    # 检查环境变量
+    if os.getenv("HARNESS_SKIP_REVIEW", "false").lower() == "true":
+        return True
+
+    # 检查配置文件
+    try:
+        import toml
+        config = toml.load("harness.toml")
+        if config.get("review", {}).get("skip_review", False):
+            return True
+    except:
+        pass
+
+    return False
+```
+
+#### 配置支持
+
+**环境变量控制**:
+```bash
+# 仅在紧急情况下使用
+export HARNESS_SKIP_REVIEW=true
+export HARNESS_REVIEW_MODE=lenient  # strict | lenient
+export HARNESS_MAX_REVIEW_ITERATIONS=5  # 最大审查重试次数
+```
+
+**harness.toml 配置**:
+```toml
+[review]
+# 强制审查配置
+enabled = true  # 是否启用强制审查（默认: true）
+mode = "strict"  # 审查模式: strict | lenient
+skip_review = false  # 紧急跳过审查（不推荐）
+max_iterations = 3  # 最大审查重试次数
+
+# 自动修复配置
+auto_fix = true  # 是否启用自动修复（默认: true）
+fix_critical_only = true  # 仅修复 critical/major 问题
+
+# 审查失败处理
+on_failure = "escalate"  # escalate | continue | stop
+escalation_message = "代码审查未通过，需要人工介入"
+```
+
+#### 审查失败处理流程
+
+```python
+def handle_review_failure(review_result, task_id, worktree_path):
+    """
+    处理审查失败的情况
+    """
+    findings = review_result.get("findings", [])
+
+    # 1. 输出审查结果
+    print_review_findings(findings)
+
+    # 2. 尝试自动修复
+    if should_auto_fix(review_result):
+        fix_result = attempt_auto_fix(findings, worktree_path)
+
+        if fix_result["success"]:
+            # 重新审查
+            new_review = forced_review_gate(
+                base_ref=get_current_base(),
+                worktree_path=worktree_path,
+                mode="strict"
+            )
+
+            if new_review["verdict"] == "APPROVE":
+                print("✅ 自动修复后审查通过")
+                return True
+
+    # 3. 自动修复失败，升级到用户
+    print(f"❌ 任务 {task_id} 审查未通过，需要人工介入")
+    escalate_to_user(review_result, task_id)
+
+    return False
+
+def print_review_findings(findings):
+    """输出审查结果"""
+    print(f"\n📋 审查发现 {len(findings)} 个问题:\n")
+
+    for finding in findings:
+        severity = finding.get("severity", "unknown")
+        file_path = finding.get("file", "unknown")
+        line = finding.get("line", 0)
+        message = finding.get("message", "")
+
+        severity_emoji = {
+            "critical": "🔴",
+            "major": "🟠",
+            "minor": "🟡",
+            "recommendation": "💡"
+        }.get(severity, "⚪")
+
+        print(f"{severity_emoji} [{severity.upper()}] {file_path}:{line}")
+        print(f"   {message}\n")
+```
+
+#### 完成报告集成
+
+在所有模式的完成报告中，包含审查结果：
+
+```markdown
+## 完成报告
+
+### 审查结果
+- **Verdict**: ✅ APPROVE / ❌ REQUEST_CHANGES
+- **审查模式**: strict / lenient
+- **发现的问题**: critical(0) major(0) minor(3) recommendation(5)
+- **审查时间**: 2024-08-13T10:30:00Z
+- **审查性能**: duration_ms=1234, files_reviewed=5
+
+### 问题详情（如有）
+[详细的审查发现列表]
+```
+
+#### 监控和日志
+
+强制审查集成会记录详细日志：
+
+```python
+# 审查调用日志
+logger.info(f"Forced review triggered: task_id={task_id}, mode={mode}")
+
+# 审查结果日志
+logger.info(f"Review verdict: {verdict}, findings={len(findings)}")
+
+# 自动修复日志
+logger.info(f"Auto-fix attempted: fixed={fixed_count}, failed={failed_count}")
+
+# 升级日志
+logger.warning(f"Review escalation: task_id={task_id}, reason={reason}")
+```
+
+#### 相关文档
+
+- **审查标准**: `skills/harness-review/references/code-review.md`
+- **多语言标准**: `skills/harness-review/references/code-standards/`
+- **治理规则**: `skills/harness-review/references/governance.md`
 
 ### Backend-resolved executor path (Solo / Parallel / Breezing)
 

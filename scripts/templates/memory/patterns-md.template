@@ -1,0 +1,34 @@
+---
+_harness_version: 4.0.0
+_harness_template:
+  name: patterns-md
+  version: 1.0.0
+  category: memory
+_author: Claude Code Team
+---
+
+# {{PROJECT_NAME}} 设计模式文档
+
+## 概述
+
+本文档记录 {{PROJECT_NAME}} 项目中使用的设计模式和最佳实践。
+
+## 架构模式
+
+{{ARCHITECTURE_PATTERNS}}
+
+## 设计模式
+
+{{DESIGN_PATTERNS}}
+
+## 代码规范
+
+{{CODE_STANDARDS}}
+
+## 最佳实践
+
+{{BEST_PRACTICES}}
+
+---
+
+_设计模式文档版本 {{VERSION}}，更新于 {{DATE}}_

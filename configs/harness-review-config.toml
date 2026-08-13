@@ -1,0 +1,211 @@
+# 强制审查集成配置
+# 在项目根目录创建 harness.toml 文件，或使用以下配置
+
+[harness]
+version = "2.3.0"
+
+# 强制审查配置
+[harness.review]
+# 是否启用强制审查（默认: true）
+enabled = true
+
+# 审查模式: strict | lenient
+# strict: critical 或 major 问题会导致 REQUEST_CHANGES
+# lenient: 仅 critical 问题导致 REQUEST_CHANGES
+mode = "strict"
+
+# 最大审查重试次数
+max_iterations = 3
+
+# 是否启用自动修复（默认: true）
+auto_fix = true
+
+# 是否仅修复 critical/major 问题（默认: true）
+fix_critical_only = true
+
+# 审查失败处理策略: escalate | continue | stop
+# escalate: 升级到用户（推荐）
+# continue: 继续执行（不推荐）
+# stop: 停止执行
+on_failure = "escalate"
+
+# 升级消息模板
+escalation_message = "代码审查未通过，需要人工介入"
+
+# 审查超时时间（秒）
+timeout = 30
+
+# 并行审查的worker数量
+parallel_workers = 4
+
+# 是否启用缓存
+cache_enabled = true
+
+# 是否启用降级方案
+fallback_enabled = true
+
+# 紧急跳过审查（不推荐，仅在紧急情况下使用）
+skip_review = false
+
+# 环境变量配置
+[environment]
+# HARNESS_REVIEW_MODE = "strict"
+# HARNESS_MAX_REVIEW_ITERATIONS = "3"
+# HARNESS_REVIEW_TIMEOUT = "30"
+# HARNESS_SKIP_REVIEW = "false"
+
+# 项目特定配置
+[project]
+# 项目名称（用于日志和报告）
+name = "example-project"
+
+# 项目类型: java | python | vue | go | multi
+project_type = "java"
+
+# 默认分支
+default_branch = "main"
+
+# 受保护的分支（这些分支需要强制审查）
+protected_branches = ["main", "master", "develop"]
+
+# 免除审查的分支（如 draft/wip 分支）
+exempt_branches = ["draft/*", "wip/*", "feature/*"]
+
+# 多语言项目配置
+[multilang]
+# 启用多语言检测
+enabled = true
+
+# 默认语言
+default_language = "java"
+
+# 语言映射（根据文件扩展名自动检测）
+[multilang.languages]
+java = { extensions = [".java"], standard = "alibaba" }
+python = { extensions = [".py", ".pyi"], standard = "pep8" }
+vue = { extensions = [".vue"], standard = "vue-style" }
+go = { extensions = [".go"], standard = "effective-go" }
+
+# 审查严重性配置
+[severity]
+# 自定义严重性规则
+[severity.rules]
+# 强制规则（总是作为 critical/major）
+"no-system-out" = "major"
+"no-print-statements" = "major"
+"no-hardcoded-passwords" = "critical"
+
+# 推荐规则（默认作为 minor）
+"prefer-constants" = "minor"
+"prefer-immutable" = "minor"
+
+# 自动修复配置
+[auto_fix]
+# 是否启用自动修复
+enabled = true
+
+# 可以自动修复的规则
+auto_fixable_rules = [
+    "no-system-out",
+    "no-print-statements",
+    "prefer-constants"
+]
+
+# 自动修复超时时间（秒）
+timeout = 10
+
+# 修复后是否自动提交
+auto_commit = true
+
+# 提交消息模板
+commit_template = "fix: 审查问题修复 ({count} 个问题)"
+
+# 报告配置
+[reporting]
+# 审查结果报告格式: json | html | markdown | console
+formats = ["json", "console"]
+
+# 报告输出目录
+output_dir = ".claude/reports"
+
+# 是否包含详细的问题描述
+detailed = true
+
+# 是否包含修复建议
+include_suggestions = true
+
+# 性能监控
+[monitoring]
+# 是否启用性能监控
+enabled = true
+
+# 慢审查阈值（毫秒）
+slow_threshold = 5000
+
+# 是否记录审查历史
+track_history = true
+
+# 历史记录文件路径
+history_file = ".claude/review-history.json"
+
+# CI/CD 集成
+[ci_integration]
+# CI 系统: github | gitlab | jenkins | circleci
+system = "github"
+
+# 是否在 CI 中自动阻塞
+block_on_failure = true
+
+# CI 状态检查名称
+check_name = "Harness Review"
+
+# 最小通过的审查等级
+minimum_level = "minor"
+
+# 端到端检测集成
+[e2e_detection]
+# 是否启用端到端检测
+enabled = true
+
+# 检测模式: strict | lenient
+mode = "strict"
+
+# 超时时间（秒）
+timeout = 120
+
+# 检测类型
+[[e2e_detection.test_types]]
+name = "frontend"
+enabled = true
+framework = "playwright"
+
+[[e2e_detection.test_types]]
+name = "backend"
+enabled = true
+framework = "auto"
+
+# 通知配置
+[notifications]
+# 是否启用通知
+enabled = true
+
+# 通知渠道: slack | email | webhook
+channels = ["slack"]
+
+# Slack 配置
+[notifications.slack]
+webhook_url = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+channel = "#code-review"
+username = "Harness Review"
+icon_emoji = ":mag:"
+
+# 通知触发条件
+[notifications.triggers]
+# 审查未通过时通知
+on_failure = true
+
+# 达到最大重试次数时通知
+on_max_retries = true
+
+# 审查通过后通知（可选）
+on_success = false

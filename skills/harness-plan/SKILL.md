@@ -19,6 +19,102 @@ Harness 的集成计划技能。
 
 Java CLI 的 `plan`、`add`、`update` 和 `sync` 命令负责路由到本技能文本，并不执行 Go 版本的 `plan-registry.sh`、`plans-issue-bridge.sh` 或其他 helper。Java 项目以 `Plans.md` 为任务正本，规格以 root `spec.md` 为产品正本，任务契约使用 `harness sprint-contract`，状态和健康检查使用 `harness status` 与 `harness doctor`。
 
+## 技能边界定义（核心职责）
+
+### 🎯 核心职责范围
+
+**harness-plan 是规划技能，专注于从想法到可执行任务的转换过程。**
+
+**明确的职责边界**: 本技能负责规划和任务分解，**不执行任何实现工作**。代码修改、构建测试、状态分析等实现相关工作由 `harness-work` 和 `harness-sync` 负责。
+
+### ✅ 允许的操作
+
+**文档操作**:
+- ✅ 读取和写入 `Plans.md`（任务定义）
+- ✅ 读取和写入 `spec.md`（产品规格）
+- ✅ 读取项目文档（`CLAUDE.md`、`README.md`）
+- ✅ 创建和修改设计文档（`docs/` 目录）
+
+**分析和规划**:
+- ✅ 需求收集和分析
+- ✅ 技术选型和架构设计
+- ✅ 任务分解和依赖关系分析
+- ✅ 优先级排序和风险评估
+- ✅ 调用 `brainstorming` 技能进行创意探索
+
+**信息获取**:
+- ✅ WebSearch 技术调研（架构级别）
+- ✅ 读取现有规格和文档
+- ✅ 分析用户需求和反馈
+
+### ❌ 禁止的操作
+
+**代码实现**:
+- ❌ **严禁修改任何源代码文件** (`src/`、`app/`、`lib/`、`pkg/` 等)
+- ❌ **严禁执行构建命令** (`mvn`、`npm`、`gradle` 等)
+- ❌ **严禁运行测试** (`mvn test`、`npm test` 等)
+- ❌ **严禁修改配置文件** (`.env`、`config/`、`pom.xml`、`package.json` 等)
+
+**深度实现分析**:
+- ❌ **严禁进行 Git 状态深度分析** (`git status`、`git log` 详细分析)
+- ❌ **严禁分析 Agent traces** (实现历史和代码变更分析)
+- ❌ **严禁代码结构分析** 和依赖关系深度分析
+
+**文件系统操作**:
+- ❌ **严禁创建或修改源代码文件**
+- ❌ **严禁修改构建配置** (除了识别需要 setup，不实施)
+
+### 🔵 灰色地带处理规则
+
+**技术调研深度控制**:
+- ✅ 允许: 架构级技术选型（如：选择 PostgreSQL vs MySQL）
+- ⚠️ 限制: 库版本调研（仅记录候选版本，不深入分析兼容性）
+- ❌ 禁止: 具体实现路径调研（如：分析某库的具体 API 用法）
+
+**前置条件识别**:
+- ✅ 允许: 识别需要 lint/formatter setup
+- ⚠️ 限制: 在 Plans.md 中生成 setup task（但不实施）
+- ❌ 禁止: 实际执行 setup 命令或修改配置
+
+### 🚨 越界检测机制
+
+**自动检测规则**:
+- 使用 `Write`/`Edit` 工具操作源代码文件 → **违规**
+- 使用 `Bash` 执行构建/测试命令 → **违规**
+- 执行深度 git 分析命令 → **违规**
+- 分析 agent traces → **违规**
+
+**违规处理**:
+- 检测到违规操作时，立即停止并提示用户
+- 将违规记录到日志文件
+- 建议用户使用正确的技能（`harness-work` 或 `harness-sync`）
+
+### 🔄 与其他技能的协作
+
+**规划→实现交接**:
+1. 本技能完成规划后，生成完整的 Plans.md
+2. 将 Plans.md 交接给 `harness-work` 进行实现
+3. 实现过程中的状态分析由 `harness-sync` 负责
+
+**职责分离**:
+- `harness-plan`: 制定计划（做什么）
+- `harness-work`: 执行实现（怎么做）
+- `harness-sync`: 状态同步（做得怎样）
+
+### 📋 边界检查清单
+
+每次执行规划后，自动检查：
+- [ ] 没有修改任何源代码文件
+- [ ] 没有执行构建或测试命令
+- [ ] 没有进行 git 状态深度分析
+- [ ] 没有分析 agent traces
+- [ ] 没有修改配置文件
+- [ ] 所有修改都在规划文档范围内
+
+**检查失败处理**: 如果检查失败，记录违规操作并提示用户。
+
+---
+
 整合以下3个旧技能:
 
 - `planning` (plan-with-agent) — 构思 → Plans.md 落地
@@ -497,11 +593,27 @@ Active plan: 20250111-main
 - 使用 `scripts/plan/plan-registry.sh list` 作为底层实现
 - 支持过滤和排序选项（如 `--status active`、`--sort updated`）
 
-### sync — 进度同步
+### sync — 进度同步（已弃用，请使用 harness-sync）
 
-对照实现与 Plans.md，检测并更新差异（Plans.md 现状获取 → 格式检测 → git 状态获取 → agent trace 分析 → 差异检测 → 标记修正提案 → 下一步提示）。
-当有 1 件以上 `cc:完成` 任务时，默认 ON 执行分析估算精度・阻塞原因・范围变动的回顾（`sync --no-retro` 跳过）。
-Step 0-6 完整版及 harness-mem 记录步骤请参考 [references/sync.md](${CLAUDE_SKILL_DIR}/references/sync.md)。
+**⚠️ 重要提示**: 此子命令已弃用，请使用独立的 `harness-sync` 技能进行进度同步。
+
+原 `sync` 子命令涉及深度实现分析（git 状态、agent traces），这超出了规划技能的职责范围。
+- **使用方式**: 调用 `/harness-sync` 或 `harness-sync` 技能
+- **功能**: Plans.md 与实现状态的对照和同步
+- **职责分离**: 状态分析属于同步职责，不属于规划职责
+
+**迁移指南**:
+```bash
+# 旧方式（已弃用）
+/harness-plan sync
+
+# 新方式（推荐）
+/harness-sync
+# 或
+harness-sync
+```
+
+---
 
 ### team mode / issue bridge
 
