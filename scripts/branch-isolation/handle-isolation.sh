@@ -32,11 +32,35 @@ init_state_file() {
     if [[ ! -f "${DECISION_FILE}" ]]; then
         cat > "${DECISION_FILE}" <<EOF
 {
-  "decisions": [],
-  "currentStrategy": null,
-  "lastUpdated": "${TIMESTAMP}"
+  "version": "2.0",
+  "schemaType": "branch-isolation-state-v2",
+  "currentSeries": null,
+  "codeStatus": null,
+  "resetTriggers": {
+    "autoResetCondition": "branch_clean_and_no_uncommitted_changes",
+    "autoResetAfterHours": 4,
+    "manualResetAvailable": true,
+    "taskSeriesComplete": false,
+    "autoResetEnabled": true
+  },
+  "decisionHistory": [],
+  "metadata": {
+    "createdAt": "${TIMESTAMP}",
+    "updatedAt": "${TIMESTAMP}",
+    "version": "2.0"
+  }
 }
 EOF
+    fi
+
+    if command -v jq >/dev/null 2>&1; then
+        jq -e '.version == "2.0" and .schemaType == "branch-isolation-state-v2"' \
+            "${DECISION_FILE}" >/dev/null 2>&1
+    elif command -v node >/dev/null 2>&1; then
+        STATE_FILE="${DECISION_FILE}" node -e 'const fs=require("fs"); const s=JSON.parse(fs.readFileSync(process.env.STATE_FILE)); if(s.version!=="2.0"||s.schemaType!=="branch-isolation-state-v2") process.exit(1);'
+    else
+        echo "ERROR: ${DECISION_FILE} is not a valid v2 isolation state file" >&2
+        return 1
     fi
 }
 
@@ -53,30 +77,45 @@ record_decision() {
 
     current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
-    # Read existing decisions
-    local existing_decisions=$(cat "${DECISION_FILE}" 2>/dev/null || echo '{"decisions":[]}')
+    local temp_file="${DECISION_FILE}.tmp"
 
-    # Create new decision entry
-    local new_decision=$(cat <<EOF
-{
-  "timestamp": "${TIMESTAMP}",
-  "branch": "${current_branch}",
-  "strategy": "${strategy}",
-  "userResponse": "${user_response}",
-  "reason": "${reason}",
-  "worktreePath": "${worktree_path}"
-}
-EOF
-)
+    if command -v jq >/dev/null 2>&1; then
+        jq --arg timestamp "${TIMESTAMP}" \
+           --arg branch "${current_branch}" \
+           --arg strategy "${strategy}" \
+           --arg user_choice "${user_response}" \
+           --arg reason_value "${reason}" \
+           --arg worktree "${worktree_path}" \
+           '.decisionHistory += [{
+              timestamp: $timestamp, seriesId: null, task: null,
+              decision: $strategy,
+              reason: ($reason_value + " [branch: " + $branch + "]"),
+              interactionType: "shell", userChoice: $user_choice,
+              worktreePath: $worktree
+            }] | .metadata.updatedAt = $timestamp' \
+           "${DECISION_FILE}" > "${temp_file}"
+    elif command -v node >/dev/null 2>&1; then
+        STATE_FILE="${DECISION_FILE}" \
+        STATE_TEMP="${temp_file}" \
+        DECISION_TIMESTAMP="${TIMESTAMP}" \
+        DECISION_BRANCH="${current_branch}" \
+        DECISION_STRATEGY="${strategy}" \
+        DECISION_CHOICE="${user_response}" \
+        DECISION_REASON="${reason}" \
+        DECISION_WORKTREE="${worktree_path}" \
+        node -e 'const fs=require("fs"); const s=JSON.parse(fs.readFileSync(process.env.STATE_FILE)); s.decisionHistory=s.decisionHistory||[]; s.decisionHistory.push({timestamp:process.env.DECISION_TIMESTAMP,seriesId:null,task:null,decision:process.env.DECISION_STRATEGY,reason:process.env.DECISION_REASON+" [branch: "+process.env.DECISION_BRANCH+"]",interactionType:"shell",userChoice:process.env.DECISION_CHOICE,worktreePath:process.env.DECISION_WORKTREE}); s.metadata=s.metadata||{}; s.metadata.updatedAt=process.env.DECISION_TIMESTAMP; fs.writeFileSync(process.env.STATE_TEMP,JSON.stringify(s,null,2)+"\\n");'
+    else
+        echo "ERROR: jq or node is required to update ${DECISION_FILE}" >&2
+        return 1
+    fi
 
-    # Update decision file
-    cat > "${DECISION_FILE}" <<EOF
-{
-  "decisions": $(echo "${existing_decisions}" | jq --argjson new "${new_decision}" '.decisions + [$new]' 2>/dev/null || echo "[${new_decision}]"),
-  "currentStrategy": "${strategy}",
-  "lastUpdated": "${TIMESTAMP}"
-}
-EOF
+    if [[ $? -eq 0 ]]; then
+        mv "${temp_file}" "${DECISION_FILE}"
+    else
+        rm -f "${temp_file}"
+        echo "ERROR: Failed to persist isolation decision" >&2
+        return 1
+    fi
 
     echo "Decision recorded: ${strategy} -> ${user_response}"
 }
@@ -253,14 +292,34 @@ get_current_decision() {
 # Clear all recorded decisions (for testing or reset)
 ##
 clear_decisions() {
-    init_state_file
-    cat > "${DECISION_FILE}" <<EOF
+    init_state_file || return 1
+    local temp_file="${DECISION_FILE}.tmp"
+    cat > "${temp_file}" <<EOF
 {
-  "decisions": [],
-  "currentStrategy": null,
-  "lastUpdated": "${TIMESTAMP}"
+  "version": "2.0",
+  "schemaType": "branch-isolation-state-v2",
+  "currentSeries": null,
+  "codeStatus": null,
+  "resetTriggers": {
+    "autoResetCondition": "branch_clean_and_no_uncommitted_changes",
+    "autoResetAfterHours": 4,
+    "manualResetAvailable": true,
+    "taskSeriesComplete": false,
+    "autoResetEnabled": true
+  },
+  "decisionHistory": [],
+  "metadata": {
+    "createdAt": "${TIMESTAMP}",
+    "updatedAt": "${TIMESTAMP}",
+    "version": "2.0"
+  }
 }
 EOF
+    mv "${temp_file}" "${DECISION_FILE}" || {
+        rm -f "${temp_file}"
+        echo "ERROR: Failed to clear isolation decisions" >&2
+        return 1
+    }
     echo "All decisions cleared"
 }
 

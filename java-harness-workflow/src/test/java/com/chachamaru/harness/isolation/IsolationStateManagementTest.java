@@ -5,7 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +27,7 @@ class IsolationStateManagementTest {
 
     @BeforeEach
     void setUp() {
-        stateManager = new IsolationStateManager();
+        stateManager = new IsolationStateManager(tempDir);
         stateReset = new IsolationStateReset();
         codeDetector = new CodeStatusDetector();
     }
@@ -53,8 +54,23 @@ class IsolationStateManagementTest {
 
         originalState.setCurrentSeries(series);
 
+        originalState.setCodeStatus(CodeStatus.builder()
+            .branchClean(true)
+            .hasUncommittedChanges(false)
+            .filesChanged(List.of("src/Main.java"))
+            .commitsCount(2)
+            .lastCommitMessage("test commit")
+            .untrackedFilesCount(0)
+            .build());
+        originalState.addDecisionRecord(new DecisionRecord(
+            "test-series", 17.1, "isolate", "test decision"));
+
         // Save and load
         stateManager.saveState(originalState);
+        String json = Files.readString(Path.of(stateManager.getStateFilePath()));
+        assertFalse(json.contains("readyForReset"));
+        assertFalse(json.contains("taskSeriesComplete"));
+        assertFalse(json.contains("migrated"));
         IsolationStateFile loadedState = stateManager.loadState();
 
         // Verify
@@ -62,6 +78,8 @@ class IsolationStateManagementTest {
                     loadedState.getCurrentSeries().getSeriesId());
         assertEquals(originalState.getCurrentSeries().getTaskCount(),
                     loadedState.getCurrentSeries().getTaskCount());
+        assertEquals(originalState.getCodeStatus(), loadedState.getCodeStatus());
+        assertEquals(1, loadedState.getDecisionHistory().size());
     }
 
     @Test
@@ -105,7 +123,8 @@ class IsolationStateManagementTest {
 
         // Verify state is cleared
         assertNull(resetState.getCurrentSeries());
-        assertEquals(0, resetState.getDecisionHistory().size()); // History should be preserved actually
+        assertEquals(1, resetState.getDecisionHistory().size());
+        assertEquals("reset", resetState.getDecisionHistory().get(0).getDecision());
     }
 
     @Test
@@ -231,5 +250,80 @@ class IsolationStateManagementTest {
 
         metadata.setMigratedFrom("1.0");
         assertTrue(metadata.isMigrated());
+    }
+
+    @Test
+    void testCodeStatusDetectorSupportsGitWorktreeAndAllChangeTypes() throws Exception {
+        Path repository = tempDir.resolve("repository");
+        Path worktree = tempDir.resolve("worktree");
+        runGit(repository.getParent(), "init", "-b", "main", repository.getFileName().toString());
+        runGit(repository, "config", "user.email", "test@example.com");
+        runGit(repository, "config", "user.name", "Test User");
+        Files.writeString(repository.resolve("tracked.txt"), "one\n");
+        Files.writeString(repository.resolve("deleted.txt"), "delete me\n");
+        runGit(repository, "add", ".");
+        runGit(repository, "commit", "-m", "initial");
+        Files.writeString(repository.resolve("tracked.txt"), "two\n");
+        runGit(repository, "add", "tracked.txt");
+        runGit(repository, "commit", "-m", "second");
+        runGit(repository, "worktree", "add", "-b", "feature/test", worktree.toString(), "HEAD");
+
+        Files.writeString(worktree.resolve("tracked.txt"), "changed\n");
+        Files.delete(worktree.resolve("deleted.txt"));
+        Files.writeString(worktree.resolve("new.txt"), "new\n");
+
+        CodeStatus status = codeDetector.detectCodeStatus(worktree.toString());
+
+        assertFalse(status.hasError());
+        assertTrue(status.hasUncommittedChanges());
+        assertFalse(status.isBranchClean());
+        assertEquals(1, status.getUntrackedFilesCount());
+        assertTrue(status.getFilesChanged().contains("tracked.txt"));
+        assertTrue(status.getFilesChanged().contains("deleted.txt"));
+        assertTrue(status.getFilesChanged().contains("new.txt"));
+        assertEquals("feature/test", codeDetector.getCurrentBranch(worktree.toString()));
+        assertEquals(runGit(repository, "rev-parse", "HEAD^"),
+            codeDetector.getBaseReference(worktree.toString()));
+        assertTrue(codeDetector.isValidGitWorktree(worktree.toString()));
+    }
+
+    @Test
+    void testLegacyDecisionStateIsMigratedToV2() throws Exception {
+        Path legacyFile = tempDir.resolve(".claude/state/branch-isolation-decision.json");
+        Files.createDirectories(legacyFile.getParent());
+        Files.writeString(legacyFile, """
+            {
+              "decisions": [{
+                "timestamp": "2026-08-13T10:00:00",
+                "strategy": "force",
+                "userResponse": "auto-isolate",
+                "reason": "legacy decision"
+              }],
+              "currentStrategy": "force",
+              "lastUpdated": "2026-08-13T10:00:00"
+            }
+            """);
+
+        IsolationStateFile migrated = stateManager.loadState();
+
+        assertEquals("2.0", migrated.getVersion());
+        assertTrue(migrated.getMetadata().isMigrated());
+        assertEquals(1, migrated.getDecisionHistory().size());
+        assertEquals("force", migrated.getDecisionHistory().get(0).getDecision());
+        assertEquals("auto-isolate", migrated.getDecisionHistory().get(0).getUserChoice());
+        assertTrue(Files.readString(legacyFile).contains("\"schemaType\" : \"branch-isolation-state-v2\""));
+    }
+
+    private static String runGit(Path directory, String... args) throws IOException, InterruptedException {
+        List<String> command = new java.util.ArrayList<>();
+        command.add("git");
+        command.addAll(List.of(args));
+        Process process = new ProcessBuilder(command)
+            .directory(directory.toFile())
+            .redirectErrorStream(true)
+            .start();
+        String output = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), output);
+        return output.trim();
     }
 }

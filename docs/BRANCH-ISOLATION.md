@@ -195,18 +195,21 @@ State files are stored in: `.claude/state/branch-isolation-decision.json`
 ### Format
 ```json
 {
-  "decisions": [
+  "version": "2.0",
+  "schemaType": "branch-isolation-state-v2",
+  "currentSeries": null,
+  "codeStatus": null,
+  "resetTriggers": {},
+  "decisionHistory": [
     {
       "timestamp": "2025-01-01T12:00:00Z",
-      "branch": "master",
-      "strategy": "force",
-      "userResponse": "auto-isolate",
+      "decision": "force",
       "reason": "Main branch protection required",
-      "worktreePath": "N/A"
+      "interactionType": "shell",
+      "userChoice": "auto-isolate"
     }
   ],
-  "currentStrategy": "force",
-  "lastUpdated": "2025-01-01T12:00:00Z"
+  "metadata": {}
 }
 ```
 
@@ -316,7 +319,7 @@ bash scripts/branch-isolation/worktree-manager.sh --prune
 ### 4. State File Review
 Periodically review the state file to understand isolation patterns and decisions:
 ```bash
-cat .claude/state/branch-isolation-decision.json | jq '.decisions[]'
+cat .claude/state/branch-isolation-decision.json | jq '.decisionHistory[]'
 ```
 
 ### 5. Integration with Harness Work

@@ -272,14 +272,13 @@ cat .claude/state/branch-isolation-decision.json
 
 ### Reset Conditions
 
-Automatic reset occurs when ANY condition is met:
+Automatic reset requires a clean branch and one completion signal:
 
-1. **Branch Clean + No Uncommitted Changes**
-   - All work committed and pushed
-   - No active changes in working directory
+1. **Task Series Complete**
+   - The series reaches 100% completion or all estimated tasks are recorded
 
-2. **Task Series Complete**
-   - All tasks in series marked as completed
+2. **Inactivity with Clean Branch**
+   - The branch has no uncommitted changes and has exceeded the configured inactivity threshold
    - Completion percentage reaches 100%
 
 3. **Inactivity with Clean Branch**

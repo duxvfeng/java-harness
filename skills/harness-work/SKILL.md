@@ -1431,9 +1431,9 @@ Phase C（整合: commit log 集计·丰富完成报告·Plans.md 最终确认�
 ```
 
 **状态文件**: `.claude/state/branch-isolation-decision.json`
-- 记录所有分支隔离决策历史
-- 包含时间戳、分支名称、策略类型、用户选择
-- 支持审计和调试
+- 唯一的 v2 状态文件，Java `IsolationStateManager` 与 Shell 兼容入口共同使用
+- 顶层必须包含 `version: "2.0"`、`schemaType: "branch-isolation-state-v2"` 和 `decisionHistory`
+- 派生状态（例如 `isReadyForReset`）不写入 JSON；所有更新必须原子替换
 
 **执行脚本**:
 ```bash
@@ -1445,6 +1445,19 @@ bash scripts/branch-isolation/handle-isolation.sh --strategy force
 
 # 仅检测不执行
 bash scripts/branch-isolation/detect-branch.sh --strategy
+```
+
+Phase A 的嵌入式执行入口为
+`com.chachamaru.harness.isolation.integration.HarnessWorkIsolationIntegration#handlePhaseABranchIsolation`。
+Shell 脚本是兼容适配入口，只能更新同一份 v2 状态文件，不得创建或写入其他分支隔离状态格式。
+
+Phase A 调用约定（嵌入式宿主）:
+```java
+var isolation = new HarnessWorkIsolationIntegration();
+var decision = isolation.handlePhaseABranchIsolation(taskId, taskTitle, worktreePath);
+if (!decision.shouldProceed()) {
+    return;
+}
 ```
 
 ### Active task scope

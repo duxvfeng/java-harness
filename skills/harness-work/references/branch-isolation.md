@@ -87,14 +87,27 @@ if [ "$CURRENT_BRANCH" = "$MAIN_BRANCH" ] && [ "$ISOLATE_BRANCH" = "true" ]; the
     cd "$WORKTREE_PATH"
 
     # 6. 记录分支信息到状态文件
-    cat > .claude/state/branch-isolation.json <<EOF
+    # 状态由 harness-work 的 v2 状态管理入口写入，不在此处创建旧格式文件。
+    # 唯一状态文件：.claude/state/branch-isolation-decision.json
+    cat > .claude/state/branch-isolation-decision.json <<EOF
 {
-  "original_branch": "$CURRENT_BRANCH",
-  "feature_branch": "$BRANCH_NAME",
-  "worktree_path": "$WORKTREE_PATH",
-  "base_ref": "$BASE_REF",
-  "task_id": "$TASK_ID",
-  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "version": "2.0",
+  "schemaType": "branch-isolation-state-v2",
+  "currentSeries": null,
+  "codeStatus": null,
+  "resetTriggers": {
+    "autoResetCondition": "branch_clean_and_no_uncommitted_changes",
+    "autoResetAfterHours": 4,
+    "manualResetAvailable": true,
+    "taskSeriesComplete": false,
+    "autoResetEnabled": true
+  },
+  "decisionHistory": [],
+  "metadata": {
+    "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "updatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "version": "2.0"
+  }
 }
 EOF
 
@@ -299,18 +312,19 @@ fi
 
 ## 状态文件
 
-### `.claude/state/branch-isolation.json`
+### `.claude/state/branch-isolation-decision.json`
 
-记录分支隔离的完整状态：
+记录分支隔离的完整 v2 状态和决策历史：
 
 ```json
 {
-  "original_branch": "master",
-  "feature_branch": "feature/task-3-20260807-143022",
-  "worktree_path": ".claude/worktrees/feature/task-3-20260807-143022",
-  "base_ref": "a1b2c3d4e5f6...",
-  "task_id": "3",
-  "created_at": "2026-08-07T14:30:22Z"
+  "version": "2.0",
+  "schemaType": "branch-isolation-state-v2",
+  "currentSeries": null,
+  "codeStatus": null,
+  "resetTriggers": {},
+  "decisionHistory": [],
+  "metadata": {}
 }
 ```
 
