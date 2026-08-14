@@ -174,12 +174,9 @@ public class EnhancedIsolationUI {
     private IsolationDecision displaySetupOptions(BranchType branchType) {
         if (branchType == BranchType.MAIN) {
             displayMainBranchProtection();
-            return new IsolationDecision(IsolationDecisionType.ISOLATE,
-                "auto-isolate", "Main branch protection required");
-        } else {
-            displayFeatureBranchOptions();
-            return getUserChoiceForFeatureBranch();
         }
+        displayIsolationChoices(branchType);
+        return getUserChoiceForIsolation();
     }
 
     /**
@@ -189,9 +186,8 @@ public class EnhancedIsolationUI {
         displaySectionHeader("🔒 Main Branch Protection");
 
         displayItem("📍", "You are on the main/master branch");
-        displayItem("🛡️", "For safety, work will be isolated in a feature branch");
-        displayItem("🔧", "The system will automatically create isolated branch");
-        displayItem("✅", "No user action required - proceeding automatically");
+        displayItem("🛡️", "Branch isolation is recommended before implementation");
+        displayItem("👤", "Choose whether to create an isolated branch");
 
         System.out.println();
     }
@@ -210,6 +206,21 @@ public class EnhancedIsolationUI {
         System.out.println();
         System.out.println("  1) Isolate branch (recommended) - Create isolated worktree for this task series");
         System.out.println("  2) Skip isolation - Continue directly on current branch");
+        System.out.println("  3) Cancel - Stop execution and decide manually");
+        System.out.println();
+    }
+
+    private void displayIsolationChoices(BranchType branchType) {
+        displaySectionHeader("Branch Isolation Choice");
+        if (branchType == BranchType.FEATURE) {
+            displayItem("*", "You are on a feature branch");
+        }
+        displayItem("*", "Branch isolation protects your work during development");
+        System.out.println();
+        System.out.println("Choose an option:");
+        System.out.println();
+        System.out.println("  1) Isolate branch - Create isolated worktree for this task series");
+        System.out.println("  2) Do not isolate - Continue directly on current branch");
         System.out.println("  3) Cancel - Stop execution and decide manually");
         System.out.println();
     }
@@ -252,7 +263,7 @@ public class EnhancedIsolationUI {
     /**
      * Get user choice for feature branch
      */
-    private IsolationDecision getUserChoiceForFeatureBranch() {
+    private IsolationDecision getUserChoiceForIsolation() {
         while (true) {
             System.out.print("Your choice [1/2/3]: ");
             String input = scanner.nextLine().trim();

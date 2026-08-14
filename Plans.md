@@ -995,3 +995,45 @@ harness-work (实现) → harness-review (审查) → 端到端检测 (新增) �
 5. 可选完成 **Phase 8** (Codex 实现完善) - 扩展平台支持
 
 **启动方式**: 使用 `/harness-work` 或 `/breezing` 开始实施 Phase 13
+
+---
+
+## Phase 18: Configuration Contract Layer
+
+### Scope and Pre-Approval
+
+- **Spec delta**: Every public configuration item must declare its owner, effective carrier, precedence, compatibility strategy, and validation route.
+- **Chosen approach**: Keep TOML, E2E JSON, session Properties, environment variables, and skill/host settings in their current roles. Add a machine-readable contract and diagnostics; do not force a single format.
+- **Pre-approved operations**: This phase performs read-only diagnostics only. It does not read secrets, send data externally, write user configuration, or automatically migrate legacy configuration.
+- **CI guardrail**: Test skips, weakened assertions, `continue-on-error`, and lint bypasses are prohibited. A failing test is investigated before any fix.
+
+| Task | Content | DoD | Depends | Status | Completion marker |
+|------|---------|-----|---------|--------|-------------------|
+| 18.1 | Establish configuration inventory and contract specification `[lane:gate] [tdd:skip:docs-only]` | Contract inventory covers TOML, E2E JSON, Properties, environment, skill, and host carriers; each entry defines owner, type, precedence, compatibility, and validation route | - | cc:TODO | |
+| 18.2 | Implement contract model and source representation `[lane:gate] [tdd:required]` | Red tests define parsing and schema rules; production implementation loads contract metadata without changing existing configuration values | 18.1 | cc:TODO | |
+| 18.3 | Implement `validate config --all` diagnostics `[lane:gate] [tdd:required]` | Red tests cover valid, invalid, missing, and deprecated entries; command reports actionable diagnostics and exits non-zero for invalid contracts | 18.2 | cc:TODO | |
+| 18.4 | Add legacy, precedence, and dual-platform fixtures `[lane:gate] [tdd:required]` | Fixtures prove legacy formats remain accepted and documented precedence is stable on supported platforms | 18.3 | cc:TODO | |
+| 18.5 | Align documentation and CI validation `[lane:gate] [tdd:required]` | Reference documentation links the contract and validation route; focused tests and full Maven verification pass without bypasses | 18.4 | cc:TODO | |
+
+### Execution Order
+
+1. Read the existing configuration consumers and tests, then complete 18.1 with the actual source-of-truth locations.
+2. Use red-green-refactor for 18.2 through 18.4, one observable behavior at a time.
+3. Run focused tests after each task and run the applicable full Maven verification for 18.5.
+4. Keep compatibility changes additive; record any divergence from the inventory before proceeding.
+
+### Risks and Controls
+
+| Risk | Control |
+|------|---------|
+| Declared precedence differs from runtime behavior | Fixtures assert effective precedence before publishing the contract |
+| Contract becomes stale | Validation links each carrier to its owning module and checks referenced paths |
+| Platform-specific paths leak into shared behavior | Use platform-neutral path handling and test Windows/Linux-compatible fixtures |
+| Existing user configuration is affected | No migration, no writes, and diagnostics are read-only in this phase |
+
+### Phase DoD
+
+- All supported carriers have an explicit, machine-readable contract entry.
+- `validate config --all` reports contract violations deterministically and preserves existing configuration.
+- Legacy configuration remains supported or has an explicit deprecation diagnostic.
+- Focused and full verification complete without test/lint bypasses.

@@ -121,7 +121,7 @@ record_decision() {
 }
 
 ##
-# Handle force isolation strategy (main branch)
+# Handle force isolation strategy (explicit non-interactive mode)
 # Returns: 0 for proceed, 1 for cancel
 ##
 handle_force_isolation() {
@@ -138,13 +138,13 @@ handle_force_isolation() {
     echo ""
 
     # Record forced decision
-    record_decision "force" "auto-isolate" "Main branch protection required"
+    record_decision "force" "auto-isolate" "Explicit forced isolation requested"
 
     return 0
 }
 
 ##
-# Handle ask isolation strategy (feature branch)
+# Handle ask isolation strategy (main or feature branch)
 # Returns: 0 for proceed, 1 for cancel
 ##
 handle_ask_isolation() {
@@ -156,7 +156,7 @@ handle_ask_isolation() {
 
     echo "🔀 Feature Branch Detected"
     echo ""
-    echo "You are currently on the '${current_branch}' feature branch."
+    echo "You are currently on the '${current_branch}' branch."
     echo ""
     echo "Branch isolation protects your current branch from potential issues"
     echo "during development. You can choose:"

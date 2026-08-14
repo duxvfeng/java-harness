@@ -2,11 +2,11 @@
 
 ## Purpose
 
-在任务执行前自动创建 git 分支隔离，确保主分支稳定性。测试通过后再合并回主分支，测试失败时保留分支用于调试。
+在任务执行前询问是否创建 git 分支隔离。用户选择隔离后执行，测试通过后再合并回主分支，测试失败时保留分支用于调试。
 
 ## 概述
 
-分支隔离模式（Branch Isolation Mode）通过 `--isolate-branch` 标志启用，适用于所有执行模式（Solo / Parallel / Breezing）。
+分支隔离流程适用于所有执行模式（Solo / Parallel / Breezing）。执行 `/harness-work` 时，系统会先询问用户选择“隔离”或“不隔离”；只有选择“隔离”时才创建隔离分支。`--isolate-branch` 作为兼容标志保留。
 
 ### 核心流程
 
@@ -23,7 +23,7 @@
 
 | 选项 | 说明 | 默认值 |
 |----------|------|----------|
-| `--isolate-branch` | 启用分支隔离模式 | false |
+| `--isolate-branch` | 兼容旧用法，启用分支隔离流程 | true |
 | `--no-merge` | 完成测试后不自动合并，保留 feature 分支 | false |
 | `--branch-name <name>` | 自定义分支名称（格式：feature/task-<id>-<timestamp>） | auto |
 | `--keep-branch` | 完成后保留 feature 分支（用于人工审查或创建 PR） | false |
@@ -33,7 +33,7 @@
 ### 基础用法
 
 ```bash
-# 单个任务，自动创建分支并合并
+# 单个任务，先询问隔离，再按用户选择创建分支并合并
 /harness-work 3 --isolate-branch
 
 # 全部任务，每个任务独立分支

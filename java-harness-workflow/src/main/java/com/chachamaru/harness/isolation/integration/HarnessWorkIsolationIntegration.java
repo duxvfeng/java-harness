@@ -107,7 +107,7 @@ public class HarnessWorkIsolationIntegration {
     private IsolationDecision handleUserInteraction(IsolationStateFile state, String taskId,
                                                    String taskTitle, String worktreePath) {
         // Determine branch type
-        BranchType branchType = determineBranchType(state);
+        BranchType branchType = determineBranchType(state, worktreePath);
 
         // Display current state and get user decision
         IsolationDecision decision = ui.displayIsolationOptions(branchType, state);
@@ -242,25 +242,36 @@ public class HarnessWorkIsolationIntegration {
     /**
      * Determine branch type based on current state
      */
-    private BranchType determineBranchType(IsolationStateFile state) {
+    private BranchType determineBranchType(IsolationStateFile state, String worktreePath) {
         if (state.getCurrentSeries() != null && state.getCurrentSeries().getBranchInfo() != null) {
             String originalBranch = state.getCurrentSeries().getBranchInfo().getOriginalBranch();
 
             if (originalBranch != null) {
-                switch (originalBranch.toLowerCase()) {
-                    case "master":
-                    case "main":
-                    case "develop":
-                    case "production":
-                        return BranchType.MAIN;
-                    default:
-                        return BranchType.FEATURE;
-                }
+                return classifyBranch(originalBranch);
             }
         }
 
-        // Default to feature branch if we can't determine
+        if (worktreePath != null && !worktreePath.isBlank()) {
+            return classifyBranch(codeDetector.getCurrentBranch(worktreePath));
+        }
+
         return BranchType.FEATURE;
+    }
+
+    private BranchType classifyBranch(String branchName) {
+        if (branchName == null) {
+            return BranchType.FEATURE;
+        }
+
+        switch (branchName.toLowerCase()) {
+            case "master":
+            case "main":
+            case "develop":
+            case "production":
+                return BranchType.MAIN;
+            default:
+                return BranchType.FEATURE;
+        }
     }
 
     /**

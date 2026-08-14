@@ -180,7 +180,7 @@ Harness 的集成执行技能。
 | `/harness-work 3` | solo | 仅立即执行任务3 |
 | `/harness-work --parallel 5` | parallel | 5工作器并行执行（强制） |
 | `/harness-work --codex` | codex | 向 Codex CLI 委托（仅明确时） |
-| `/harness-work --isolate-branch` | **branch-iso** | 在隔离分支执行，测试通过后合并 |
+| `/harness-work` | **branch-iso** | 执行前询问是否创建隔离分支；选择隔离后执行，测试通过后合并 |
 | Cursor host (adapter candidate) | cursor | Task/subagent routing via `.cursor/AGENTS.md`; not auto-selected |
 | `/harness-work --breezing` | breezing | 强制团队执行 |
 | `/harness-work --auto-mode` | **智能推荐** | 基于任务特征智能推荐模式，高置信度自动应用 |
@@ -401,13 +401,13 @@ if (recommender.shouldAutoApply(rec)) {
 
 ## Branch Isolation Mode（分支隔离模式）
 
-**Purpose**: 在任务执行前自动创建 git 分支隔离，确保主分支稳定性。测试通过后再合并回主分支。
+**Purpose**: 在任务执行前询问是否创建 git 分支隔离。用户选择隔离后执行，测试通过后再合并回主分支。
 
 ### 核心流程
 
 ```
 1. 检查当前分支（是否在主分支）
-2. 自动创建 feature 分支（使用 git worktree）
+2. 用户选择隔离时创建 feature 分支（使用 git worktree）
 3. 在隔离分支中执行任务实现
 4. 运行测试验证
 5. 测试通过：合并回主分支，清理 feature 分支
@@ -417,7 +417,7 @@ if (recommender.shouldAutoApply(rec)) {
 ### 基础用法
 
 ```bash
-# 单个任务，自动创建分支并合并
+# 单个任务，先询问隔离，再按用户选择执行并合并
 /harness-work 3 --isolate-branch
 
 # 全部任务，每个任务独立分支
@@ -508,7 +508,7 @@ precedence（从高到低）: 明确标志（`--backend` / `--cursor` / `--codex
 | `--tdd-bypass` | 仅在紧急情况下绕过 TDD 强制。将 `HARNESS_TDD_BYPASS_REASON` 或明确理由保留在 audit 中 | false |
 | `--no-simplify` | 跳过 Auto-Refinement | false |
 | `--auto-mode` | 启用智能执行模式推荐。基于任务特征自动推荐 Solo/Parallel/Breezing，高置信度时自动应用。同时也是 CC Auto Mode rollout 的 opt-in 标志 | false |
-| `--isolate-branch` | 启用分支隔离模式。任务执行前自动创建 feature 分支，测试通过后合并回主分支 | false |
+| `--isolate-branch` | 兼容旧用法，启用分支隔离流程；默认 `/harness-work` 也会先询问隔离或不隔离 | true |
 | `--no-merge` | 与 `--isolate-branch` 配合使用，完成测试后保留分支不自动合并 | false |
 | `--branch-name <name>` | 自定义分支名称（默认：feature/task-<id>-<timestamp>） | auto |
 | `--keep-branch` | 完成后保留 feature 分支（用于人工审查或创建 PR） | false |
@@ -1410,12 +1410,12 @@ Phase C（整合: commit log 集计·丰富完成报告·Plans.md 最终确认�
 4. 记录决策到状态文件
 
 **策略类型**:
-- `force`: 强制隔离（主分支保护）- 自动创建隔离分支，无需用户确认
+- `force`: 显式强制隔离 - 自动创建隔离分支，无需用户确认
 - `ask`: 可选隔离（功能分支）- 提示用户选择是否隔离
 - `skip`: 跳过隔离（已隔离状态）- 当前已在 worktree 中，无需额外隔离
 
 **优先级**:
-1. 显式 `--isolate-branch` 标志优先级最高
+1. 默认先询问用户选择“隔离”或“不隔离”；显式 `--isolate-branch` 保留为兼容标志
 2. 智能检测次之（根据分支类型和配置）
 3. 配置文件可覆盖默认策略
 
@@ -1424,7 +1424,7 @@ Phase C（整合: commit log 集计·丰富完成报告·Plans.md 最终确认�
 // .claude/settings.json
 {
   "branchIsolation": {
-    "mainBranch": "force",     // 主分支策略：force/ask/skip
+    "mainBranch": "ask",       // 主分支策略：force/ask/skip
     "featureBranch": "ask"     // 功能分支策略：force/ask/skip
   }
 }

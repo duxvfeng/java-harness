@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/git-error-handler.sh" 2>/dev/null || {
 
 # Branch Isolation State Types
 ISOLATION_STRATEGY_FORCE="force"      # Mandatory isolation (main branch)
-ISOLATION_STRATEGY_ASK="ask"          # User choice required (feature branch)
+ISOLATION_STRATEGY_ASK="ask"          # User choice required
 ISOLATION_STRATEGY_SKIP="skip"        # Already isolated or no isolation needed
 
 # Branch Types
@@ -26,8 +26,8 @@ CONFIG_FILE=".claude/settings.json"
 CONFIG_KEY="branchIsolation"
 
 # Default configuration values
-DEFAULT_MAIN_BRANCH_POLICY="force"    # Force isolation on main branch
-DEFAULT_FEATURE_BRANCH_POLICY="ask"   # Ask user on feature branches
+DEFAULT_MAIN_BRANCH_POLICY="ask"      # Ask user before isolating the main branch
+DEFAULT_FEATURE_BRANCH_POLICY="ask"   # Ask user before isolating a feature branch
 
 ##
 # Validate git repository and command availability with enhanced error handling

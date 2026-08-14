@@ -71,6 +71,25 @@ class BranchIsolationIntegrationTest {
     }
 
     @Test
+    void testMainBranch_AsksBeforeSkippingIsolation() throws Exception {
+        Path repository = createGitRepository();
+        RecordingUI ui = new RecordingUI();
+        ui.decisions.add(new IsolationDecision(IsolationDecisionType.SKIP, "skip", "user chose no"));
+        IsolationStateManager manager = new IsolationStateManager(tempDir.resolve("main-branch"));
+        HarnessWorkIsolationIntegration integration = new HarnessWorkIsolationIntegration(
+            manager, new com.chachamaru.harness.isolation.CodeStatusDetector(),
+            new IsolationStateReset(), ui);
+
+        IsolationDecision decision = integration.handlePhaseABranchIsolation(
+            "17.1", "main branch task", repository.toString());
+
+        assertEquals(IsolationDecisionType.SKIP, decision.getDecisionType());
+        assertEquals(com.chachamaru.harness.isolation.ui.BranchType.MAIN, ui.lastBranchType);
+        assertEquals(1, ui.interactionCount);
+        assertFalse(manager.loadState().hasActiveSeries());
+    }
+
+    @Test
     void testStateResetLifecycle() {
         // Test state reset lifecycle: Initial → Isolated → Active Use → Ready for Reset → Reset → Initial
 
@@ -147,11 +166,13 @@ class BranchIsolationIntegrationTest {
     private static class RecordingUI extends com.chachamaru.harness.isolation.ui.EnhancedIsolationUI {
         private final List<IsolationDecision> decisions = new ArrayList<>();
         private int interactionCount;
+        private com.chachamaru.harness.isolation.ui.BranchType lastBranchType;
 
         @Override
         public IsolationDecision displayIsolationOptions(
                 com.chachamaru.harness.isolation.ui.BranchType branchType, IsolationStateFile state) {
             interactionCount++;
+            lastBranchType = branchType;
             return decisions.isEmpty()
                 ? new IsolationDecision(IsolationDecisionType.ISOLATE, "isolate", "default")
                 : decisions.remove(0);
